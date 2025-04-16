@@ -26,8 +26,6 @@
     background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 70%);
     mix-blend-mode: normal;
     transform: translate(-50%, -50%);
-    opacity: 0;
-    transition: opacity 3s;
   }
 </style>
 <img src="seafarer-secession.svg" alt="Eärendil">
@@ -36,7 +34,6 @@
   (function() {
     const img = document.querySelector('img');
     const spotlight = document.querySelector('.spotlight');
-    const rect = img.getBoundingClientRect();
 
     img.style.opacity = '0';
     setTimeout(() => {
@@ -45,11 +42,9 @@
     }, 250);
 
     document.addEventListener('mousemove', (e) => {
+      const rect = img.getBoundingClientRect();
       spotlight.style.left = e.pageX + 'px';
       spotlight.style.top = e.pageY + 'px';
-
-      spotlight.style.opacity = (e.clientX >= rect.left && e.clientX <= rect.right &&
-        e.clientY >= rect.top && e.clientY <= rect.bottom) ? '1' : '0';
     });
   })();
 </script>
