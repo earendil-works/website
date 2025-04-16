@@ -41,14 +41,8 @@
     img.style.opacity = '0';
     setTimeout(() => {
       img.style.transition = 'opacity 3s';
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          img.style.opacity = '1';
-        });
-      } else {
-        img.style.opacity = '1';
-      }
-    }, 100);
+      img.style.opacity = '1';
+    }, 250);
 
     document.addEventListener('mousemove', (e) => {
       spotlight.style.left = e.pageX + 'px';
