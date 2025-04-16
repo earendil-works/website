@@ -8,7 +8,9 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: rgb(230, 230, 230)
+    background: rgb(230, 230, 230);
+    margin: 0;
+    padding: 0;
   }
 
   img {
@@ -31,15 +33,29 @@
 <img src="seafarer-secession.svg" alt="Eärendil">
 <div class="spotlight"></div>
 <script>
-  document.addEventListener('mousemove', (e) => {
-    const spotlight = document.querySelector('.spotlight');
+  (function() {
     const img = document.querySelector('img');
+    const spotlight = document.querySelector('.spotlight');
     const rect = img.getBoundingClientRect();
 
-    spotlight.style.left = e.pageX + 'px';
-    spotlight.style.top = e.pageY + 'px';
+    img.style.opacity = '0';
+    setTimeout(() => {
+      img.style.transition = 'opacity 3s';
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          img.style.opacity = '1';
+        });
+      } else {
+        img.style.opacity = '1';
+      }
+    }, 100);
 
-    spotlight.style.opacity = (e.clientX >= rect.left && e.clientX <= rect.right &&
-      e.clientY >= rect.top && e.clientY <= rect.bottom) ? '1' : '0';
-  });
+    document.addEventListener('mousemove', (e) => {
+      spotlight.style.left = e.pageX + 'px';
+      spotlight.style.top = e.pageY + 'px';
+
+      spotlight.style.opacity = (e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom) ? '1' : '0';
+    });
+  })();
 </script>
