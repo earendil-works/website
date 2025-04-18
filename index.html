@@ -105,32 +105,35 @@
       }
 
       void main() {
-        float speed = 0.14;
-        float waveComplexity = 10.0;
+        float speed = 0.3;
+        float waveComplexity = 12.0;
         float waveAmplitude = 0.06;
-        float noiseFrequency = 6.0;
-        float noiseAmplitude = 0.3;
+        float noiseFrequency = 8.0;
+        float noiseAmplitude = 0.2;
         float height = 0.0;
-        float freq = 0.5;
+        float freq = 0.4;
         float amp = waveAmplitude;
-        vec3 deepColor = vec3(0.86);
-        vec3 shallowColor = vec3(0.98);
+        vec3 deepColor = vec3(0.88);
+        vec3 shallowColor = vec3(0.97);
 
         vec2 uv = gl_FragCoord.xy / resolution.xy;
         vec2 p = uv * waveComplexity;
 
-        for (int i = 0; i < 4; i++) {
-          float angle = time * speed * freq * 0.3 + float(i) * 1.57;
+        for (int i = 0; i < 3; i++) {
+          float angle = time * speed * freq * 0.4 + float(i) * 1.047;
           float wave = sin(p.x * freq * cos(angle) + p.y * freq * sin(angle) + time * speed * freq);
+          wave += cos(p.y * freq * 0.8 + time * speed * freq * 0.5);
           height += wave * amp;
-          freq *= 1.7;
-          amp *= 0.6;
+          freq *= 1.4;
+          amp *= 0.7;
         }
 
-        vec2 noiseCoord = uv * noiseFrequency + time * speed * 0.2;
-        float noise = (snoise(noiseCoord) - 0.5) * noiseAmplitude;
+        vec2 noiseCoord = uv * noiseFrequency;
+        float noise = (snoise(noiseCoord + time * speed * 0.3) - 0.5) * noiseAmplitude;
+        noise += (snoise(noiseCoord * 2.0 - time * speed * 0.2) - 0.5) * noiseAmplitude * 0.5;
         height += noise;
-        float colorMix = smoothstep(-waveAmplitude * 3.0, waveAmplitude * 3.0, height);
+
+        float colorMix = smoothstep(-waveAmplitude * 4.0, waveAmplitude * 4.0, height);
         vec3 color = mix(deepColor, shallowColor, colorMix);
         gl_FragColor = vec4(color, 1.0);
       }
