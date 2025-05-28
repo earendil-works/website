@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Eärendil</title>
 <style>
-
+<style>
   body {
     display: flex;
     justify-content: center;
@@ -28,27 +28,43 @@
 
   .fullscreen-bg {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
     width: 100vw;
     height: 100vh;
-    background-image: url("earendil in ocean with boat logo and type as vector.svg");
+    background-image: url("earendil in ocean with boat logo.svg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    transform: translate(-50%, -50%);
     z-index: 1;
   }
 
   .main-image {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
     width: 100vw;
     height: 100vh;
     object-fit: cover;
     object-position: center;
+    transform: translate(-50%, -50%);
     z-index: 1;
     opacity: 0.9;
+  }
+
+  /* Hide broken image icon on mobile */
+  .main-image {
+    font-size: 0;
+    color: transparent;
+  }
+  
+  .main-image::before {
+    content: none;
+  }
+  
+  .main-image::after {
+    content: none;
   }
 
   .spotlight {
@@ -66,7 +82,7 @@
 <body>
 <canvas id="noise"></canvas>
 <div class="fullscreen-bg"></div>
-<img src="earendil in ocean with boat logo.svg" class="main-image" alt="Eärendil">
+<img src="earendil in ocean with boat logo.svg" class="main-image" alt="" aria-hidden="true">
 <div class="spotlight"></div>
 <script>
   (function () {
