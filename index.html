@@ -23,12 +23,18 @@
     z-index: -1;
   }
 
-  img {
-    width: 380px;
-    max-width: 90vw;
-    position: relative;
-  }
-
+.fullscreen-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url('earendil in ocean with boat logo.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
   .spotlight {
     position: fixed;
     width: 700px;
@@ -40,7 +46,7 @@
   }
 </style>
 <canvas id="noise"></canvas>
-<img src="seafarer-coin.svg" alt="Eärendil">
+<img src="earendil in ocean with boat logo.svg" alt="Eärendil">
 <div class="spotlight"></div>
 <script>
   (function () {
