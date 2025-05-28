@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Eärendil</title>
@@ -23,18 +25,31 @@
     z-index: -1;
   }
 
-.fullscreen-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-image: img src="earendil in ocean with boat logo.svg";
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index: -1;
-}
+  .fullscreen-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: url("earendil in ocean with boat logo.svg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 1;
+  }
+
+  .main-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    object-position: center;
+    z-index: 1;
+    opacity: 0.9;
+  }
+
   .spotlight {
     position: fixed;
     width: 700px;
@@ -43,14 +58,18 @@
     background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 70%);
     mix-blend-mode: normal;
     transform: translate(-50%, -50%);
+    z-index: 2;
   }
 </style>
+</head>
+<body>
 <canvas id="noise"></canvas>
-<img src="earendil in ocean with boat logo.svg" alt="Eärendil">
+<div class="fullscreen-bg"></div>
+<img src="earendil in ocean with boat logo.svg" class="main-image" alt="Eärendil">
 <div class="spotlight"></div>
 <script>
   (function () {
-    const img = document.querySelector('img');
+    const img = document.querySelector('.main-image');
     const spotlight = document.querySelector('.spotlight');
     const canvas = document.getElementById('noise');
 
@@ -198,3 +217,5 @@
     });
   })();
 </script>
+</body>
+</html>
