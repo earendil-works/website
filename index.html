@@ -84,14 +84,23 @@
 <div class="spotlight"></div>
 <script>
   (function () {
+    const bg = document.querySelector('.fullscreen-bg');
     const img = document.querySelector('.main-image');
     const spotlight = document.querySelector('.spotlight');
 
-    img.style.opacity = '0';
+    bg.style.opacity = '0';
     setTimeout(() => {
-      img.style.transition = 'opacity 3s';
-      img.style.opacity = '0.9';
+      bg.style.transition = 'opacity 2s';
+      bg.style.opacity = '1.0';
     }, 250);
+
+    [img, spotlight].forEach(el => {
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.style.transition = 'opacity 3s';
+        el.style.opacity = '0.9';
+      }, 600);
+    });
 
     document.addEventListener('mousemove', (e) => {
       const rect = img.getBoundingClientRect();
