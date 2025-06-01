@@ -89,6 +89,7 @@
     transition: color 0.3s ease;
     user-select: none;
     padding: 20px;
+    opacity: 0;
   }
 
   .corner-text:hover {
@@ -199,43 +200,60 @@
       const englishText = cornerElement.dataset.english;
       const contentElement = cornerElement.querySelector('.text-content');
       
-      // Clear the content and prepare for new animation
-      contentElement.innerHTML = '';
+      // Wrap the existing Quenya text in spans
+      const currentText = contentElement.textContent;
+      contentElement.innerHTML = currentText.split('').map(char => 
+        `<span class="text-char">${char}</span>`
+      ).join('');
       
-      // Create spans for each character in the English text
-      const englishChars = englishText.split('');
-      englishChars.forEach((char, index) => {
-        const span = document.createElement('span');
-        span.className = 'text-char';
-        span.textContent = char;
-        span.style.opacity = '0';
-        contentElement.appendChild(span);
-      });
-      
-      // Animate characters appearing one by one
       const chars = contentElement.querySelectorAll('.text-char');
       let currentIndex = 0;
-      const translationSpeed = 50; // milliseconds between character appearances
+      const replacementSpeed = 100; // milliseconds between character replacements
       
-      function showNextChar() {
-        if (currentIndex < chars.length) {
-          const char = chars[currentIndex];
-          char.classList.add('translating');
+      function replaceNextChar() {
+        if (currentIndex < englishText.length) {
+          const englishChar = englishText[currentIndex];
           
-          setTimeout(() => {
-            char.style.opacity = '1';
-            char.classList.remove('translating');
-            currentIndex++;
-            showNextChar();
-          }, 20); // Brief flash effect
+          if (currentIndex < chars.length) {
+            // Replace existing Quenya character with English character
+            const char = chars[currentIndex];
+            char.classList.add('translating');
+            
+            setTimeout(() => {
+              char.textContent = englishChar;
+              char.classList.remove('translating');
+              currentIndex++;
+              setTimeout(replaceNextChar, replacementSpeed);
+            }, 30);
+          } else {
+            // English text is longer - add new character
+            const newSpan = document.createElement('span');
+            newSpan.className = 'text-char translating';
+            newSpan.textContent = englishChar;
+            newSpan.style.opacity = '0';
+            contentElement.appendChild(newSpan);
+            
+            setTimeout(() => {
+              newSpan.style.opacity = '1';
+              newSpan.classList.remove('translating');
+              currentIndex++;
+              setTimeout(replaceNextChar, replacementSpeed);
+            }, 30);
+          }
         } else {
+          // If Quenya text was longer, hide remaining characters
+          for (let i = currentIndex; i < chars.length; i++) {
+            const char = chars[i];
+            char.style.opacity = '0';
+          }
+          
           // Mark as translated
           cornerElement.classList.add('translated');
         }
       }
       
-      // Start the animation with a brief delay
-      setTimeout(showNextChar, 100);
+      // Start the replacement animation
+      replaceNextChar();
     }
 
     // Add hover listeners to corner texts
@@ -244,6 +262,14 @@
       cornerText.addEventListener('mouseenter', () => {
         translateText(cornerText);
       });
+    });
+
+    // Animate corner texts with staggered timing
+    cornerTexts.forEach((cornerText, index) => {
+      setTimeout(() => {
+        cornerText.style.transition = 'opacity 2.5s ease';
+        cornerText.style.opacity = '1';
+      }, 600); // Start at same time as logo and spotlight
     });
   })();
 </script>
