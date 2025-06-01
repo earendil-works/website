@@ -260,10 +260,6 @@
         clearTimeout(cornerElement.animationTimeout);
       }
       
-      // Check if this is a right-aligned element
-      const isRightAligned = cornerElement.classList.contains('top-right') || 
-                            cornerElement.classList.contains('bottom-right');
-      
       // Start with Quenya text structure to maintain alignment
       contentElement.innerHTML = elvenText.split('').map(char => 
         `<span class="text-char">${char}</span>`
@@ -271,7 +267,7 @@
       
       const chars = Array.from(contentElement.querySelectorAll('.text-char'));
       let currentIndex = 0;
-      const replacementSpeed = 60;
+      const replacementSpeed = 45;
       
       function replaceNextChar() {
         if (currentIndex < englishText.length) {
@@ -282,18 +278,11 @@
             // Replace existing Quenya character with English character
             chars[currentIndex].innerHTML = displayChar;
           } else {
-            // English text is longer - add new character
+            // English text is longer - add new character (CSS alignment handles positioning)
             const newSpan = document.createElement('span');
             newSpan.className = 'text-char';
             newSpan.innerHTML = displayChar;
-            
-            if (isRightAligned) {
-              // For right-aligned text, insert at the beginning to grow left
-              contentElement.insertBefore(newSpan, contentElement.firstChild);
-            } else {
-              // For left-aligned text, append to grow right
-              contentElement.appendChild(newSpan);
-            }
+            contentElement.appendChild(newSpan);
           }
           
           currentIndex++;
