@@ -194,50 +194,63 @@
 
     // Translation functionality
     function translateText(cornerElement) {
-      if (cornerElement.classList.contains('translated')) return;
+      // Prevent multiple animations on the same element
+      if (cornerElement.classList.contains('translated') || cornerElement.dataset.animating === 'true') {
+        return;
+      }
+
+      // Mark as animating to prevent concurrent animations
+      cornerElement.dataset.animating = 'true';
 
       const elvenText = cornerElement.dataset.elven;
       const englishText = cornerElement.dataset.english;
       const contentElement = cornerElement.querySelector('.text-content');
       
-      // Wrap the existing Quenya text in spans
-      const currentText = contentElement.textContent;
-      contentElement.innerHTML = currentText.split('').map(char => 
-        `<span class="text-char">${char}</span>`
-      ).join('');
+      // Clear any existing animation timeout
+      if (cornerElement.animationTimeout) {
+        clearTimeout(cornerElement.animationTimeout);
+      }
       
-      const existingChars = Array.from(contentElement.querySelectorAll('.text-char'));
+      // Start fresh - completely replace content with English text structure
+      contentElement.innerHTML = englishText.split('').map(char => {
+        const displayChar = char === ' ' ? '&nbsp;' : char;
+        return `<span class="text-char">${displayChar}</span>`;
+      }).join('');
+      
+      // Get all the new character spans
+      const allChars = Array.from(contentElement.querySelectorAll('.text-char'));
+      
+      // Initially show the Quenya text by replacing content but keep English structure
+      for (let i = 0; i < allChars.length; i++) {
+        if (i < elvenText.length) {
+          allChars[i].innerHTML = elvenText[i];
+        } else {
+          allChars[i].style.opacity = '0';
+        }
+      }
+      
+      // Now animate the replacement
       let currentIndex = 0;
-      const replacementSpeed = 60; // milliseconds between character replacements
+      const replacementSpeed = 60;
       
       function replaceNextChar() {
-        if (currentIndex < englishText.length) {
+        if (currentIndex < englishText.length && currentIndex < allChars.length) {
           const englishChar = englishText[currentIndex];
-          // Handle spaces by using non-breaking space
           const displayChar = englishChar === ' ' ? '&nbsp;' : englishChar;
           
-          if (currentIndex < existingChars.length) {
-            // Replace existing Quenya character with English character
-            const char = existingChars[currentIndex];
-            char.innerHTML = displayChar;
-          } else {
-            // English text is longer - add new character
-            const newSpan = document.createElement('span');
-            newSpan.className = 'text-char';
-            newSpan.innerHTML = displayChar;
-            contentElement.appendChild(newSpan);
-          }
+          // Replace the character content
+          allChars[currentIndex].innerHTML = displayChar;
+          allChars[currentIndex].style.opacity = '1';
           
           currentIndex++;
-          setTimeout(replaceNextChar, replacementSpeed);
-        } else {
-          // If Quenya text was longer, hide remaining characters
-          for (let i = currentIndex; i < existingChars.length; i++) {
-            existingChars[i].style.display = 'none';
-          }
           
-          // Mark as translated
+          // Store timeout reference to allow cancellation
+          cornerElement.animationTimeout = setTimeout(replaceNextChar, replacementSpeed);
+        } else {
+          // Animation complete
+          cornerElement.dataset.animating = 'false';
           cornerElement.classList.add('translated');
+          delete cornerElement.animationTimeout;
         }
       }
       
