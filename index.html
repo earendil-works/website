@@ -128,8 +128,7 @@
   }
 
   .text-char.translating {
-    color: rgba(255, 215, 0, 1);
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+    color: rgba(255, 255, 255, 1);
   }
 
   /* Import EB Garamond font */
@@ -193,13 +192,6 @@
     });
 
     // Translation functionality
-    function wrapTextInSpans(element) {
-      const text = element.textContent;
-      element.innerHTML = text.split('').map(char => 
-        `<span class="text-char">${char}</span>`
-      ).join('');
-    }
-
     function translateText(cornerElement) {
       if (cornerElement.classList.contains('translated')) return;
 
@@ -207,54 +199,43 @@
       const englishText = cornerElement.dataset.english;
       const contentElement = cornerElement.querySelector('.text-content');
       
-      // Wrap current text in spans for animation
-      wrapTextInSpans(contentElement);
+      // Clear the content and prepare for new animation
+      contentElement.innerHTML = '';
+      
+      // Create spans for each character in the English text
+      const englishChars = englishText.split('');
+      englishChars.forEach((char, index) => {
+        const span = document.createElement('span');
+        span.className = 'text-char';
+        span.textContent = char;
+        span.style.opacity = '0';
+        contentElement.appendChild(span);
+      });
+      
+      // Animate characters appearing one by one
       const chars = contentElement.querySelectorAll('.text-char');
-      
-      // Start translation animation
       let currentIndex = 0;
-      const translationSpeed = 80; // milliseconds between character changes
+      const translationSpeed = 50; // milliseconds between character appearances
       
-      function animateNextChar() {
+      function showNextChar() {
         if (currentIndex < chars.length) {
           const char = chars[currentIndex];
           char.classList.add('translating');
           
           setTimeout(() => {
-            // Change to English character or add if English text is longer
-            if (currentIndex < englishText.length) {
-              char.textContent = englishText[currentIndex];
-            } else {
-              char.style.display = 'none';
-            }
+            char.style.opacity = '1';
             char.classList.remove('translating');
             currentIndex++;
-            animateNextChar();
-          }, translationSpeed);
+            showNextChar();
+          }, 20); // Brief flash effect
         } else {
-          // If English text is longer, add remaining characters
-          if (englishText.length > elvenText.length) {
-            const remainingText = englishText.slice(elvenText.length);
-            remainingText.split('').forEach((char, index) => {
-              setTimeout(() => {
-                const newSpan = document.createElement('span');
-                newSpan.className = 'text-char translating';
-                newSpan.textContent = char;
-                contentElement.appendChild(newSpan);
-                
-                setTimeout(() => {
-                  newSpan.classList.remove('translating');
-                }, translationSpeed);
-              }, index * translationSpeed);
-            });
-          }
-          
           // Mark as translated
           cornerElement.classList.add('translated');
         }
       }
       
-      animateNextChar();
+      // Start the animation with a brief delay
+      setTimeout(showNextChar, 100);
     }
 
     // Add hover listeners to corner texts
