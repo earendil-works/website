@@ -185,8 +185,24 @@
   /* Extra small mobile screens */
   @media (max-width: 480px) {
     .corner-text {
-      font-size: 16px;
+      font-size: 17px;
       padding: 12px;
+    }
+  }
+
+  /* Short screens (landscape phones) - prevent text squashing */
+  @media (max-height: 500px) {
+    .corner-text {
+      padding: 8px 15px;
+      line-height: 1.2;
+    }
+
+    .top-left, .top-right {
+      top: 10px;
+    }
+
+    .bottom-left, .bottom-right {
+      bottom: 10px;
     }
   }
 </style>
