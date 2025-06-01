@@ -82,7 +82,7 @@
     position: fixed;
     font-family: 'EB Garamond', 'Times New Roman', serif;
     font-weight: 500;
-    font-size: 16px;
+    font-size: 17px;
     color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     z-index: 3;
@@ -208,7 +208,7 @@
       
       const existingChars = Array.from(contentElement.querySelectorAll('.text-char'));
       let currentIndex = 0;
-      const replacementSpeed = 100; // milliseconds between character replacements
+      const replacementSpeed = 60; // milliseconds between character replacements
       
       function replaceNextChar() {
         if (currentIndex < englishText.length) {
