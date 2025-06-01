@@ -59,7 +59,7 @@
     object-position: center;
     transform: translate(-50%, -50%);
     z-index: 1;
-    opacity: 0.9;
+    opacity: 0.95;
   }
 
   /* Hide broken image icon on mobile */
@@ -188,6 +188,17 @@
       font-size: 17px;
       padding: 12px;
       line-height: 1.5;
+    }
+  }
+
+  /* Mobile landscape - revert to corner layout like desktop */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .top-left, .top-right, .bottom-left, .bottom-right {
+      bottom: unset;
+      right: unset;
+      left: unset;
+      top: unset;
+      text-align: unset;
     }
   }
 
