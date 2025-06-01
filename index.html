@@ -206,45 +206,34 @@
         `<span class="text-char">${char}</span>`
       ).join('');
       
-      const chars = contentElement.querySelectorAll('.text-char');
+      const existingChars = Array.from(contentElement.querySelectorAll('.text-char'));
       let currentIndex = 0;
       const replacementSpeed = 100; // milliseconds between character replacements
       
       function replaceNextChar() {
         if (currentIndex < englishText.length) {
           const englishChar = englishText[currentIndex];
+          // Handle spaces by using non-breaking space
+          const displayChar = englishChar === ' ' ? '&nbsp;' : englishChar;
           
-          if (currentIndex < chars.length) {
+          if (currentIndex < existingChars.length) {
             // Replace existing Quenya character with English character
-            const char = chars[currentIndex];
-            char.classList.add('translating');
-            
-            setTimeout(() => {
-              char.textContent = englishChar;
-              char.classList.remove('translating');
-              currentIndex++;
-              setTimeout(replaceNextChar, replacementSpeed);
-            }, 30);
+            const char = existingChars[currentIndex];
+            char.innerHTML = displayChar;
           } else {
             // English text is longer - add new character
             const newSpan = document.createElement('span');
-            newSpan.className = 'text-char translating';
-            newSpan.textContent = englishChar;
-            newSpan.style.opacity = '0';
+            newSpan.className = 'text-char';
+            newSpan.innerHTML = displayChar;
             contentElement.appendChild(newSpan);
-            
-            setTimeout(() => {
-              newSpan.style.opacity = '1';
-              newSpan.classList.remove('translating');
-              currentIndex++;
-              setTimeout(replaceNextChar, replacementSpeed);
-            }, 30);
           }
+          
+          currentIndex++;
+          setTimeout(replaceNextChar, replacementSpeed);
         } else {
           // If Quenya text was longer, hide remaining characters
-          for (let i = currentIndex; i < chars.length; i++) {
-            const char = chars[i];
-            char.style.opacity = '0';
+          for (let i = currentIndex; i < existingChars.length; i++) {
+            existingChars[i].style.display = 'none';
           }
           
           // Mark as translated
