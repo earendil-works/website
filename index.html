@@ -134,6 +134,55 @@
 
   /* Import EB Garamond font */
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&display=swap');
+
+  /* Mobile layout */
+  @media (max-width: 768px) {
+    .corner-text {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      padding: 15px 20px;
+      font-size: 14px;
+      width: calc(100% - 40px);
+      max-width: 300px;
+    }
+
+    .top-left {
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .top-right {
+      top: 25%;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .bottom-left {
+      bottom: 25%;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .bottom-right {
+      bottom: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+  }
+
+  /* Extra small mobile screens */
+  @media (max-width: 480px) {
+    .corner-text {
+      font-size: 13px;
+      padding: 10px 15px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -211,42 +260,53 @@
         clearTimeout(cornerElement.animationTimeout);
       }
       
-      // Start fresh - completely replace content with English text structure
-      contentElement.innerHTML = englishText.split('').map(char => {
-        const displayChar = char === ' ' ? '&nbsp;' : char;
-        return `<span class="text-char">${displayChar}</span>`;
-      }).join('');
+      // Check if this is a right-aligned element
+      const isRightAligned = cornerElement.classList.contains('top-right') || 
+                            cornerElement.classList.contains('bottom-right');
       
-      // Get all the new character spans
-      const allChars = Array.from(contentElement.querySelectorAll('.text-char'));
+      // Start with Quenya text structure to maintain alignment
+      contentElement.innerHTML = elvenText.split('').map(char => 
+        `<span class="text-char">${char}</span>`
+      ).join('');
       
-      // Initially show the Quenya text by replacing content but keep English structure
-      for (let i = 0; i < allChars.length; i++) {
-        if (i < elvenText.length) {
-          allChars[i].innerHTML = elvenText[i];
-        } else {
-          allChars[i].style.opacity = '0';
-        }
-      }
-      
-      // Now animate the replacement
+      const chars = Array.from(contentElement.querySelectorAll('.text-char'));
       let currentIndex = 0;
       const replacementSpeed = 60;
       
       function replaceNextChar() {
-        if (currentIndex < englishText.length && currentIndex < allChars.length) {
+        if (currentIndex < englishText.length) {
           const englishChar = englishText[currentIndex];
           const displayChar = englishChar === ' ' ? '&nbsp;' : englishChar;
           
-          // Replace the character content
-          allChars[currentIndex].innerHTML = displayChar;
-          allChars[currentIndex].style.opacity = '1';
+          if (currentIndex < chars.length) {
+            // Replace existing Quenya character with English character
+            chars[currentIndex].innerHTML = displayChar;
+          } else {
+            // English text is longer - add new character
+            const newSpan = document.createElement('span');
+            newSpan.className = 'text-char';
+            newSpan.innerHTML = displayChar;
+            
+            if (isRightAligned) {
+              // For right-aligned text, insert at the beginning to grow left
+              contentElement.insertBefore(newSpan, contentElement.firstChild);
+            } else {
+              // For left-aligned text, append to grow right
+              contentElement.appendChild(newSpan);
+            }
+          }
           
           currentIndex++;
-          
-          // Store timeout reference to allow cancellation
           cornerElement.animationTimeout = setTimeout(replaceNextChar, replacementSpeed);
         } else {
+          // If Quenya text was longer, hide remaining characters
+          const remainingChars = Array.from(contentElement.querySelectorAll('.text-char'));
+          for (let i = englishText.length; i < remainingChars.length; i++) {
+            if (remainingChars[i]) {
+              remainingChars[i].style.display = 'none';
+            }
+          }
+          
           // Animation complete
           cornerElement.dataset.animating = 'false';
           cornerElement.classList.add('translated');
@@ -260,10 +320,27 @@
 
     // Add hover listeners to corner texts
     const cornerTexts = document.querySelectorAll('.corner-text');
+    
+    // Detect if device is mobile/touch-enabled
+    const isMobile = window.matchMedia('(max-width: 768px)').matches || 
+                     'ontouchstart' in window || 
+                     navigator.maxTouchPoints > 0;
+    
     cornerTexts.forEach(cornerText => {
-      cornerText.addEventListener('mouseenter', () => {
-        translateText(cornerText);
-      });
+      if (isMobile) {
+        // Use click/touch for mobile
+        cornerText.addEventListener('click', () => {
+          translateText(cornerText);
+        });
+        cornerText.addEventListener('touchstart', () => {
+          translateText(cornerText);
+        });
+      } else {
+        // Use hover for desktop
+        cornerText.addEventListener('mouseenter', () => {
+          translateText(cornerText);
+        });
+      }
     });
 
     // Animate corner texts with staggered timing
