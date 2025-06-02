@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="image" href="ocean-80.jpg">
+<link rel="preload" as="image" href="ocean-50.jpg">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
 <style>
   body {
@@ -42,7 +42,7 @@
     left: 50%;
     width: 100vw;
     height: 100vh;
-    background-image: url("ocean-80.jpg");
+    background-image: url("ocean-50.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -290,16 +290,16 @@
       spotlight.style.top = e.pageY + 'px';
     });
 
-    // Progressive background image loading: 80% → 90% → 100% quality
+    // Progressive background image loading: 50% → 75% → 100% quality
     function loadProgressiveBackground() {
-      // Start with 80% (already loaded via preload)
-      // After 1 second, load 90% quality
+      // Start with 50% (already loaded via preload)
+      // After 1 second, load 75% quality
       setTimeout(() => {
-        const img90 = new Image();
-        img90.onload = () => {
-          bg.style.backgroundImage = 'url("ocean-90.jpg")';
+        const img75 = new Image();
+        img75.onload = () => {
+          bg.style.backgroundImage = 'url("ocean-75.jpg")';
         };
-        img90.src = 'ocean-90.jpg';
+        img75.src = 'ocean-75.jpg';
       }, 1000);
       
       // After 3 seconds, load 100% quality
