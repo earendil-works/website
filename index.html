@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="image" href="ocean-50.jpg">
+<link rel="preload" as="image" href="ocean-35.jpg">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
 <style>
   body {
@@ -42,7 +42,7 @@
     left: 50%;
     width: 100vw;
     height: 100vh;
-    background-image: url("ocean-50.jpg");
+    background-image: url("ocean-35.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -290,25 +290,25 @@
       spotlight.style.top = e.pageY + 'px';
     });
 
-    // Progressive background image loading: 50% → 75% → 100% quality
+    // Progressive background image loading: 35% → 60% → 85% quality
     function loadProgressiveBackground() {
-      // Start with 50% (already loaded via preload)
-      // After 1 second, load 75% quality
+      // Start with 35% (already loaded via preload)
+      // After 1 second, load 60% quality
       setTimeout(() => {
-        const img75 = new Image();
-        img75.onload = () => {
-          bg.style.backgroundImage = 'url("ocean-75.jpg")';
+        const img60 = new Image();
+        img60.onload = () => {
+          bg.style.backgroundImage = 'url("ocean-60.jpg")';
         };
-        img75.src = 'ocean-75.jpg';
+        img60.src = 'ocean-60.jpg';
       }, 1000);
       
-      // After 3 seconds, load 100% quality
+      // After 3 seconds, load 85% quality
       setTimeout(() => {
-        const img100 = new Image();
-        img100.onload = () => {
-          bg.style.backgroundImage = 'url("ocean-100.jpg")';
+        const img85 = new Image();
+        img85.onload = () => {
+          bg.style.backgroundImage = 'url("ocean-85.jpg")';
         };
-        img100.src = 'ocean-100.jpg';
+        img85.src = 'ocean-85.jpg';
       }, 3000);
     }
     
