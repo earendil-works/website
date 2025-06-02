@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="image" href="waves-80.jpg">
+<link rel="preload" as="image" href="ocean-80.jpg">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
 <style>
   body {
@@ -42,7 +42,7 @@
     left: 50%;
     width: 100vw;
     height: 100vh;
-    background-image: url("waves-80.jpg");
+    background-image: url("ocean-80.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -57,7 +57,7 @@
     left: 50%;
     width: 333px;
     max-width: 65vw;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
     transform: translate(-50%, -50%);
     z-index: 1;
@@ -297,18 +297,18 @@
       setTimeout(() => {
         const img90 = new Image();
         img90.onload = () => {
-          bg.style.backgroundImage = 'url("waves-90.jpg")';
+          bg.style.backgroundImage = 'url("ocean-90.jpg")';
         };
-        img90.src = 'waves-90.jpg';
+        img90.src = 'ocean-90.jpg';
       }, 1000);
       
       // After 3 seconds, load 100% quality
       setTimeout(() => {
         const img100 = new Image();
         img100.onload = () => {
-          bg.style.backgroundImage = 'url("waves-100.jpg")';
+          bg.style.backgroundImage = 'url("ocean-100.jpg")';
         };
-        img100.src = 'waves-100.jpg';
+        img100.src = 'ocean-100.jpg';
       }, 3000);
     }
     
