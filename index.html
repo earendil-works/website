@@ -13,6 +13,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="waves-80.jpg">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
 <style>
   body {
@@ -41,12 +42,13 @@
     left: 50%;
     width: 100vw;
     height: 100vh;
-    background-image: url("waves-high-res.jpg");
+    background-image: url("waves-80.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     transform: translate(-50%, -50%);
     z-index: 1;
+    transition: background-image 0.5s ease-in-out;
   }
 
   .main-image {
@@ -287,6 +289,33 @@
       spotlight.style.left = e.pageX + 'px';
       spotlight.style.top = e.pageY + 'px';
     });
+
+    // Progressive background image loading: 80% → 90% → 100% quality
+    function loadProgressiveBackground() {
+      // Start with 80% (already loaded via preload)
+      // After 1 second, load 90% quality
+      setTimeout(() => {
+        const img90 = new Image();
+        img90.onload = () => {
+          bg.style.backgroundImage = 'url("waves-90.jpg")';
+        };
+        img90.src = 'waves-90.jpg';
+      }, 1000);
+      
+      // After 3 seconds, load 100% quality
+      setTimeout(() => {
+        const img100 = new Image();
+        img100.onload = () => {
+          bg.style.backgroundImage = 'url("waves-100.jpg")';
+        };
+        img100.src = 'waves-100.jpg';
+      }, 3000);
+    }
+    
+    // Start progressive loading after initial fade-in
+    setTimeout(() => {
+      loadProgressiveBackground();
+    }, 1000);
 
     // Translation functionality
     function translateText(cornerElement) {
