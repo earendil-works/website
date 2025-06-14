@@ -372,6 +372,14 @@
       const sourceText = translateToEnglish ? elvenText : englishText;
       const targetText = translateToEnglish ? englishText : elvenText;
       
+      // Check if this is English → Quenya on right-aligned text
+      const isEnglishToQuenya = !translateToEnglish;
+      const isRightAligned = cornerElement.classList.contains('top-right') || 
+                            cornerElement.classList.contains('bottom-right') ||
+                            isMobile; // All mobile texts are right-aligned
+      
+      const needsRightShrinking = isEnglishToQuenya && isRightAligned && sourceText.length > targetText.length;
+      
       // Clear any existing animation timeout
       if (cornerElement.animationTimeout) {
         clearTimeout(cornerElement.animationTimeout);
@@ -386,6 +394,33 @@
       let currentIndex = 0;
       const replacementSpeed = 45;
       
+      if (needsRightShrinking) {
+        // Option 1: Right-to-Left Shrinking Animation
+        const excessChars = sourceText.length - targetText.length;
+        let shrinkIndex = sourceText.length - 1;
+        
+        // Phase 1: Shrink from right to match target length
+        function shrinkFromRight() {
+          if (shrinkIndex >= targetText.length) {
+            // Hide character from the right
+            if (chars[shrinkIndex]) {
+              chars[shrinkIndex].style.display = 'none';
+            }
+            shrinkIndex--;
+            cornerElement.animationTimeout = setTimeout(shrinkFromRight, replacementSpeed);
+          } else {
+            // Phase 2: Start normal character replacement
+            replaceNextChar();
+          }
+        }
+        
+        // Start shrinking phase
+        shrinkFromRight();
+      } else {
+        // Normal animation for other cases
+        replaceNextChar();
+      }
+      
       function replaceNextChar() {
         if (currentIndex < targetText.length) {
           const targetChar = targetText[currentIndex];
@@ -394,6 +429,7 @@
           if (currentIndex < chars.length) {
             // Replace existing character with target character
             chars[currentIndex].innerHTML = displayChar;
+            chars[currentIndex].style.display = 'inline-block'; // Ensure visibility
           } else {
             // Target text is longer - add new character
             const newSpan = document.createElement('span');
@@ -405,11 +441,13 @@
           currentIndex++;
           cornerElement.animationTimeout = setTimeout(replaceNextChar, replacementSpeed);
         } else {
-          // If source text was longer, hide remaining characters
-          const remainingChars = Array.from(contentElement.querySelectorAll('.text-char'));
-          for (let i = targetText.length; i < remainingChars.length; i++) {
-            if (remainingChars[i]) {
-              remainingChars[i].style.display = 'none';
+          // If source text was longer, hide remaining characters (for non-shrinking cases)
+          if (!needsRightShrinking) {
+            const remainingChars = Array.from(contentElement.querySelectorAll('.text-char'));
+            for (let i = targetText.length; i < remainingChars.length; i++) {
+              if (remainingChars[i]) {
+                remainingChars[i].style.display = 'none';
+              }
             }
           }
           
@@ -423,9 +461,6 @@
           delete cornerElement.animationTimeout;
         }
       }
-      
-      // Start the replacement animation
-      replaceNextChar();
     }
 
     // Mobile sequential animation function
