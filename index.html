@@ -49,7 +49,23 @@
     background-repeat: no-repeat;
     transform: translate(-50%, -50%);
     z-index: 1;
-    transition: opacity 2s, background-image 0.8s ease-in-out;
+    transition: opacity 2s;
+  }
+
+  .fullscreen-bg-hq {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100vw;
+    height: 100vh;
+    background-image: url("ocean-70.jpg");
+    background-size: cover;
+    background-position: center 15%;
+    background-repeat: no-repeat;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 1.2s ease-in-out;
   }
 
   .main-image {
@@ -243,6 +259,7 @@
 </head>
 <body>
 <div class="fullscreen-bg"></div>
+<div class="fullscreen-bg-hq"></div>
 <img src="logo.svg" class="main-image" alt="" aria-hidden="true">
 <div class="spotlight"></div>
 
@@ -274,6 +291,7 @@
 <script>
   (function () {
     const bg = document.querySelector('.fullscreen-bg');
+    const bgHQ = document.querySelector('.fullscreen-bg-hq');
     const img = document.querySelector('.main-image');
     const spotlight = document.querySelector('.spotlight');
 
@@ -297,14 +315,15 @@
       spotlight.style.top = e.pageY + 'px';
     });
 
-    // Progressive background image loading: 10% → 70% quality (2-stage)
+    // Progressive background image loading: Fade in high-quality layer
     function loadProgressiveBackground() {
-      // Start with ocean-10.jpg (already loaded via preload and set in CSS)
-      // After 4 seconds, load final 70% quality with smooth transition
+      // ocean-10.jpg is already loaded and visible in base layer
+      // After 4 seconds, fade in the high-quality layer on top
       setTimeout(() => {
         const img70 = new Image();
         img70.onload = () => {
-          bg.style.backgroundImage = 'url("ocean-70.jpg")';
+          // Fade in the high-quality background layer
+          bgHQ.style.opacity = '1';
         };
         img70.src = 'ocean-70.jpg';
       }, 4000);
