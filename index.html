@@ -49,7 +49,7 @@
     background-repeat: no-repeat;
     transform: translate(-50%, -50%);
     z-index: 1;
-    transition: background-image 0.5s ease-in-out;
+    transition: opacity 2s, background-image 0.8s ease-in-out;
   }
 
   .main-image {
@@ -297,26 +297,17 @@
       spotlight.style.top = e.pageY + 'px';
     });
 
-    // Progressive background image loading: 10% → 40% → 70% quality
+    // Progressive background image loading: 10% → 70% quality (2-stage)
     function loadProgressiveBackground() {
-      // Start with 10% (already loaded via preload)
-      // After 1 second, load 40% quality
-      setTimeout(() => {
-        const img40 = new Image();
-        img40.onload = () => {
-          bg.style.backgroundImage = 'url("ocean-40.jpg")';
-        };
-        img40.src = 'ocean-40.jpg';
-      }, 1000);
-      
-      // After 3 seconds, load 70% quality
+      // Start with ocean-10.jpg (already loaded via preload and set in CSS)
+      // After 4 seconds, load final 70% quality with smooth transition
       setTimeout(() => {
         const img70 = new Image();
         img70.onload = () => {
           bg.style.backgroundImage = 'url("ocean-70.jpg")';
         };
         img70.src = 'ocean-70.jpg';
-      }, 3000);
+      }, 4000);
     }
     
     // Start progressive loading after initial fade-in
