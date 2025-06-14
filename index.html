@@ -338,9 +338,13 @@
       setTimeout(() => {
         const img70 = new Image();
         img70.onload = () => {
-          // Crossfade: fade out low-quality, fade in high-quality
-          bg.style.opacity = '0';        // ocean-10.jpg fades out
-          bgHQ.style.opacity = '1';      // ocean-70.jpg fades in
+          // Sequential fade: fade in high-quality first, then fade out low-quality
+          bgHQ.style.opacity = '1';      // ocean-70.jpg fades in first
+          
+          // Delay fading out the low-quality image
+          setTimeout(() => {
+            bg.style.opacity = '0';      // ocean-10.jpg fades out after delay
+          }, 400);
         };
         img70.src = 'ocean-70.jpg';
       }, 3000);
