@@ -322,11 +322,12 @@
       setTimeout(() => {
         const img70 = new Image();
         img70.onload = () => {
-          // Fade in the high-quality background layer
-          bgHQ.style.opacity = '1';
+          // Crossfade: fade out low-quality, fade in high-quality
+          bg.style.opacity = '0';        // ocean-10.jpg fades out
+          bgHQ.style.opacity = '1';      // ocean-70.jpg fades in
         };
         img70.src = 'ocean-70.jpg';
-      }, 4000);
+      }, 3000);
     }
     
     // Start progressive loading after initial fade-in
