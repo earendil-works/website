@@ -255,6 +255,22 @@
     }
   }
 
+  /* Mobile unified hover area */
+  .mobile-hover-area {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 50vw;
+    height: 15vh;
+    z-index: 4;
+    background: transparent;
+    pointer-events: auto;
+  }
+
+  .mobile-hover-area:active {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
 </style>
 </head>
 <body>
@@ -335,10 +351,10 @@
       loadProgressiveBackground();
     }, 1000);
 
-    // Translation functionality
-    function translateText(cornerElement) {
+    // Translation functionality with toggle-back support
+    function translateText(cornerElement, forceDirection = null) {
       // Prevent multiple animations on the same element
-      if (cornerElement.classList.contains('translated') || cornerElement.dataset.animating === 'true') {
+      if (cornerElement.dataset.animating === 'true') {
         return;
       }
 
@@ -348,14 +364,21 @@
       const elvenText = cornerElement.dataset.elven;
       const englishText = cornerElement.dataset.english;
       const contentElement = cornerElement.querySelector('.text-content');
+      const isCurrentlyTranslated = cornerElement.classList.contains('translated');
+      
+      // Determine direction: if forceDirection is set, use it; otherwise toggle
+      const translateToEnglish = forceDirection !== null ? forceDirection : !isCurrentlyTranslated;
+      
+      const sourceText = translateToEnglish ? elvenText : englishText;
+      const targetText = translateToEnglish ? englishText : elvenText;
       
       // Clear any existing animation timeout
       if (cornerElement.animationTimeout) {
         clearTimeout(cornerElement.animationTimeout);
       }
       
-      // Start with Quenya text structure to maintain alignment
-      contentElement.innerHTML = elvenText.split('').map(char => 
+      // Start with source text structure to maintain alignment
+      contentElement.innerHTML = sourceText.split('').map(char => 
         `<span class="text-char">${char}</span>`
       ).join('');
       
@@ -364,15 +387,15 @@
       const replacementSpeed = 45;
       
       function replaceNextChar() {
-        if (currentIndex < englishText.length) {
-          const englishChar = englishText[currentIndex];
-          const displayChar = englishChar === ' ' ? '&nbsp;' : englishChar;
+        if (currentIndex < targetText.length) {
+          const targetChar = targetText[currentIndex];
+          const displayChar = targetChar === ' ' ? '&nbsp;' : targetChar;
           
           if (currentIndex < chars.length) {
-            // Replace existing Quenya character with English character
+            // Replace existing character with target character
             chars[currentIndex].innerHTML = displayChar;
           } else {
-            // English text is longer - add new character (CSS alignment handles positioning)
+            // Target text is longer - add new character
             const newSpan = document.createElement('span');
             newSpan.className = 'text-char';
             newSpan.innerHTML = displayChar;
@@ -382,23 +405,71 @@
           currentIndex++;
           cornerElement.animationTimeout = setTimeout(replaceNextChar, replacementSpeed);
         } else {
-          // If Quenya text was longer, hide remaining characters
+          // If source text was longer, hide remaining characters
           const remainingChars = Array.from(contentElement.querySelectorAll('.text-char'));
-          for (let i = englishText.length; i < remainingChars.length; i++) {
+          for (let i = targetText.length; i < remainingChars.length; i++) {
             if (remainingChars[i]) {
               remainingChars[i].style.display = 'none';
             }
           }
           
-          // Animation complete
+          // Animation complete - update state
           cornerElement.dataset.animating = 'false';
-          cornerElement.classList.add('translated');
+          if (translateToEnglish) {
+            cornerElement.classList.add('translated');
+          } else {
+            cornerElement.classList.remove('translated');
+          }
           delete cornerElement.animationTimeout;
         }
       }
       
       // Start the replacement animation
       replaceNextChar();
+    }
+
+    // Mobile sequential animation function
+    function triggerMobileSequentialAnimation() {
+      const cornerTexts = document.querySelectorAll('.corner-text');
+      const textsArray = Array.from(cornerTexts);
+      
+      // Check current state - if any text is in English, translate all to Quenya
+      // If all are in Quenya, translate all to English
+      const anyTranslated = textsArray.some(text => text.classList.contains('translated'));
+      const targetDirection = !anyTranslated; // true = to English, false = to Quenya
+      
+      // Animation order: top-left, top-right, bottom-left, bottom-right
+      const animationOrder = [
+        document.getElementById('text-tl'),
+        document.getElementById('text-tr'), 
+        document.getElementById('text-bl'),
+        document.getElementById('text-br')
+      ];
+      
+      let currentIndex = 0;
+      
+      function animateNext() {
+        if (currentIndex < animationOrder.length) {
+          const currentElement = animationOrder[currentIndex];
+          
+          // Start translation
+          translateText(currentElement, targetDirection);
+          
+          // Wait for animation to complete, then start next
+          const checkComplete = () => {
+            if (currentElement.dataset.animating === 'false') {
+              currentIndex++;
+              setTimeout(animateNext, 50); // Small delay between animations
+            } else {
+              setTimeout(checkComplete, 50);
+            }
+          };
+          
+          setTimeout(checkComplete, 100); // Give animation time to start
+        }
+      }
+      
+      animateNext();
     }
 
     // Add hover listeners to corner texts
@@ -409,22 +480,28 @@
                      'ontouchstart' in window || 
                      navigator.maxTouchPoints > 0;
     
-    cornerTexts.forEach(cornerText => {
-      if (isMobile) {
-        // Use click/touch for mobile
-        cornerText.addEventListener('click', () => {
-          translateText(cornerText);
-        });
-        cornerText.addEventListener('touchstart', () => {
-          translateText(cornerText);
-        });
-      } else {
-        // Use hover for desktop
+    if (isMobile) {
+      // Mobile: Create unified hover area for sequential animation
+      const mobileHoverArea = document.createElement('div');
+      mobileHoverArea.className = 'mobile-hover-area';
+      document.body.appendChild(mobileHoverArea);
+      
+      // Add touch/click listeners to unified area
+      mobileHoverArea.addEventListener('click', triggerMobileSequentialAnimation);
+      mobileHoverArea.addEventListener('touchstart', triggerMobileSequentialAnimation);
+      
+      // Remove individual corner text interactions on mobile
+      cornerTexts.forEach(cornerText => {
+        cornerText.style.pointerEvents = 'none';
+      });
+    } else {
+      // Desktop: Individual hover with toggle-back functionality
+      cornerTexts.forEach(cornerText => {
         cornerText.addEventListener('mouseenter', () => {
-          translateText(cornerText);
+          translateText(cornerText); // No forceDirection = toggle behavior
         });
-      }
-    });
+      });
+    }
 
     // Animate corner texts with staggered timing
     cornerTexts.forEach((cornerText, index) => {
