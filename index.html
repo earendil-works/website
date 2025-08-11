@@ -72,7 +72,7 @@
     position: fixed;
     top: 50%;
     left: 50%;
-    width: 333px;
+    width: 300px;
     max-width: 45vw;
     object-fit: contain;
     object-position: center;
@@ -97,8 +97,8 @@
 
   .spotlight {
     position: fixed;
-    width: 700px;
-    height: 700px;
+    width: 500px;
+    height: 500px;
     pointer-events: none;
     background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 70%);
     mix-blend-mode: normal;
@@ -163,6 +163,11 @@
 
   /* Mobile layout */
   @media (max-width: 768px) {
+    .spotlight {
+      width: 200px;
+      height: 200px;
+    }
+    
     .corner-text {
       font-size: 18px;
       font-family: 'EB Garamond', 'Times New Roman', serif;
@@ -211,6 +216,11 @@
   }
 
   @media (min-width: 1025px) {
+    .spotlight {
+      width: 700px;
+      height: 700px;
+    }
+    
     .corner-text {
       font-size: 20px;
     }
