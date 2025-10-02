@@ -1,8 +1,26 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eärendil</title>
+<title>EARENDIL</title>
+<link rel="icon" type="image/svg+xml" href="favicon/square.svg">
+<link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon/android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="ocean-10.jpg">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  html {
+    padding: 0;
+    margin: 0;
+  }
+
   body {
     display: flex;
     justify-content: center;
@@ -23,10 +41,45 @@
     z-index: -1;
   }
 
-  img {
-    width: 380px;
-    max-width: 90vw;
-    position: relative;
+  .fullscreen-bg {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100vw;
+    height: 100vh;
+    background-image: url("ocean-10.jpg");
+    background-size: cover;
+    background-position: center 15%;
+    background-repeat: no-repeat;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    transition: background-image 0.5s ease-in-out;
+  }
+
+  .main-image {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 333px;
+    max-width: 45vw;
+    object-fit: contain;
+    object-position: center;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    opacity: 1;
+  }
+
+  .main-image {
+    font-size: 0;
+    color: transparent;
+  }
+  
+  .main-image::before {
+    content: none;
+  }
+  
+  .main-image::after {
+    content: none;
   }
 
   .spotlight {
@@ -37,158 +90,310 @@
     background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 70%);
     mix-blend-mode: normal;
     transform: translate(-50%, -50%);
+    z-index: 2;
   }
-</style>
-<canvas id="noise"></canvas>
-<img src="seafarer-coin.svg" alt="Eärendil">
-<div class="spotlight"></div>
-<script>
-  (function () {
-    const img = document.querySelector('img');
-    const spotlight = document.querySelector('.spotlight');
-    const canvas = document.getElementById('noise');
 
-    function setupGl(gl) {
-      if (!gl) {
-        console.error("WebGL is not supported.");
-        return;
-      }
+  /* Corner text styles */
+  .corner-text {
+    position: fixed;
+    font-family: 'EB Garamond', 'Times New Roman', serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    z-index: 3;
+    transition: color 0.3s ease;
+    user-select: none;
+    padding: 30px;
+    opacity: 0;
+  }
 
-      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-      gl.shaderSource(vertexShader, `
-      attribute vec2 position;
-      void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
-      }
-    `);
-      gl.compileShader(vertexShader);
+  .corner-text:hover {
+    color: rgba(255, 255, 255, 1);
+  }
 
-      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-      gl.shaderSource(fragmentShader, `
-      precision mediump float;
-      uniform float time;
-      uniform vec2 resolution;
+  .corner-text.translated {
+    cursor: default;
+    color: rgba(255, 255, 255, 0.9);
+  }
 
-      vec3 mod289(vec3 x) {
-        return x - floor(x * (1.0 / 289.0)) * 289.0;
-      }
+  .top-left {
+    top: 0;
+    left: 0;
+  }
 
-      vec2 mod289(vec2 x) {
-        return x - floor(x * (1.0 / 289.0)) * 289.0;
-      }
+  .top-right {
+    top: 0;
+    right: 0;
+    text-align: right;
+  }
 
-      vec3 permute(vec3 x) {
-        return mod289(((x * 34.0) + 1.0) * x);
-      }
+  .bottom-left {
+    bottom: 0;
+    left: 0;
+  }
 
-      float snoise(vec2 v) {
-        const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-        vec2 i = floor(v + dot(v, C.yy));
-        vec2 x0 = v - i + dot(i, C.xx);
-        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-        vec4 x12 = x0.xyxy + C.xxzz;
-        x12.xy -= i1;
-        i = mod289(i);
-        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0 ));
-        vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
-        m = m * m;
-        m = m * m;
-        vec3 x = 2.0 * fract(p * C.www) - 1.0;
-        vec3 h = abs(x) - 0.5;
-        vec3 ox = floor(x + 0.5);
-        vec3 a0 = x - ox;
-        m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
-        vec3 g;
-        g.x  = a0.x  * x0.x  + h.x  * x0.y;
-        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-        return 130.0 * dot(m, g);
-      }
+  .bottom-right {
+    bottom: 0;
+    right: 0;
+    text-align: right;
+  }
 
-      void main() {
-        float speed = 0.3;
-        float waveComplexity = 12.0;
-        float waveAmplitude = 0.06;
-        float noiseFrequency = 8.0;
-        float noiseAmplitude = 0.2;
-        float height = 0.0;
-        float freq = 0.4;
-        float amp = waveAmplitude;
-        vec3 deepColor = vec3(0.88);
-        vec3 shallowColor = vec3(0.97);
+  .text-char {
+    display: inline-block;
+    transition: all 0.1s ease;
+  }
 
-        vec2 uv = gl_FragCoord.xy / resolution.xy;
-        vec2 p = uv * waveComplexity;
+  .text-char.translating {
+    color: rgba(255, 255, 255, 1);
+  }
 
-        for (int i = 0; i < 3; i++) {
-          float angle = time * speed * freq * 0.4 + float(i) * 1.047;
-          float wave = sin(p.x * freq * cos(angle) + p.y * freq * sin(angle) + time * speed * freq);
-          wave += cos(p.y * freq * 0.8 + time * speed * freq * 0.5);
-          height += wave * amp;
-          freq *= 1.4;
-          amp *= 0.7;
-        }
-
-        vec2 noiseCoord = uv * noiseFrequency;
-        float noise = (snoise(noiseCoord + time * speed * 0.3) - 0.5) * noiseAmplitude;
-        noise += (snoise(noiseCoord * 2.0 - time * speed * 0.2) - 0.5) * noiseAmplitude * 0.5;
-        height += noise;
-
-        float colorMix = smoothstep(-waveAmplitude * 4.0, waveAmplitude * 4.0, height);
-        vec3 color = mix(deepColor, shallowColor, colorMix);
-        gl_FragColor = vec4(color, 1.0);
-      }
-    `);
-      gl.compileShader(fragmentShader);
-
-      const program = gl.createProgram();
-      gl.attachShader(program, vertexShader);
-      gl.attachShader(program, fragmentShader);
-      gl.linkProgram(program);
-      gl.useProgram(program);
-
-      const timeLocation = gl.getUniformLocation(program, 'time');
-      const resolutionLocation = gl.getUniformLocation(program, 'resolution');
-
-      const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
-      const buffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-      const position = gl.getAttribLocation(program, 'position');
-      gl.enableVertexAttribArray(position);
-      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-
-      function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-      }
-      window.addEventListener('resize', resize);
-      resize();
-
-      function animate(time) {
-        gl.uniform1f(timeLocation, time * 0.002);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        requestAnimationFrame(animate);
-      }
-      requestAnimationFrame(animate);
+  /* Mobile layout */
+  @media (max-width: 768px) {
+    .corner-text {
+      font-size: 18px;
+      font-family: 'EB Garamond', 'Times New Roman', serif;
+      font-weight: 500;
+      padding: 5px 10px;
     }
 
-    setupGl(canvas.getContext('webgl2'));
+    .top-left {
+      bottom: 10%;
+      right: 0;
+      left: auto;
+      top: auto;
+      text-align: right;
+    }
 
-    for (let el of [img, canvas]) {
+    .top-right {
+      bottom: 7%;
+      right: 0;
+      left: auto;
+      top: auto;
+      text-align: right;
+    }
+
+    .bottom-left {
+      bottom: 4%;
+      right: 0;
+      left: auto;
+      text-align: right;
+    }
+
+    .bottom-right {
+      bottom: 1%;
+      right: 0;
+      left: auto;
+      text-align: right;
+    }
+  }
+
+  /* Extra small mobile screens */
+  @media (max-width: 480px) {
+    .corner-text {
+      font-size: 17px;
+      padding: 12px;
+      line-height: 1.5;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    .corner-text {
+      font-size: 24px;
+    }
+  }
+
+  /* Mobile landscape - use corner layout */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .top-left {
+      top: 0;
+      left: 0;
+      bottom: auto;
+      right: auto;
+      text-align: left;
+    }
+
+    .top-right {
+      top: 0;
+      right: 0;
+      bottom: auto;
+      left: auto;
+      text-align: right;
+    }
+
+    .bottom-left {
+      bottom: 0;
+      left: 0;
+      top: auto;
+      right: auto;
+      text-align: left;
+    }
+
+    .bottom-right {
+      bottom: 0;
+      right: 0;
+      top: auto;
+      left: auto;
+      text-align: right;
+    }
+  }
+
+</style>
+</head>
+<body>
+<div class="fullscreen-bg"></div>
+<img src="logo.svg" class="main-image" alt="" aria-hidden="true">
+<div class="spotlight"></div>
+
+<!-- Corner texts -->
+<div class="corner-text top-left" id="text-tl" 
+     data-elven="Antorya i fairë Fírimion" 
+     data-english="Strengthen the agency of humanity">
+  <span class="text-content">Antorya i fairë Fírimion</span>
+</div>
+
+<div class="corner-text top-right" id="text-tr" 
+     data-elven="Finya osanwë ar látanë axani" 
+     data-english="Craft software and open protocols">
+  <span class="text-content">Finya osanwë ar látanë axani</span>
+</div>
+
+<div class="corner-text bottom-left" id="text-bl" 
+     data-elven="Yantā yáwë ar laista" 
+     data-english="Bridge division and ignorance">
+  <span class="text-content">Yantā yáwë ar laista</span>
+</div>
+
+<div class="corner-text bottom-right" id="text-br" 
+     data-elven="Alta alassë ar handë oira" 
+     data-english="Cultivate lasting joy and understanding">
+  <span class="text-content">Alta alassë ar handë oira</span>
+</div>
+
+<script>
+  (function () {
+    const bg = document.querySelector('.fullscreen-bg');
+    const img = document.querySelector('.main-image');
+    const spotlight = document.querySelector('.spotlight');
+
+    bg.style.opacity = '0';
+    setTimeout(() => {
+      bg.style.transition = 'opacity 2s';
+      bg.style.opacity = '1.0';
+    }, 250);
+
+    [img, spotlight].forEach(el => {
       el.style.opacity = '0';
       setTimeout(() => {
         el.style.transition = 'opacity 3s';
         el.style.opacity = '0.9';
-      }, 250);
-    }
+      }, 600);
+    });
 
     document.addEventListener('mousemove', (e) => {
       const rect = img.getBoundingClientRect();
       spotlight.style.left = e.pageX + 'px';
       spotlight.style.top = e.pageY + 'px';
     });
+    // Translation functionality
+    function translateText(cornerElement) {
+      // Prevent multiple animations on the same element
+      if (cornerElement.classList.contains('translated') || cornerElement.dataset.animating === 'true') {
+        return;
+      }
+
+      // Mark as animating to prevent concurrent animations
+      cornerElement.dataset.animating = 'true';
+
+      const elvenText = cornerElement.dataset.elven;
+      const englishText = cornerElement.dataset.english;
+      const contentElement = cornerElement.querySelector('.text-content');
+      
+      // Clear any existing animation timeout
+      if (cornerElement.animationTimeout) {
+        clearTimeout(cornerElement.animationTimeout);
+      }
+      
+      // Start with Quenya text structure to maintain alignment
+      contentElement.innerHTML = elvenText.split('').map(char => 
+        `<span class="text-char">${char}</span>`
+      ).join('');
+      
+      const chars = Array.from(contentElement.querySelectorAll('.text-char'));
+      let currentIndex = 0;
+      const replacementSpeed = 45;
+      
+      function replaceNextChar() {
+        if (currentIndex < englishText.length) {
+          const englishChar = englishText[currentIndex];
+          const displayChar = englishChar === ' ' ? '&nbsp;' : englishChar;
+          
+          if (currentIndex < chars.length) {
+            // Replace existing Quenya character with English character
+            chars[currentIndex].innerHTML = displayChar;
+          } else {
+            // English text is longer - add new character (CSS alignment handles positioning)
+            const newSpan = document.createElement('span');
+            newSpan.className = 'text-char';
+            newSpan.innerHTML = displayChar;
+            contentElement.appendChild(newSpan);
+          }
+          
+          currentIndex++;
+          cornerElement.animationTimeout = setTimeout(replaceNextChar, replacementSpeed);
+        } else {
+          // If Quenya text was longer, hide remaining characters
+          const remainingChars = Array.from(contentElement.querySelectorAll('.text-char'));
+          for (let i = englishText.length; i < remainingChars.length; i++) {
+            if (remainingChars[i]) {
+              remainingChars[i].style.display = 'none';
+            }
+          }
+          
+          // Animation complete
+          cornerElement.dataset.animating = 'false';
+          cornerElement.classList.add('translated');
+          delete cornerElement.animationTimeout;
+        }
+      }
+      
+      // Start the replacement animation
+      replaceNextChar();
+    }
+
+    // Add hover listeners to corner texts
+    const cornerTexts = document.querySelectorAll('.corner-text');
+    
+    // Detect if device is mobile/touch-enabled
+    const isMobile = window.matchMedia('(max-width: 768px)').matches || 
+                     'ontouchstart' in window || 
+                     navigator.maxTouchPoints > 0;
+    
+    cornerTexts.forEach(cornerText => {
+      if (isMobile) {
+        // Use click/touch for mobile
+        cornerText.addEventListener('click', () => {
+          translateText(cornerText);
+        });
+        cornerText.addEventListener('touchstart', () => {
+          translateText(cornerText);
+        });
+      } else {
+        // Use hover for desktop
+        cornerText.addEventListener('mouseenter', () => {
+          translateText(cornerText);
+        });
+      }
+    });
+
+    // Animate corner texts with staggered timing
+    cornerTexts.forEach((cornerText, index) => {
+      setTimeout(() => {
+        cornerText.style.transition = 'opacity 2.5s ease';
+        cornerText.style.opacity = '1';
+      }, 600); // Start at same time as logo and spotlight
+    });
   })();
 </script>
+</body>
+</html>
