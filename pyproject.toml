@@ -1,0 +1,9 @@
+[project]
+name = "earendil-website"
+version = "0.1.0"
+description = "Static site generator for earendil.io"
+requires-python = ">=3.11"
+dependencies = [
+    "jinja2>=3.1.0",
+    "markdown>=3.5.0",
+]

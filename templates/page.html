@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }} - EARENDIL{% endblock %}
+
+{% block styles %}
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  color: #333;
+}
+
+.header {
+  margin-bottom: 40px;
+}
+
+.header h1 {
+  font-size: 48px;
+  font-weight: 500;
+  margin: 0 0 20px 0;
+}
+
+.header a {
+  color: #666;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.header a:hover {
+  color: #333;
+}
+
+.content {
+  line-height: 1.8;
+  font-size: 20px;
+}
+
+.content h2 {
+  font-size: 36px;
+  font-weight: 500;
+  margin: 40px 0 20px 0;
+}
+
+.content h3 {
+  font-size: 28px;
+  font-weight: 500;
+  margin: 30px 0 15px 0;
+}
+
+.content p {
+  margin: 20px 0;
+}
+
+.content a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.content a:hover {
+  text-decoration: underline;
+}
+
+.content ul, .content ol {
+  margin: 20px 0;
+  padding-left: 40px;
+}
+
+.content li {
+  margin: 10px 0;
+}
+
+.content code {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+.content pre {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+.content pre code {
+  background: none;
+  padding: 0;
+}
+{% endblock %}
+
+{% block body %}
+<div class="container">
+  <div class="header">
+    <a href="/">← Back to home</a>
+  </div>
+  <div class="content">
+    {{ content|safe }}
+  </div>
+</div>
+{% endblock %}
