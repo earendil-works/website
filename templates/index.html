@@ -18,15 +18,39 @@ canvas {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 100vw;
-  height: 100vh;
+  width: calc(100vw + 32px);
+  height: calc(100vh + 32px);
   background-image: url("/ocean-10.jpg");
   background-size: cover;
-  background-position: center 15%;
+  /* Allow small animated offsets via CSS variables */
+  background-position: calc(50% + var(--bg-offset-x, 0px)) calc(15% + var(--bg-offset-y, 0px));
   background-repeat: no-repeat;
   transform: translate(-50%, -50%);
   z-index: 1;
   transition: background-image 0.5s ease-in-out;
+  will-change: background-position;
+}
+
+.dotted-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(127, 127, 127, 0.17),
+      rgba(127, 127, 127, 0.17) 3px,
+      rgba(0, 0, 0, 0) 3px,
+      rgba(0, 0, 0, 0) 6px
+    ),
+    radial-gradient(rgba(255, 255, 255, 0.28) 1px, rgba(0, 0, 0, 0) 1px);
+  background-size: 100% 3px, 3px 3px;
+  background-position: 0 0, 0 0;
+  mix-blend-mode: overlay;
 }
 
 .main-image {
@@ -242,6 +266,11 @@ canvas {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .fullscreen-bg { will-change: auto; }
+  .dotted-overlay { animation: none; opacity: 0.06; }
+}
+
 @media (min-width: 1025px) {
   .corner-text {
     font-size: 24px;
@@ -296,6 +325,7 @@ canvas {
 
 {% block body %}
 <div class="fullscreen-bg"></div>
+<div class="dotted-overlay" aria-hidden="true"></div>
 <img src="/logo.svg" class="main-image" alt="" aria-hidden="true">
 <div class="nav-links">
   <a href="/memo/">memo</a>
@@ -554,6 +584,50 @@ canvas {
         }
       });
     });
+
+    // Background "wiggle" motion: smooth random walk within ~5px bounds
+    (function setupBackgroundWiggle() {
+      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!bg || reduceMotion) return;
+
+      const MAX = 10; // max px offset in any direction
+      const CHANGE_INTERVAL_MS = 700; // pick a new target roughly every ~1s
+      const SMOOTHING = 0.01; // how quickly we ease toward target per frame
+
+      let currentX = 0, currentY = 0;
+      let targetX = 0, targetY = 0;
+      let lastChange = performance.now();
+
+      function pickNewTarget() {
+        // Pick within a circle of radius MAX for more natural bounds
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * MAX;
+        targetX = Math.cos(angle) * radius;
+        targetY = Math.sin(angle) * radius;
+      }
+
+      function animate(now) {
+        if (now - lastChange > CHANGE_INTERVAL_MS) {
+          pickNewTarget();
+          lastChange = now;
+        }
+        // Ease towards the target
+        currentX += (targetX - currentX) * SMOOTHING;
+        currentY += (targetY - currentY) * SMOOTHING;
+
+        // Add a tiny high-frequency jitter for a VHS feel
+        const jitterX = (Math.random() - 0.5) * 0.3;
+        const jitterY = (Math.random() - 0.5) * 0.3;
+
+        bg.style.setProperty('--bg-offset-x', (currentX + jitterX).toFixed(2) + 'px');
+        bg.style.setProperty('--bg-offset-y', (currentY + jitterY).toFixed(2) + 'px');
+
+        requestAnimationFrame(animate);
+      }
+
+      pickNewTarget();
+      requestAnimationFrame(animate);
+    })();
   })();
 </script>
 {% endblock %}
