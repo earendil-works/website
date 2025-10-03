@@ -133,14 +133,34 @@ canvas {
 .text-container {
   position: relative;
   display: inline-block;
+  vertical-align: bottom;
+  filter: url(#threshold) blur(0.6px);
+  transform-origin: top left;
+  transform: scale(0.5);
+}
+
+.top-right .text-container {
+  transform-origin: top right;
+}
+
+/* For bottom corners, anchor the scaled box to the bottom
+   so the visible text sits on the container's bottom edge. */
+.bottom-left .text-container {
+  transform-origin: bottom left;
+}
+
+.bottom-right .text-container {
+  transform-origin: bottom right;
 }
 
 .text-version {
   position: absolute;
   top: 0;
   left: 0;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 1);
   white-space: nowrap;
+  font-size: 200%;
+  transition: filter 1.2s ease-in-out, opacity 1.2s ease-in-out;
 }
 
 .top-right .text-version,
@@ -151,14 +171,6 @@ canvas {
 
 .corner-text:hover .text-version {
   color: rgba(255, 255, 255, 1);
-}
-
-.text-version.hidden {
-  display: none;
-}
-
-.text-version.visible {
-  display: block;
 }
 
 /* Mobile layout */
@@ -303,6 +315,20 @@ canvas {
 </div>
 <div class="spotlight"></div>
 
+<!-- SVG filter for text morphing -->
+<svg id="filters" style="position: absolute; width: 0; height: 0;">
+  <defs>
+    <filter id="threshold">
+      <feColorMatrix in="SourceGraphic"
+        type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 255 -120" />
+    </filter>
+  </defs>
+</svg>
+
 <!-- Corner texts -->
 <div class="corner-texts-wrapper">
   <div class="corner-text top-left" id="text-tl"
@@ -395,8 +421,66 @@ canvas {
 
     // Track default language for each corner text (starts as elven)
     const defaultLanguages = new Map();
+    const morphStates = new Map();
+    const MORPH_DURATION = 0.85;
 
-    // Set container dimensions to accommodate both text versions
+    // Utility: apply blur+opacity for a given fraction (0..1)
+    function setMorph(cornerElement, fraction) {
+      const elvenSpan = cornerElement.querySelector('.text-version.elven');
+      const englishSpan = cornerElement.querySelector('.text-version.english');
+
+      // Clamp to avoid division by zero in blur formula
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+      let f = clamp(fraction, 0.0001, 0.9999);
+
+      // English visibility follows f; Elven follows (1-f)
+      const englishBlur = Math.min(8 / f - 8, 100);
+      const elvenBlur = Math.min(8 / (1 - f) - 8, 100);
+
+      const englishOpacity = Math.pow(f, 0.4);
+      const elvenOpacity = Math.pow(1 - f, 0.4);
+
+      englishSpan.style.filter = `blur(${englishBlur}px)`;
+      englishSpan.style.opacity = `${englishOpacity}`;
+
+      elvenSpan.style.filter = `blur(${elvenBlur}px)`;
+      elvenSpan.style.opacity = `${elvenOpacity}`;
+    }
+
+    // Start a morph animation towards target language for a specific element
+    function startMorph(cornerElement, targetLanguage) {
+      let state = morphStates.get(cornerElement);
+      if (!state) {
+        state = { f: 0, raf: null };
+        morphStates.set(cornerElement, state);
+      }
+
+      const targetF = targetLanguage === 'english' ? 1 : 0;
+      const startF = state.f;
+      const startTime = performance.now();
+
+      if (state.raf) cancelAnimationFrame(state.raf);
+
+      const step = (now) => {
+        const t = (now - startTime) / (MORPH_DURATION * 1000);
+        // Ease in/out for smoother motion
+        const ease = t <= 0 ? 0 : t >= 1 ? 1 : (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+        const f = startF + (targetF - startF) * ease;
+        state.f = f;
+        setMorph(cornerElement, f);
+        if (t < 1) {
+          state.raf = requestAnimationFrame(step);
+        } else {
+          state.raf = null;
+          // Snap to exact target at end
+          state.f = targetF;
+          setMorph(cornerElement, targetF);
+        }
+      };
+
+      state.raf = requestAnimationFrame(step);
+    }
+
     cornerTexts.forEach(cornerText => {
       defaultLanguages.set(cornerText, 'elven');
 
@@ -404,41 +488,24 @@ canvas {
       const elvenSpan = cornerText.querySelector('.text-version.elven');
       const englishSpan = cornerText.querySelector('.text-version.english');
 
-      // Measure both to set container size
-      elvenSpan.style.display = 'block';
-      englishSpan.style.display = 'block';
+      // Remove CSS transitions so JS-driven morphing takes precedence
+      elvenSpan.style.transition = 'none';
+      englishSpan.style.transition = 'none';
 
+      // Measure both to set container size
       const elvenWidth = elvenSpan.offsetWidth;
       const elvenHeight = elvenSpan.offsetHeight;
       const englishWidth = englishSpan.offsetWidth;
       const englishHeight = englishSpan.offsetHeight;
 
-      // Reset
-      elvenSpan.style.display = '';
-      englishSpan.style.display = '';
-
       // Set container to the maximum dimensions
       container.style.width = Math.max(elvenWidth, englishWidth) + 'px';
       container.style.height = Math.max(elvenHeight, englishHeight) + 'px';
+
+      // Initialize: elven fully visible via morph fraction f=0
+      morphStates.set(cornerText, { f: 0, raf: null });
+      setMorph(cornerText, 0);
     });
-
-    // Function to switch between languages
-    function switchLanguage(cornerElement, targetLanguage) {
-      const elvenSpan = cornerElement.querySelector('.text-version.elven');
-      const englishSpan = cornerElement.querySelector('.text-version.english');
-
-      if (targetLanguage === 'elven') {
-        elvenSpan.classList.remove('hidden');
-        elvenSpan.classList.add('visible');
-        englishSpan.classList.remove('visible');
-        englishSpan.classList.add('hidden');
-      } else {
-        englishSpan.classList.remove('hidden');
-        englishSpan.classList.add('visible');
-        elvenSpan.classList.remove('visible');
-        elvenSpan.classList.add('hidden');
-      }
-    }
 
     cornerTexts.forEach(cornerText => {
       let isHovering = false;
@@ -447,13 +514,13 @@ canvas {
         // Desktop: hover to temporarily show English, return to default on mouse leave
         cornerText.addEventListener('mouseenter', () => {
           isHovering = true;
-          switchLanguage(cornerText, 'english');
+          startMorph(cornerText, 'english');
         });
 
         cornerText.addEventListener('mouseleave', () => {
           isHovering = false;
           const defaultLang = defaultLanguages.get(cornerText);
-          switchLanguage(cornerText, defaultLang);
+          startMorph(cornerText, defaultLang);
         });
       }
 
@@ -463,9 +530,9 @@ canvas {
         const newDefault = currentDefault === 'elven' ? 'english' : 'elven';
         defaultLanguages.set(cornerText, newDefault);
 
-        // Switch to new default
+        // Morph to new default
         if (isMobile || !isHovering) {
-          switchLanguage(cornerText, newDefault);
+          startMorph(cornerText, newDefault);
         }
       });
     });
@@ -473,7 +540,7 @@ canvas {
     // Animate corner texts with staggered timing
     cornerTexts.forEach((cornerText, index) => {
       setTimeout(() => {
-        cornerText.style.transition = 'opacity 2.5s ease';
+        cornerText.style.transition = 'opacity 2.0s ease';
         cornerText.style.opacity = '1';
       }, 600); // Start at same time as logo and spotlight
     });
