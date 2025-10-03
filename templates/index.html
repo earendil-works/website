@@ -155,6 +155,12 @@ canvas {
   transform-origin: top right;
 }
 
+/* Ensure top corners sit flush with the top edge on large screens */
+.top-left .text-container,
+.top-right .text-container {
+  vertical-align: top;
+}
+
 /* For bottom corners, anchor the scaled box to the bottom
    so the visible text sits on the container's bottom edge. */
 .bottom-left .text-container {
@@ -185,87 +191,6 @@ canvas {
   color: rgba(255, 255, 255, 1);
 }
 
-/* Mobile layout */
-@media (max-width: 768px) {
-  .corner-texts-wrapper {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px;
-    text-align: right;
-  }
-
-  .corner-text {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    bottom: auto !important;
-    right: auto !important;
-    font-size: 16px;
-    font-family: 'EB Garamond', 'Times New Roman', serif;
-    font-weight: 500;
-    padding: 0;
-  }
-
-  .nav-links {
-    top: calc(50% + 150px);
-    gap: 15px;
-    text-align: center;
-  }
-
-  .nav-links a {
-    font-size: 18px;
-  }
-}
-
-/* Extra small mobile screens */
-@media (max-width: 480px) {
-  .corner-text {
-    font-size: 14px;
-    line-height: 1.3;
-  }
-
-  .corner-texts-wrapper {
-    gap: 6px;
-    padding: 8px;
-  }
-}
-
-/* Very small screens - move logo up to prevent overlap */
-@media (max-height: 600px) {
-  .main-image {
-    top: 35%;
-  }
-
-  .nav-links {
-    top: calc(35% + 150px);
-  }
-}
-
-/* Extra small screens with height constraint */
-@media (max-height: 500px) {
-  .main-image {
-    top: 30%;
-  }
-
-  .nav-links {
-    top: calc(30% + 120px);
-  }
-
-  .corner-text {
-    font-size: 13px;
-  }
-
-  .corner-texts-wrapper {
-    gap: 4px;
-    padding: 6px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .fullscreen-bg { will-change: auto; }
   .dotted-overlay { animation: none; opacity: 0.06; }
@@ -277,49 +202,58 @@ canvas {
   }
 }
 
-/* Mobile landscape - use corner layout */
-@media (max-width: 768px) and (orientation: landscape) {
+/* Small screens < 800px: stack tightly at bottom-right and enlarge text by 10% */
+@media (max-width: 800px) {
   .corner-texts-wrapper {
-    position: static;
-    display: contents;
-  }
-
-  .corner-text {
     position: fixed !important;
-    padding: 20px !important;
-  }
-
-  .top-left {
-    top: 0 !important;
-    left: 0 !important;
-    bottom: auto !important;
-    right: auto !important;
-    text-align: left;
-  }
-
-  .top-right {
-    top: 0 !important;
-    right: 0 !important;
-    bottom: auto !important;
-    left: auto !important;
-    text-align: right;
-  }
-
-  .bottom-left {
-    bottom: 0 !important;
-    left: 0 !important;
-    top: auto !important;
-    right: auto !important;
-    text-align: left;
-  }
-
-  .bottom-right {
     bottom: 0 !important;
     right: 0 !important;
+    z-index: 3;
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end !important;
+    gap: 0 !important;
+    padding: 8px !important;
+    text-align: right !important;
+  }
+
+  /* Make each item tight with no inner padding/margins and 10% bigger */
+  .corner-texts-wrapper .corner-text {
+    position: static !important;
     top: auto !important;
     left: auto !important;
-    text-align: right;
+    bottom: auto !important;
+    right: auto !important;
+    width: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    font-size: 110% !important;
+    text-align: right !important;
   }
+
+  /* Remove scale-based layout gap; use natural size instead */
+  .corner-texts-wrapper .text-container {
+    transform: none !important;
+    display: inline-block !important;
+    line-height: 1 !important; /* avoid extra line box */
+  }
+
+  /* Keep the texts right-aligned and 1x size when unscaled */
+  .corner-texts-wrapper .text-version {
+    left: auto !important;
+    right: 0 !important;
+    font-size: 100% !important;
+    text-align: right !important;
+  }
+
+  /* Tweak nav for small screens */
+  .nav-links {
+    top: calc(50% + 150px);
+    gap: 15px;
+    text-align: center;
+  }
+  .nav-links a { font-size: 18px; }
 }
 {% endblock %}
 
@@ -508,9 +442,12 @@ canvas {
       const englishWidth = englishSpan.offsetWidth;
       const englishHeight = englishSpan.offsetHeight;
 
-      // Set container to the maximum dimensions
-      container.style.width = Math.max(elvenWidth, englishWidth) + 'px';
-      container.style.height = Math.max(elvenHeight, englishHeight) + 'px';
+      // Set container to the maximum dimensions (store base for responsive tweaks)
+      const baseWidth = Math.max(elvenWidth, englishWidth);
+      const baseHeight = Math.max(elvenHeight, englishHeight);
+      container.style.width = baseWidth + 'px';
+      container.style.height = baseHeight + 'px';
+      container.dataset.baseHeight = String(baseHeight);
 
       // Initialize morph state, but start with both hidden for reveal
       morphStates.set(cornerText, { f: 0, raf: null });
@@ -519,6 +456,26 @@ canvas {
       englishSpan.style.opacity = '0';
       englishSpan.style.filter = 'blur(100px)';
     });
+
+    // Adjust stacked layout spacing based on viewport width
+    const stackedMQ = window.matchMedia('(max-width: 800px)');
+    function applyStackedSpacing() {
+      const isStacked = stackedMQ.matches;
+      cornerTexts.forEach(cornerText => {
+        const container = cornerText.querySelector('.text-container');
+        const baseHeight = parseFloat(container?.dataset?.baseHeight || '0');
+        if (!baseHeight) return;
+        if (isStacked) {
+          // Tighten vertical spacing for stacked mode
+          container.style.height = Math.round(baseHeight * 0.7) + 'px';
+        } else {
+          container.style.height = Math.round(baseHeight) + 'px';
+        }
+      });
+    }
+    applyStackedSpacing();
+    if (stackedMQ.addEventListener) stackedMQ.addEventListener('change', applyStackedSpacing);
+    else if (stackedMQ.addListener) stackedMQ.addListener(applyStackedSpacing);
 
     // Initial reveal animation for Elvish text only (from full transparency)
     function startInitialReveal(cornerElement, durationSec) {
