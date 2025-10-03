@@ -81,10 +81,10 @@ canvas {
 
 .spotlight {
   position: fixed;
-  width: 700px;
-  height: 700px;
+  width: 400vh;
+  height: 400vh;
   pointer-events: none;
-  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 70%);
+  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 50%);
   mix-blend-mode: normal;
   transform: translate(-50%, -50%);
   z-index: 2;
@@ -335,10 +335,20 @@ canvas {
       }, 600);
     });
 
-    navLinks.style.opacity = '0';
+    // Animate logo transform
+    img.style.transform = 'translate(-50%, calc(-50% - 3vh)) scale(1.1)';
     setTimeout(() => {
-      navLinks.style.transition = 'opacity 2.5s ease';
+      img.style.transition = 'opacity 2s, transform 2s ease-out';
+      img.style.transform = 'translate(-50%, -50%) scale(1)';
+    }, 600);
+
+    // Animate nav links transform
+    navLinks.style.opacity = '0';
+    navLinks.style.transform = 'translate(-50%, 3vh) scale(1.1)';
+    setTimeout(() => {
+      navLinks.style.transition = 'opacity 2s ease, transform 2s ease-out';
       navLinks.style.opacity = '1';
+      navLinks.style.transform = 'translateX(-50%) scale(1)';
     }, 600);
 
     document.addEventListener('mousemove', (e) => {
