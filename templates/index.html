@@ -69,7 +69,7 @@ canvas {
 .nav-links a {
   font-family: 'EB Garamond', 'Times New Roman', serif;
   font-weight: 500;
-  font-size: 20px;
+  font-size: 24px;
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   transition: color 0.3s ease;
@@ -77,17 +77,6 @@ canvas {
 
 .nav-links a:hover {
   color: rgba(255, 255, 255, 1);
-}
-
-.spotlight {
-  position: fixed;
-  width: 400vh;
-  height: 400vh;
-  pointer-events: none;
-  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 50%);
-  mix-blend-mode: normal;
-  transform: translate(-50%, -50%);
-  z-index: 2;
 }
 
 /* Corner text styles */
@@ -100,7 +89,6 @@ canvas {
   z-index: 3;
   user-select: none;
   padding: 30px;
-  opacity: 0;
   overflow: hidden;
 }
 
@@ -313,7 +301,6 @@ canvas {
   <a href="/memo/">memo</a>
   <a href="/careers/">careers</a>
 </div>
-<div class="spotlight"></div>
 
 <!-- SVG filter for text morphing -->
 <svg id="filters" style="position: absolute; width: 0; height: 0;">
@@ -372,7 +359,6 @@ canvas {
   (function () {
     const bg = document.querySelector('.fullscreen-bg');
     const img = document.querySelector('.main-image');
-    const spotlight = document.querySelector('.spotlight');
     const navLinks = document.querySelector('.nav-links');
 
     bg.style.opacity = '0';
@@ -381,13 +367,11 @@ canvas {
       bg.style.opacity = '1.0';
     }, 250);
 
-    [img, spotlight].forEach(el => {
-      el.style.opacity = '0';
-      setTimeout(() => {
-        el.style.transition = 'opacity 3s';
-        el.style.opacity = '0.9';
-      }, 600);
-    });
+    img.style.opacity = '0';
+    setTimeout(() => {
+      img.style.transition = 'opacity 3s';
+      img.style.opacity = '0.9';
+    }, 600);
 
     // Animate logo transform
     img.style.transform = 'translate(-50%, calc(-50% - 3vh)) scale(1.1) perspective(800px) rotateX(15deg)';
@@ -405,12 +389,6 @@ canvas {
       navLinks.style.transform = 'translateX(-50%) scale(1)';
     }, 600);
 
-    document.addEventListener('mousemove', (e) => {
-      const rect = img.getBoundingClientRect();
-      spotlight.style.left = e.pageX + 'px';
-      spotlight.style.top = e.pageY + 'px';
-    });
-
     // Corner text language switching
     const cornerTexts = document.querySelectorAll('.corner-text');
 
@@ -423,6 +401,8 @@ canvas {
     const defaultLanguages = new Map();
     const morphStates = new Map();
     const MORPH_DURATION = 0.85;
+    const INITIAL_ELVEN_REVEAL_DURATION = 3.5; // seconds
+    let initialRevealActive = true;
 
     // Utility: apply blur+opacity for a given fraction (0..1)
     function setMorph(cornerElement, fraction) {
@@ -502,10 +482,45 @@ canvas {
       container.style.width = Math.max(elvenWidth, englishWidth) + 'px';
       container.style.height = Math.max(elvenHeight, englishHeight) + 'px';
 
-      // Initialize: elven fully visible via morph fraction f=0
+      // Initialize morph state, but start with both hidden for reveal
       morphStates.set(cornerText, { f: 0, raf: null });
-      setMorph(cornerText, 0);
+      elvenSpan.style.opacity = '0';
+      elvenSpan.style.filter = 'blur(100px)';
+      englishSpan.style.opacity = '0';
+      englishSpan.style.filter = 'blur(100px)';
     });
+
+    // Initial reveal animation for Elvish text only (from full transparency)
+    function startInitialReveal(cornerElement, durationSec) {
+      const elvenSpan = cornerElement.querySelector('.text-version.elven');
+      const start = performance.now();
+      const step = (now) => {
+        const t = (now - start) / (durationSec * 1000);
+        const clamped = t <= 0 ? 0 : t >= 1 ? 1 : t;
+        // Ease in-out cubic
+        const ease = clamped < 0.5
+          ? 4 * clamped * clamped * clamped
+          : 1 - Math.pow(-2 * clamped + 2, 3) / 2;
+        // Use similar blur falloff as morph for visual consistency
+        const f = Math.max(ease, 0.0001);
+        const blur = Math.min(8 / f - 8, 100);
+        const opacity = Math.pow(ease, 0.4);
+        elvenSpan.style.filter = `blur(${blur}px)`;
+        elvenSpan.style.opacity = `${opacity}`;
+        if (clamped < 1) {
+          requestAnimationFrame(step);
+        } else {
+          // Snap to stable morph baseline (Elvish fully visible)
+          setMorph(cornerElement, 0);
+        }
+      };
+      requestAnimationFrame(step);
+    }
+
+    // Kick off initial reveal for all corners
+    cornerTexts.forEach(cornerText => startInitialReveal(cornerText, INITIAL_ELVEN_REVEAL_DURATION));
+    // Allow interactions after reveal completes
+    setTimeout(() => { initialRevealActive = false; }, INITIAL_ELVEN_REVEAL_DURATION * 1000);
 
     cornerTexts.forEach(cornerText => {
       let isHovering = false;
@@ -513,11 +528,13 @@ canvas {
       if (!isMobile) {
         // Desktop: hover to temporarily show English, return to default on mouse leave
         cornerText.addEventListener('mouseenter', () => {
+          if (initialRevealActive) return;
           isHovering = true;
           startMorph(cornerText, 'english');
         });
 
         cornerText.addEventListener('mouseleave', () => {
+          if (initialRevealActive) return;
           isHovering = false;
           const defaultLang = defaultLanguages.get(cornerText);
           startMorph(cornerText, defaultLang);
@@ -526,6 +543,7 @@ canvas {
 
       // Click/tap: toggle default language
       cornerText.addEventListener('click', (e) => {
+        if (initialRevealActive) return;
         const currentDefault = defaultLanguages.get(cornerText);
         const newDefault = currentDefault === 'elven' ? 'english' : 'elven';
         defaultLanguages.set(cornerText, newDefault);
@@ -535,14 +553,6 @@ canvas {
           startMorph(cornerText, newDefault);
         }
       });
-    });
-
-    // Animate corner texts with staggered timing
-    cornerTexts.forEach((cornerText, index) => {
-      setTimeout(() => {
-        cornerText.style.transition = 'opacity 2.0s ease';
-        cornerText.style.opacity = '1';
-      }, 600); // Start at same time as logo and spotlight
     });
   })();
 </script>
