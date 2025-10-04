@@ -128,7 +128,6 @@ canvas {
 .top-right {
   top: 0;
   right: 0;
-  text-align: right;
 }
 
 .bottom-left {
@@ -139,21 +138,18 @@ canvas {
 .bottom-right {
   bottom: 0;
   right: 0;
-  text-align: right;
 }
 
 .text-container {
   position: relative;
-  display: inline-block;
+  display: inline-grid;
   vertical-align: bottom;
   filter: url(#threshold) blur(0.6px);
   transform-origin: top left;
   transform: scale(0.5);
 }
 
-.top-right .text-container {
-  transform-origin: top right;
-}
+.top-right .text-container { transform-origin: top right; }
 
 /* Ensure top corners sit flush with the top edge on large screens */
 .top-left .text-container,
@@ -163,29 +159,31 @@ canvas {
 
 /* For bottom corners, anchor the scaled box to the bottom
    so the visible text sits on the container's bottom edge. */
-.bottom-left .text-container {
-  transform-origin: bottom left;
-}
+.bottom-left .text-container { transform-origin: bottom left; }
+.bottom-right .text-container { transform-origin: bottom right; }
 
-.bottom-right .text-container {
-  transform-origin: bottom right;
-}
+/* Overlay both text variants while letting container size naturally */
+.text-container > .text-version { grid-area: 1 / 1; }
+
+/* Align content within the container based on corner */
+.top-left .text-container
+.top-right .text-container { align-items: start; }
+.bottom-left .text-container,
+.bottom-right .text-container { align-items: end; }
+.top-left .text-container,
+.bottom-left .text-container { justify-items: start; }
+.top-right .text-container,
+.bottom-right .text-container { justify-items: end; }
 
 .text-version {
-  position: absolute;
-  top: 0;
-  left: 0;
   color: rgba(255, 255, 255, 1);
   white-space: nowrap;
   font-size: 200%;
   transition: filter 1.2s ease-in-out, opacity 1.2s ease-in-out;
+  display: block;
 }
 
-.top-right .text-version,
-.bottom-right .text-version {
-  left: auto;
-  right: 0;
-}
+/* Right alignment handled by grid on container */
 
 .corner-text:hover .text-version {
   color: rgba(255, 255, 255, 1);
@@ -205,45 +203,44 @@ canvas {
   .corner-texts-wrapper {
     position: fixed !important;
     bottom: 0 !important;
-    right: 0 !important;
+    left: 0 !important;
     z-index: 3;
-    display: flex !important;
-    flex-direction: column;
-    align-items: flex-end !important;
-    gap: 0 !important;
     padding: 8px !important;
-    text-align: right !important;
   }
 
   /* Make each item tight with no inner padding/margins and 10% bigger */
   .corner-texts-wrapper .corner-text {
-    position: static !important;
-    top: auto !important;
-    left: auto !important;
-    bottom: auto !important;
-    right: auto !important;
-    width: auto !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    line-height: 1 !important;
     font-size: 110% !important;
-    text-align: right !important;
+    display: block;
+    bottom: initial;
+    top: initial;
+    left: initial;
+    right: initial;
+    position: initial;
+    padding: 0;
   }
 
   /* Remove scale-based layout gap; use natural size instead */
   .corner-texts-wrapper .text-container {
     transform: none !important;
-    display: inline-block !important;
-    line-height: 1.5 !important; /* avoid extra line box */
+    display: inline-grid !important;
+    line-height: 1.3 !important; /* avoid extra line box */
   }
 
   /* Keep the texts right-aligned and 1x size when unscaled */
   .corner-texts-wrapper .text-version {
-    left: auto !important;
-    right: 0 !important;
-    font-size: 100% !important;
-    text-align: right !important;
+    left: 0;
+    font-size: 110%;
   }
+
+  .top-left .text-container
+  .top-right .text-container { align-items: start; }
+  .bottom-left .text-container,
+  .bottom-right .text-container { align-items: start; }
+  .top-left .text-container,
+  .bottom-left .text-container { justify-items: start; }
+  .top-right .text-container,
+  .bottom-right .text-container { justify-items: start; }
 
   /* Tweak nav for small screens */
   .nav-links {
@@ -251,8 +248,19 @@ canvas {
     gap: 15px;
     text-align: center;
   }
-  .nav-links a { font-size: 18px; }
+  .nav-links a { font-size: 22px; }
 }
+
+/* move logo up to make space for small corner text */
+@media (max-width: 800px) and (max-height: 700px) {
+  .main-image {
+    top: calc(50% - 15vh);
+  }
+  .nav-links {
+    top: 5vh;
+  }
+}
+
 {% endblock %}
 
 {% block body %}
@@ -423,38 +431,15 @@ canvas {
       state.raf = requestAnimationFrame(step);
     }
 
-    function resetHeight(cornerText) {
-      const container = cornerText.querySelector('.text-container');
-      const elvenSpan = cornerText.querySelector('.text-version.elven');
-      const englishSpan = cornerText.querySelector('.text-version.english');
-
-      // Remove CSS transitions so JS-driven morphing takes precedence
-      elvenSpan.style.transition = 'none';
-      englishSpan.style.transition = 'none';
-
-      // Measure both to set container size
-      const elvenWidth = elvenSpan.offsetWidth;
-      const elvenHeight = elvenSpan.offsetHeight;
-      const englishWidth = englishSpan.offsetWidth;
-      const englishHeight = englishSpan.offsetHeight;
-
-      // Set container to the maximum dimensions (store base for responsive tweaks)
-      const baseWidth = Math.max(elvenWidth, englishWidth);
-      const baseHeight = Math.max(elvenHeight, englishHeight);
-      container.style.width = baseWidth + 'px';
-      container.style.height = baseHeight + 'px';
-      container.dataset.baseHeight = String(baseHeight);
-    }
-
-    window.addEventListener('resize', () => {
-      cornerTexts.forEach(cornerText => resetHeight(cornerText));
-    });
+    // Ensure CSS transitions don't interfere with JS morphing
 
     cornerTexts.forEach(cornerText => {
       defaultLanguages.set(cornerText, 'elven');
       const elvenSpan = cornerText.querySelector('.text-version.elven');
       const englishSpan = cornerText.querySelector('.text-version.english');
-      resetHeight(cornerText);
+      // Remove CSS transitions so JS-driven morphing takes precedence
+      elvenSpan.style.transition = 'none';
+      englishSpan.style.transition = 'none';
       // Initialize morph state, but start with both hidden for reveal
       morphStates.set(cornerText, { f: 0, raf: null });
       elvenSpan.style.opacity = '0';
@@ -463,25 +448,7 @@ canvas {
       englishSpan.style.filter = 'blur(100px)';
     });
 
-    // Adjust stacked layout spacing based on viewport width
-    const stackedMQ = window.matchMedia('(max-width: 800px)');
-    function applyStackedSpacing() {
-      const isStacked = stackedMQ.matches;
-      cornerTexts.forEach(cornerText => {
-        const container = cornerText.querySelector('.text-container');
-        const baseHeight = parseFloat(container?.dataset?.baseHeight || '0');
-        if (!baseHeight) return;
-        if (isStacked) {
-          // Tighten vertical spacing for stacked mode
-          container.style.height = Math.round(baseHeight * 0.7) + 'px';
-        } else {
-          container.style.height = Math.round(baseHeight) + 'px';
-        }
-      });
-    }
-    applyStackedSpacing();
-    if (stackedMQ.addEventListener) stackedMQ.addEventListener('change', applyStackedSpacing);
-    else if (stackedMQ.addListener) stackedMQ.addListener(applyStackedSpacing);
+    // Stacked layout spacing handled via CSS media queries
 
     // Initial reveal animation for Elvish text only (from full transparency)
     function startInitialReveal(cornerElement, durationSec) {
