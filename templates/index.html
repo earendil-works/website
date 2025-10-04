@@ -196,10 +196,8 @@ canvas {
   .dotted-overlay { animation: none; opacity: 0.06; }
 }
 
-@media (min-width: 1025px) {
-  .corner-text {
-    font-size: 24px;
-  }
+@media (min-width: 900px) {
+  .corner-text { font-size: 24px; }
 }
 
 /* Small screens < 800px: stack tightly at bottom-right and enlarge text by 10% */
@@ -236,7 +234,7 @@ canvas {
   .corner-texts-wrapper .text-container {
     transform: none !important;
     display: inline-block !important;
-    line-height: 1 !important; /* avoid extra line box */
+    line-height: 1.5 !important; /* avoid extra line box */
   }
 
   /* Keep the texts right-aligned and 1x size when unscaled */
@@ -425,9 +423,7 @@ canvas {
       state.raf = requestAnimationFrame(step);
     }
 
-    cornerTexts.forEach(cornerText => {
-      defaultLanguages.set(cornerText, 'elven');
-
+    function resetHeight(cornerText) {
       const container = cornerText.querySelector('.text-container');
       const elvenSpan = cornerText.querySelector('.text-version.elven');
       const englishSpan = cornerText.querySelector('.text-version.english');
@@ -448,7 +444,17 @@ canvas {
       container.style.width = baseWidth + 'px';
       container.style.height = baseHeight + 'px';
       container.dataset.baseHeight = String(baseHeight);
+    }
 
+    window.addEventListener('resize', () => {
+      cornerTexts.forEach(cornerText => resetHeight(cornerText));
+    });
+
+    cornerTexts.forEach(cornerText => {
+      defaultLanguages.set(cornerText, 'elven');
+      const elvenSpan = cornerText.querySelector('.text-version.elven');
+      const englishSpan = cornerText.querySelector('.text-version.english');
+      resetHeight(cornerText);
       // Initialize morph state, but start with both hidden for reveal
       morphStates.set(cornerText, { f: 0, raf: null });
       elvenSpan.style.opacity = '0';
