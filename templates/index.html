@@ -57,7 +57,7 @@ canvas {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 333px;
+  width: 300px;
   max-width: 65vw;
   object-fit: contain;
   object-position: center;
@@ -81,13 +81,17 @@ canvas {
 
 .nav-links {
   position: fixed;
-  top: calc(50% + 200px);
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
   display: flex;
-  gap: 30px;
+  justify-content: space-between;
   opacity: 0;
+  width: calc(300px - 51px);
+  max-width: calc(65vw - 51px);
+  align-items: center;
+  align-self: stretch;
 }
 
 .nav-links a {
@@ -112,7 +116,7 @@ canvas {
   cursor: pointer;
   z-index: 3;
   user-select: none;
-  padding: 30px;
+  padding: 20px;
   overflow: hidden;
 }
 
@@ -195,7 +199,7 @@ canvas {
 }
 
 @media (min-width: 900px) {
-  .corner-text { font-size: 24px; }
+  .corner-text { font-size: 20px; }
 }
 
 /* Small screens < 800px: stack tightly at bottom-right and enlarge text by 10% */
@@ -246,6 +250,7 @@ canvas {
   .nav-links {
     top: calc(50% + 150px);
     gap: 15px;
+    bottom: initial;
     text-align: center;
   }
   .nav-links a { font-size: 22px; }
