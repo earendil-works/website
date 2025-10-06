@@ -358,10 +358,10 @@ canvas {
     });
 
     // Animate logo transform
-    img.style.transform = 'translate(-50%, calc(-50% - 3vh)) scale(1.0) perspective(800px) rotateX(15deg)';
+    img.style.opacity = '0';
     setTimeout(() => {
-      img.style.transition = 'opacity 2s, transform 2s ease-out';
-      img.style.transform = 'translate(-50%, -50%) scale(1) perspective(800px) rotateX(0deg)';
+      img.style.transition = 'opacity 5s ease';
+      img.style.opacity = '0.9';
     }, 600);
 
     // Animate nav links transform
