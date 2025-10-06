@@ -371,8 +371,7 @@ canvas {
     const defaultLanguages = new Map();
     const morphStates = new Map();
     const MORPH_DURATION = 0.85;
-    const INITIAL_ELVEN_REVEAL_DURATION = 3.5; // seconds
-    let initialRevealActive = true;
+    const INITIAL_ELVEN_REVEAL_DURATION = 1.0; // seconds
 
     // Utility: apply blur+opacity for a given fraction (0..1)
     function setMorph(cornerElement, fraction) {
@@ -479,8 +478,6 @@ canvas {
 
     // Kick off initial reveal for all corners
     cornerTexts.forEach(cornerText => startInitialReveal(cornerText, INITIAL_ELVEN_REVEAL_DURATION));
-    // Allow interactions after reveal completes
-    setTimeout(() => { initialRevealActive = false; }, INITIAL_ELVEN_REVEAL_DURATION * 1000);
 
     cornerTexts.forEach(cornerText => {
       let isHovering = false;
@@ -488,13 +485,11 @@ canvas {
       if (!isMobile) {
         // Desktop: hover to temporarily show English, return to default on mouse leave
         cornerText.addEventListener('mouseenter', () => {
-          if (initialRevealActive) return;
           isHovering = true;
           startMorph(cornerText, 'english');
         });
 
         cornerText.addEventListener('mouseleave', () => {
-          if (initialRevealActive) return;
           isHovering = false;
           const defaultLang = defaultLanguages.get(cornerText);
           startMorph(cornerText, defaultLang);
@@ -503,7 +498,6 @@ canvas {
 
       // Click/tap: toggle default language
       cornerText.addEventListener('click', (e) => {
-        if (initialRevealActive) return;
         const currentDefault = defaultLanguages.get(cornerText);
         const newDefault = currentDefault === 'elven' ? 'english' : 'elven';
         defaultLanguages.set(cornerText, newDefault);
