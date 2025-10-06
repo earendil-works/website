@@ -18,8 +18,8 @@ canvas {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: calc(100vw + 32px);
-  height: calc(100vh + 32px);
+  width: calc(100vw + 80px);
+  height: calc(100vh + 80px);
   background-image: url("/ocean-10.jpg");
   background-size: cover;
   /* Allow small animated offsets via CSS variables */
@@ -31,26 +31,24 @@ canvas {
   will-change: background-position;
 }
 
-.dotted-overlay {
+.spotlight {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 1000px;
+  height: 1000px;
   pointer-events: none;
+  background: radial-gradient(circle at center,
+    rgba(230, 230, 230, 0.3) 0%,
+    rgba(230, 230, 230, 0.25) 10%,
+    rgba(230, 230, 230, 0.15) 20%,
+    rgba(230, 230, 230, 0.08) 30%,
+    rgba(230, 230, 230, 0.04) 40%,
+    rgba(230, 230, 230, 0.02) 50%,
+    rgba(230, 230, 230, 0.01) 60%,
+    rgba(230, 230, 230, 0) 70%
+  );
+  mix-blend-mode: normal;
+  transform: translate(-50%, -50%);
   z-index: 2;
-  background-image:
-    repeating-linear-gradient(
-      to bottom,
-      rgba(127, 127, 127, 0.17),
-      rgba(127, 127, 127, 0.17) 3px,
-      rgba(0, 0, 0, 0) 3px,
-      rgba(0, 0, 0, 0) 6px
-    ),
-    radial-gradient(rgba(255, 255, 255, 0.28) 1px, rgba(0, 0, 0, 0) 1px);
-  background-size: 100% 3px, 3px 3px;
-  background-position: 0 0, 0 0;
-  mix-blend-mode: overlay;
 }
 
 .main-image {
@@ -195,7 +193,6 @@ canvas {
 
 @media (prefers-reduced-motion: reduce) {
   .fullscreen-bg { will-change: auto; }
-  .dotted-overlay { animation: none; opacity: 0.06; }
 }
 
 @media (min-width: 900px) {
@@ -270,7 +267,7 @@ canvas {
 
 {% block body %}
 <div class="fullscreen-bg"></div>
-<div class="dotted-overlay" aria-hidden="true"></div>
+<div class="spotlight"></div>
 <img src="/logo.svg" class="main-image" alt="" aria-hidden="true">
 <div class="nav-links">
   <a href="/memo/">memo</a>
@@ -335,6 +332,7 @@ canvas {
     const bg = document.querySelector('.fullscreen-bg');
     const img = document.querySelector('.main-image');
     const navLinks = document.querySelector('.nav-links');
+    const spotlight = document.querySelector('.spotlight');
 
     bg.style.opacity = '0';
     setTimeout(() => {
@@ -348,8 +346,19 @@ canvas {
       img.style.opacity = '0.9';
     }, 600);
 
+    setTimeout(() => {
+      spotlight.style.transition = 'opacity 3s';
+      spotlight.style.opacity = '0.9';
+    }, 600);
+
+    document.addEventListener('mousemove', (e) => {
+      const rect = img.getBoundingClientRect();
+      spotlight.style.left = e.pageX + 'px';
+      spotlight.style.top = e.pageY + 'px';
+    });
+
     // Animate logo transform
-    img.style.transform = 'translate(-50%, calc(-50% - 3vh)) scale(1.1) perspective(800px) rotateX(15deg)';
+    img.style.transform = 'translate(-50%, calc(-50% - 3vh)) scale(1.0) perspective(800px) rotateX(15deg)';
     setTimeout(() => {
       img.style.transition = 'opacity 2s, transform 2s ease-out';
       img.style.transform = 'translate(-50%, -50%) scale(1) perspective(800px) rotateX(0deg)';
@@ -357,11 +366,9 @@ canvas {
 
     // Animate nav links transform
     navLinks.style.opacity = '0';
-    navLinks.style.transform = 'translate(-50%, 3vh) scale(1.1)';
     setTimeout(() => {
-      navLinks.style.transition = 'opacity 2s ease, transform 2s ease-out';
+      navLinks.style.transition = 'opacity 3s ease';
       navLinks.style.opacity = '1';
-      navLinks.style.transform = 'translateX(-50%) scale(1)';
     }, 600);
 
     // Corner text language switching
@@ -514,35 +521,56 @@ canvas {
       });
     });
 
-    // Background "wiggle" motion: smooth random walk within ~5px bounds
-    (function setupBackgroundWiggle() {
+    // Background parallax motion: follows mouse cursor with smooth decay
+    (function setupBackgroundParallax() {
       const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (!bg || reduceMotion) return;
 
-      const MAX = 10; // max px offset in any direction
-      const CHANGE_INTERVAL_MS = 700; // pick a new target roughly every ~1s
+      const MAX_OFFSET = 40; // max px offset in any direction
       const SMOOTHING = 0.01; // how quickly we ease toward target per frame
+      const DECAY_DURATION_MS = 2000; // time to scale down to rest after mouse stops
 
       let currentX = 0, currentY = 0;
       let targetX = 0, targetY = 0;
-      let lastChange = performance.now();
+      let lastMouseMove = performance.now();
+      let isMouseMoving = false;
 
-      function pickNewTarget() {
-        // Pick within a circle of radius MAX for more natural bounds
-        const angle = Math.random() * Math.PI * 2;
-        const radius = Math.random() * MAX;
-        targetX = Math.cos(angle) * radius;
-        targetY = Math.sin(angle) * radius;
-      }
+      // Track mouse position and calculate parallax offset
+      document.addEventListener('mousemove', (e) => {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
+        // Calculate normalized position (-1 to 1) from center
+        const normalizedX = (e.clientX - centerX) / centerX;
+        const normalizedY = (e.clientY - centerY) / centerY;
+
+        // Invert for parallax effect (mouse right = background left)
+        targetX = -normalizedX * MAX_OFFSET;
+        targetY = -normalizedY * MAX_OFFSET;
+
+        lastMouseMove = performance.now();
+        isMouseMoving = true;
+      });
 
       function animate(now) {
-        if (now - lastChange > CHANGE_INTERVAL_MS) {
-          pickNewTarget();
-          lastChange = now;
+        // Calculate decay factor if mouse stopped moving
+        const timeSinceMove = now - lastMouseMove;
+        let decayFactor = 1;
+
+        if (timeSinceMove > 100) { // Small delay before decay starts
+          isMouseMoving = false;
+          const decayProgress = Math.min((timeSinceMove - 100) / DECAY_DURATION_MS, 1);
+          // Ease out cubic for smooth deceleration
+          decayFactor = 1 - (decayProgress < 1 ? 1 - Math.pow(1 - decayProgress, 3) : 1);
         }
-        // Ease towards the target
-        currentX += (targetX - currentX) * SMOOTHING;
-        currentY += (targetY - currentY) * SMOOTHING;
+
+        // Apply decay to target when not moving
+        const effectiveTargetX = isMouseMoving ? targetX : targetX * decayFactor;
+        const effectiveTargetY = isMouseMoving ? targetY : targetY * decayFactor;
+
+        // Smoothly interpolate current position toward target
+        currentX += (effectiveTargetX - currentX) * SMOOTHING;
+        currentY += (effectiveTargetY - currentY) * SMOOTHING;
 
         // Add a tiny high-frequency jitter for a VHS feel
         const jitterX = (Math.random() - 0.5) * 0.3;
@@ -554,7 +582,6 @@ canvas {
         requestAnimationFrame(animate);
       }
 
-      pickNewTarget();
       requestAnimationFrame(animate);
     })();
   })();
