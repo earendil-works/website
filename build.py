@@ -52,7 +52,7 @@ def build_site():
     # Build markdown pages
     pages = [
         {"slug": "memo", "file": "memo.md"},
-        {"slug": "careers", "file": "careers.md"},
+        {"slug": "join-us", "file": "join-us.md"},
     ]
 
     for page in pages:
