@@ -572,12 +572,15 @@ canvas {
         currentX += (effectiveTargetX - currentX) * SMOOTHING;
         currentY += (effectiveTargetY - currentY) * SMOOTHING;
 
-        // Add a tiny high-frequency jitter for a VHS feel
-        const jitterX = (Math.random() - 0.5) * 0.3;
-        const jitterY = (Math.random() - 0.5) * 0.3;
+        if (Math.abs(currentX) < 0.2) {
+          currentX = 0;
+        }
+        if (Math.abs(currentY) < 0.2) {
+          currentY = 0;
+        }
 
-        bg.style.setProperty('--bg-offset-x', (currentX + jitterX).toFixed(2) + 'px');
-        bg.style.setProperty('--bg-offset-y', (currentY + jitterY).toFixed(2) + 'px');
+        bg.style.setProperty('--bg-offset-x', currentX + 'px');
+        bg.style.setProperty('--bg-offset-y', currentY + 'px');
 
         requestAnimationFrame(animate);
       }
