@@ -23,6 +23,7 @@ def build_site():
     # Copy static assets
     print("Copying static assets...")
     static_files = [
+        "cursor.svg",
         "logo.svg",
         "ocean-10.jpg",
         "ocean-70.jpg",

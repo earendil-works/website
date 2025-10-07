@@ -3,6 +3,7 @@
 {% block styles %}
 body {
   overflow: hidden;
+  cursor: url('cursor.svg') 24 24, auto;
 }
 
 canvas {
@@ -33,19 +34,10 @@ canvas {
 
 .spotlight {
   position: fixed;
-  width: 1000px;
-  height: 1000px;
+  width: 500px;
+  height: 500px;
   pointer-events: none;
-  background: radial-gradient(circle at center,
-    rgba(230, 230, 230, 0.3) 0%,
-    rgba(230, 230, 230, 0.25) 10%,
-    rgba(230, 230, 230, 0.15) 20%,
-    rgba(230, 230, 230, 0.08) 30%,
-    rgba(230, 230, 230, 0.04) 40%,
-    rgba(230, 230, 230, 0.02) 50%,
-    rgba(230, 230, 230, 0.01) 60%,
-    rgba(230, 230, 230, 0) 70%
-  );
+  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 70%);
   mix-blend-mode: normal;
   transform: translate(-50%, -50%);
   z-index: 2;
@@ -99,6 +91,7 @@ canvas {
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   transition: color 0.3s ease;
+  cursor: url('/cursor.svg') 12 12, pointer;
 }
 
 .nav-links a:hover {
@@ -111,7 +104,7 @@ canvas {
   font-family: 'EB Garamond', 'Times New Roman', serif;
   font-weight: 500;
   font-size: 18px;
-  cursor: pointer;
+  cursor: url('/cursor.svg') 12 12, pointer;
   z-index: 3;
   user-select: none;
   padding: 20px;
@@ -197,6 +190,21 @@ canvas {
 
 @media (min-width: 900px) {
   .corner-text { font-size: 20px; }
+}
+
+/* Responsive spotlight sizing */
+@media (max-width: 768px) {
+  .spotlight {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .spotlight {
+    width: 700px;
+    height: 700px;
+  }
 }
 
 /* Small screens < 800px: stack tightly at bottom-right and enlarge text by 10% */
