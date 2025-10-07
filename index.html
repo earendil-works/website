@@ -26,6 +26,7 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
+    cursor: url('cursor.svg') 12 12, auto;
   }
 
   canvas {
@@ -34,7 +35,10 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.75;
+    mix-blend-mode: screen;
   }
 
   .fullscreen-bg {
@@ -48,7 +52,7 @@
     background-position: center 15%;
     background-repeat: no-repeat;
     transform: translate(-50%, -50%);
-    z-index: 1;
+    z-index: 0;
     transition: opacity 1s;
   }
 
@@ -63,7 +67,7 @@
     background-position: center 15%;
     background-repeat: no-repeat;
     transform: translate(-50%, -50%);
-    z-index: 1;
+    z-index: 0;
     opacity: 0;
     transition: opacity 1s ease-out;
   }
@@ -77,7 +81,7 @@
     object-fit: contain;
     object-position: center;
     transform: translate(-50%, -50%);
-    z-index: 1;
+    z-index: 2;
     opacity: 1;
   }
 
@@ -103,7 +107,7 @@
     background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 70%);
     mix-blend-mode: normal;
     transform: translate(-50%, -50%);
-    z-index: 2;
+    z-index: 3;
   }
 
   /* Corner text styles */
@@ -111,10 +115,10 @@
     position: fixed;
     font-family: 'EB Garamond', 'Times New Roman', serif;
     font-weight: 500;
-    font-size: 18px;
+    font-size: 20px;
     color: rgba(255, 255, 255, 0.8);
-    cursor: pointer;
-    z-index: 3;
+    cursor: url('cursor.svg') 12 12, pointer;
+    z-index: 4;
     transition: color 0.3s ease;
     user-select: none;
     padding: 10px;
@@ -126,7 +130,7 @@
   }
 
   .corner-text.translated {
-    cursor: default;
+    cursor: url('cursor.svg') 12 12, default;
     color: rgba(255, 255, 255, 0.9);
   }
 
@@ -152,6 +156,35 @@
     text-align: right;
   }
 
+  .bottom-links {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: min(45vw, 300px);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'EB Garamond', 'Times New Roman', serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
+    z-index: 4;
+    padding: 10px 0;
+    user-select: none;
+    opacity: 0;
+  }
+
+  .bottom-link {
+    color: inherit;
+    text-decoration: none;
+    cursor: url('cursor.svg') 12 12, pointer;
+    transition: color 0.3s ease;
+  }
+
+  .bottom-link:hover {
+    color: rgba(255, 255, 255, 1);
+  }
+
   .text-char {
     display: inline-block;
     transition: all 0.1s ease;
@@ -169,10 +202,16 @@
     }
     
     .corner-text {
-      font-size: 18px;
+      font-size: 19px;
       font-family: 'EB Garamond', 'Times New Roman', serif;
       font-weight: 500;
       padding: 3px 8px;
+    }
+
+    .bottom-links {
+      width: min(70vw, 260px);
+      font-size: 18px;
+      padding: 8px 0;
     }
 
     .top-left {
@@ -209,9 +248,15 @@
   /* Extra small mobile screens */
   @media (max-width: 480px) {
     .corner-text {
-      font-size: 17px;
+      font-size: 18px;
       padding: 8px;
       line-height: 1.5;
+    }
+
+    .bottom-links {
+      width: min(80vw, 240px);
+      font-size: 17px;
+      padding: 6px 0 10px;
     }
   }
 
@@ -286,6 +331,7 @@
 <body>
 <div class="fullscreen-bg"></div>
 <div class="fullscreen-bg-hq"></div>
+<canvas id="ripple-canvas"></canvas>
 <img src="logo.svg" class="main-image" alt="" aria-hidden="true">
 <div class="spotlight"></div>
 
@@ -314,12 +360,112 @@
   <span class="text-content">Alta handë ar alassë</span>
 </div>
 
+<div class="bottom-links">
+  <a class="bottom-link" href="memo.html">memo</a>
+  <a class="bottom-link" href="join-us.html">join us</a>
+</div>
+
 <script>
   (function () {
     const bg = document.querySelector('.fullscreen-bg');
     const bgHQ = document.querySelector('.fullscreen-bg-hq');
     const img = document.querySelector('.main-image');
     const spotlight = document.querySelector('.spotlight');
+    const rippleCanvas = document.getElementById('ripple-canvas');
+    const rippleCtx = rippleCanvas ? rippleCanvas.getContext('2d') : null;
+
+    const ripples = [];
+    const rippleDuration = 3600; // milliseconds for a ripple to dissipate fully
+    const maxRipples = 8;
+    let maxRippleRadius = 0;
+    let currentPixelRatio = window.devicePixelRatio || 1;
+    let lastPointerPosition = null;
+
+    function resizeRippleCanvas() {
+      if (!rippleCanvas || !rippleCtx) {
+        return;
+      }
+
+      currentPixelRatio = window.devicePixelRatio || 1;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      rippleCanvas.width = width * currentPixelRatio;
+      rippleCanvas.height = height * currentPixelRatio;
+      rippleCanvas.style.width = width + 'px';
+      rippleCanvas.style.height = height + 'px';
+
+      rippleCtx.setTransform(1, 0, 0, 1, 0, 0);
+      rippleCtx.scale(currentPixelRatio, currentPixelRatio);
+
+      maxRippleRadius = Math.hypot(width, height);
+    }
+
+    function addRipple(x, y) {
+      if (!rippleCtx) {
+        return;
+      }
+
+      ripples.push({ x, y, born: performance.now() });
+      if (ripples.length > maxRipples) {
+        ripples.shift();
+      }
+    }
+
+    function animateRipples() {
+      if (!rippleCtx) {
+        return;
+      }
+
+      rippleCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      const now = performance.now();
+      rippleCtx.save();
+      rippleCtx.globalCompositeOperation = 'lighter';
+
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const ripple = ripples[i];
+        const age = now - ripple.born;
+        const progress = age / rippleDuration;
+
+        if (progress >= 1) {
+          ripples.splice(i, 1);
+          continue;
+        }
+
+        const easedProgress = Math.pow(progress, 0.9);
+        const radius = easedProgress * maxRippleRadius;
+        const innerRadius = radius * 0.22;
+
+        const gradient = rippleCtx.createRadialGradient(
+          ripple.x,
+          ripple.y,
+          innerRadius,
+          ripple.x,
+          ripple.y,
+          radius
+        );
+
+        const fade = 0.055 * (1 - easedProgress);
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${fade})`);
+        gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.025)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        rippleCtx.fillStyle = gradient;
+        rippleCtx.beginPath();
+        rippleCtx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2);
+        rippleCtx.fill();
+      }
+
+      rippleCtx.restore();
+      requestAnimationFrame(animateRipples);
+    }
+
+    if (rippleCtx) {
+      resizeRippleCanvas();
+      window.addEventListener('resize', resizeRippleCanvas);
+      requestAnimationFrame(animateRipples);
+    }
 
     bg.style.opacity = '0';
     setTimeout(() => {
@@ -335,11 +481,60 @@
       }, 600);
     });
 
+    const bottomLinks = document.querySelector('.bottom-links');
+    if (bottomLinks) {
+      bottomLinks.style.opacity = '0';
+      setTimeout(() => {
+        bottomLinks.style.transition = 'opacity 3s';
+        bottomLinks.style.opacity = '0.9';
+      }, 600);
+    }
+
     document.addEventListener('mousemove', (e) => {
-      const rect = img.getBoundingClientRect();
+      if (lastPointerPosition) {
+        addRipple(lastPointerPosition.x, lastPointerPosition.y);
+      }
+
+      lastPointerPosition = { x: e.clientX, y: e.clientY };
+
       spotlight.style.left = e.pageX + 'px';
       spotlight.style.top = e.pageY + 'px';
     });
+
+    document.addEventListener('mouseleave', () => {
+      lastPointerPosition = null;
+    });
+
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      document.addEventListener('touchstart', (event) => {
+        const touch = event.touches[0];
+        if (!touch) {
+          return;
+        }
+        lastPointerPosition = { x: touch.clientX, y: touch.clientY };
+        spotlight.style.left = touch.pageX + 'px';
+        spotlight.style.top = touch.pageY + 'px';
+      }, { passive: true });
+
+      document.addEventListener('touchmove', (event) => {
+        const touch = event.touches[0];
+        if (!touch) {
+          return;
+        }
+
+        if (lastPointerPosition) {
+          addRipple(lastPointerPosition.x, lastPointerPosition.y);
+        }
+
+        lastPointerPosition = { x: touch.clientX, y: touch.clientY };
+        spotlight.style.left = touch.pageX + 'px';
+        spotlight.style.top = touch.pageY + 'px';
+      }, { passive: true });
+
+      document.addEventListener('touchend', () => {
+        lastPointerPosition = null;
+      });
+    }
 
     // Progressive background image loading: Fade in high-quality layer
     function loadProgressiveBackground() {
