@@ -1,4 +1,6 @@
-# Join Us
+<div style="text-align: center">
 
-Want to work with us?  We're hiring Members of the Technical Staff and Founder's Office. <a href="mailto:join@earendil.com">Reach out to us</a>.
-We appreciate a cover letter.
+We're hiring Members of the Technical Staff and Founder's Office<br><br>
+<a href="mailto:join@earendil.com">Send us an email</a>
+
+</div>

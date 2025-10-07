@@ -7,7 +7,7 @@
 
   <img src="/logo.svg" class="main-image" alt="" aria-hidden="true" data-home-el data-home-visible-opacity="0.9" data-home-manual-show>
   <div class="nav-links" data-home-el data-home-visible-opacity="1" data-home-manual-show>
-    <a href="/memo/" data-route-link="memo">Memo</a>
+    <a href="/purpose/" data-route-link="purpose">Purpose</a>
     <a href="/join-us/" data-route-link="join-us">Join Us</a>
   </div>
 
@@ -76,7 +76,6 @@
   <div id="page-templates" hidden>
     {% for page in pages %}
     <template data-page="{{ page.slug }}" data-path="{{ page.path }}" data-title="{{ page.title }}">
-      <h1>{{ page.title }}</h1>
       {{ page.content|safe }}
     </template>
     {% endfor %}

@@ -50,7 +50,7 @@ def build_site():
 
     # Gather markdown-backed page content for SPA
     page_sources = [
-        {"slug": "memo", "file": "memo.md"},
+        {"slug": "purpose", "file": "purpose.md"},
         {"slug": "join-us", "file": "join-us.md"},
     ]
 
@@ -64,7 +64,6 @@ def build_site():
         content_lines = lines
         if lines and lines[0].startswith("# "):
             title = lines[0][2:].strip()
-            content_lines = lines[1:]
 
         # Drop the leading heading from the rendered HTML to avoid duplicate H1s
         content_md = "\n".join(content_lines).lstrip("\n")

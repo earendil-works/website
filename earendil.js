@@ -324,6 +324,13 @@
   let lastRippleTime = 0;
   const RIPPLE_INTERVAL = window.EARENDIL_RIPPLE_INTERVAL;
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const CURSOR_GLOW_INACTIVITY_MS = 3000;
+
+  let cursorGlow = null;
+  let cursorGlowFadeHandle = null;
+  let cursorGlowAnimationHandle = null;
+  let cursorGlowPosition = null;
+  let cursorGlowTarget = null;
 
   function createRipple(x, y) {
     if (prefersReducedMotion || window.EARENDIL_DISABLE_RIPPLE || !rippleContainer) {
@@ -358,9 +365,123 @@
     }, 3600);
   }
 
+  function ensureCursorGlow() {
+    if (cursorGlow || !rippleContainer) {
+      return;
+    }
+    cursorGlow = document.createElement('div');
+    cursorGlow.className = 'cursor-glow';
+    rippleContainer.appendChild(cursorGlow);
+  }
+
+  function clearCursorGlowFade() {
+    if (cursorGlowFadeHandle !== null) {
+      clearTimeout(cursorGlowFadeHandle);
+      cursorGlowFadeHandle = null;
+    }
+  }
+
+  function hideCursorGlow() {
+    if (!cursorGlow) {
+      return;
+    }
+    cursorGlow.style.opacity = '0';
+  }
+
+  function scheduleCursorGlowFade() {
+    if (!cursorGlow) {
+      return;
+    }
+    clearCursorGlowFade();
+    cursorGlowFadeHandle = window.setTimeout(() => {
+      cursorGlowFadeHandle = null;
+      hideCursorGlow();
+    }, CURSOR_GLOW_INACTIVITY_MS);
+  }
+
+  function showCursorGlow() {
+    if (!cursorGlow || window.EARENDIL_DISABLE_RIPPLE) {
+      return;
+    }
+    cursorGlow.style.opacity = '1';
+    scheduleCursorGlowFade();
+  }
+
+  function applyCursorGlowPosition(x, y) {
+    if (!cursorGlow) {
+      return;
+    }
+    cursorGlow.style.left = `${x}px`;
+    cursorGlow.style.top = `${y}px`;
+  }
+
+  function stepCursorGlowAnimation() {
+    if (!cursorGlow || !cursorGlowTarget || !cursorGlowPosition) {
+      cursorGlowAnimationHandle = null;
+      return;
+    }
+
+    const lerp = 0.2;
+    const dx = cursorGlowTarget.x - cursorGlowPosition.x;
+    const dy = cursorGlowTarget.y - cursorGlowPosition.y;
+
+    cursorGlowPosition.x += dx * lerp;
+    cursorGlowPosition.y += dy * lerp;
+
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+      cursorGlowPosition.x = cursorGlowTarget.x;
+      cursorGlowPosition.y = cursorGlowTarget.y;
+    }
+
+    applyCursorGlowPosition(cursorGlowPosition.x, cursorGlowPosition.y);
+
+    if (cursorGlowPosition.x !== cursorGlowTarget.x || cursorGlowPosition.y !== cursorGlowTarget.y) {
+      cursorGlowAnimationHandle = requestAnimationFrame(stepCursorGlowAnimation);
+    } else {
+      cursorGlowAnimationHandle = null;
+    }
+  }
+
+  function updateCursorGlowPosition(x, y) {
+    if (!cursorGlow) {
+      return;
+    }
+
+    cursorGlowTarget = { x, y };
+
+    if (!cursorGlowPosition) {
+      cursorGlowPosition = { x, y };
+      applyCursorGlowPosition(x, y);
+      return;
+    }
+
+    if (cursorGlowAnimationHandle === null) {
+      cursorGlowAnimationHandle = requestAnimationFrame(stepCursorGlowAnimation);
+    }
+  }
+
   if (!prefersReducedMotion && rippleContainer) {
+    ensureCursorGlow();
+
     document.addEventListener('mousemove', (event) => {
       createRipple(event.pageX, event.pageY);
+      if (window.EARENDIL_DISABLE_RIPPLE) {
+        return;
+      }
+      ensureCursorGlow();
+      updateCursorGlowPosition(event.clientX, event.clientY);
+      showCursorGlow();
+    });
+
+    document.addEventListener('mouseleave', () => {
+      clearCursorGlowFade();
+      hideCursorGlow();
+      cursorGlowTarget = null;
+      cursorGlowPosition = null;
+      if (cursorGlowAnimationHandle !== null) {
+        cancelAnimationFrame(cursorGlowAnimationHandle);
+        cursorGlowAnimationHandle = null;
+      }
     });
   }
 

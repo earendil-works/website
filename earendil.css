@@ -80,6 +80,20 @@ canvas {
   will-change: transform, opacity;
 }
 
+.cursor-glow {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.19) 20%, rgba(230, 230, 230, 0.08) 45%, rgba(230, 230, 230, 0) 70%);
+  mix-blend-mode: lighter;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.5s ease;
+  will-change: opacity;
+}
+
 @keyframes ripple-grow {
   0% {
     transform: translate(-50%, -50%) scale(0);
@@ -135,7 +149,7 @@ canvas {
 .nav-links a {
   font-family: 'EB Garamond', 'Times New Roman', serif;
   font-weight: 500;
-  font-size: 24px;
+  font-size: 20px;
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   transition: color 0.3s ease;
@@ -338,11 +352,11 @@ canvas {
   margin: 0 auto;
   padding: 40px 20px 120px;
   box-sizing: border-box;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
 }
 
 .page-content {
   color: white;
-  text-align: center;
   font-size: 20px;
   line-height: 1.6;
   flex: 1;
