@@ -3,7 +3,10 @@
 {% block styles %}
 body {
   overflow: hidden;
-  cursor: url('cursor.svg') 24 24, auto;
+}
+
+* {
+  cursor: url('cursor.svg') 12 12, auto!important;
 }
 
 canvas {
@@ -111,7 +114,6 @@ canvas {
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   transition: color 0.3s ease;
-  cursor: url('/cursor.svg') 12 12, pointer;
 }
 
 .nav-links a:hover {
@@ -124,7 +126,6 @@ canvas {
   font-family: 'EB Garamond', 'Times New Roman', serif;
   font-weight: 500;
   font-size: 18px;
-  cursor: url('/cursor.svg') 12 12, pointer;
   z-index: 3;
   user-select: none;
   padding: 20px;
@@ -348,7 +349,7 @@ canvas {
     const rippleContainer = document.querySelector('.ripple-container');
 
     // Ripple management
-    const MAX_RIPPLES = 8;
+    const MAX_RIPPLES = 6;
     let lastRippleTime = 0;
     const RIPPLE_INTERVAL = 100; // ms between ripples
     let restingTimeout = null;
