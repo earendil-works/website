@@ -9,7 +9,7 @@
   }
 
   if (typeof window.EARENDIL_RIPPLE_INTERVAL === 'undefined') {
-    window.EARENDIL_RIPPLE_INTERVAL = 100; // ms between ripples
+    window.EARENDIL_RIPPLE_INTERVAL = 90; // ms between ripples
   }
 
   if (typeof window.EARENDIL_MORPH_DURATION === 'undefined') {

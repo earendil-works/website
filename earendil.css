@@ -73,7 +73,7 @@ canvas {
 .ripple {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.055) 0%, rgba(230, 230, 230, 0.025) 40%, rgba(230, 230, 230, 0) 70%);
+  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.095) 20%, rgba(230, 230, 230, 0.025) 40%, rgba(230, 230, 230, 0) 70%);
   mix-blend-mode: lighter;
   transform: translate(-50%, -50%) scale(0);
   animation: ripple-grow 3.6s ease-out forwards;
