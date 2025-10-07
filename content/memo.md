@@ -19,5 +19,3 @@ time onboarding machines onto humanity’s greatest communication protocol.  We
 want to help map human intent to machines with maximum truth and minimal loss.
 We may one day even look to help optimize how intelligent machines communicate
 amongst one another with new languages.
-
-Watch this space.

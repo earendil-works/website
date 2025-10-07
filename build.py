@@ -48,43 +48,47 @@ def build_site():
     # Setup Jinja2 environment
     env = Environment(loader=FileSystemLoader(templates_dir))
 
-    # Build index page
-    print("Building index.html...")
-    template = env.get_template("index.html")
-    html = template.render()
-    (output_dir / "index.html").write_text(html)
-
-    # Build markdown pages
-    pages = [
+    # Gather markdown-backed page content for SPA
+    page_sources = [
         {"slug": "memo", "file": "memo.md"},
         {"slug": "join-us", "file": "join-us.md"},
     ]
 
-    for page in pages:
-        print(f"Building {page['slug']}/index.html...")
-
-        # Read and convert markdown
-        md_file = content_dir / page["file"]
+    pages = []
+    for entry in page_sources:
+        md_file = content_dir / entry["file"]
         md_content = md_file.read_text()
-        html_content = markdown.markdown(md_content)
+        lines = md_content.splitlines()
 
-        # Extract title from first h1 if present
-        title = page["slug"].capitalize()
-        if md_content.startswith("# "):
-            title = md_content.split("\n")[0][2:]
+        title = entry["slug"].replace('-', ' ').title()
+        content_lines = lines
+        if lines and lines[0].startswith("# "):
+            title = lines[0][2:].strip()
+            content_lines = lines[1:]
 
-        # Render template
-        template = env.get_template("page.html")
-        html = template.render(
-            title=title,
-            content=html_content,
-            slug=page["slug"]
-        )
+        # Drop the leading heading from the rendered HTML to avoid duplicate H1s
+        content_md = "\n".join(content_lines).lstrip("\n")
+        html_content = markdown.markdown(content_md)
 
-        # Write to output
+        pages.append({
+            "slug": entry["slug"],
+            "title": title,
+            "path": f"/{entry['slug']}/",
+            "content": html_content,
+        })
+
+    # Build index page with embedded page content
+    print("Building index.html...")
+    template = env.get_template("index.html")
+    html = template.render(pages=pages)
+    (output_dir / "index.html").write_text(html)
+
+    # Create fallback copies for direct navigation
+    for page in pages:
         page_dir = output_dir / page["slug"]
         page_dir.mkdir(exist_ok=True)
-        (page_dir / "index.html").write_text(html)
+        print(f"Copying index.html to {page['slug']}/index.html...")
+        shutil.copy2(output_dir / "index.html", page_dir / "index.html")
 
     print("Build complete!")
 

@@ -19,6 +19,15 @@ body {
   font-family: 'EB Garamond', 'Times New Roman', serif;
 }
 
+[data-home-el] {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+body.view-page [data-home-el] {
+  pointer-events: none;
+}
+
 * {
   cursor: inherit;
 }
@@ -294,6 +303,23 @@ canvas {
 }
 
 /* Page-specific styles (memo, join-us, etc.) */
+.page-layer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.page-layer.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .page-bg {
   opacity: 1;
   background-position: 50% 15% !important; /* No movement on page */
