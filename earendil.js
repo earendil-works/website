@@ -285,6 +285,9 @@
   }
 
   const initialRoute = resolveRouteFromPath(window.location.pathname);
+  if (initialRoute !== HOME_ROUTE) {
+    homeIntroDone = true;
+  }
   applyRoute(initialRoute, { immediate: true, initial: true });
   updateHistory(initialRoute, 'replace');
 
@@ -400,7 +403,7 @@
   }
 
   function showCursorGlow() {
-    if (!cursorGlow || window.EARENDIL_DISABLE_RIPPLE) {
+    if (!cursorGlow) {
       return;
     }
     cursorGlow.style.opacity = '1';
@@ -465,9 +468,6 @@
 
     document.addEventListener('mousemove', (event) => {
       createRipple(event.pageX, event.pageY);
-      if (window.EARENDIL_DISABLE_RIPPLE) {
-        return;
-      }
       ensureCursorGlow();
       updateCursorGlowPosition(event.clientX, event.clientY);
       showCursorGlow();
