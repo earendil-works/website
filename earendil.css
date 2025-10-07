@@ -1,0 +1,390 @@
+html {
+  padding: 0;
+  margin: 0;
+  cursor: url('cursor.svg') 12 12, auto;
+}
+
+a {
+  color: gray;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: rgb(190, 190, 190);
+  margin: 0;
+  padding: 0;
+  font-family: 'EB Garamond', 'Times New Roman', serif;
+}
+
+* {
+  cursor: inherit;
+}
+
+a { 
+  cursor: url('cursor-hover.svg') 17 17, auto!important;
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.fullscreen-bg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: calc(100vw + 80px);
+  height: calc(100vh + 80px);
+  background-image: url("/ocean-10.jpg");
+  background-size: cover;
+  /* Allow small animated offsets via CSS variables */
+  background-position: calc(50% + var(--bg-offset-x, 0px)) calc(15% + var(--bg-offset-y, 0px));
+  background-repeat: no-repeat;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  transition: background-image 0.5s ease-in-out;
+  will-change: background-position;
+}
+
+.ripple-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.055) 0%, rgba(230, 230, 230, 0.025) 40%, rgba(230, 230, 230, 0) 70%);
+  mix-blend-mode: lighter;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple-grow 3.6s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes ripple-grow {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(30);
+    opacity: 0;
+  }
+}
+
+.main-image {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  max-width: 65vw;
+  object-fit: contain;
+  object-position: center;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  opacity: 1;
+}
+
+.main-image {
+  font-size: 0;
+  color: transparent;
+}
+
+.main-image::before {
+  content: none;
+}
+
+.main-image::after {
+  content: none;
+}
+
+.nav-links {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  opacity: 0;
+  width: calc(300px - 51px);
+  max-width: calc(65vw - 51px);
+  align-items: center;
+  align-self: stretch;
+}
+
+.nav-links a {
+  font-family: 'EB Garamond', 'Times New Roman', serif;
+  font-weight: 500;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+/* Corner text styles */
+.corner-text {
+  position: fixed;
+  font-family: 'EB Garamond', 'Times New Roman', serif;
+  font-weight: 500;
+  font-size: 18px;
+  z-index: 3;
+  user-select: none;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.corner-text:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.top-left {
+  top: 0;
+  left: 0;
+}
+
+.top-right {
+  top: 0;
+  right: 0;
+}
+
+.bottom-left {
+  bottom: 0;
+  left: 0;
+}
+
+.bottom-right {
+  bottom: 0;
+  right: 0;
+}
+
+.text-container {
+  position: relative;
+  display: inline-grid;
+  vertical-align: bottom;
+  filter: url(#threshold) blur(0.6px);
+  transform-origin: top left;
+  transform: scale(0.5);
+}
+
+.top-right .text-container { transform-origin: top right; }
+
+/* Ensure top corners sit flush with the top edge on large screens */
+.top-left .text-container,
+.top-right .text-container {
+  vertical-align: top;
+}
+
+/* For bottom corners, anchor the scaled box to the bottom
+   so the visible text sits on the container's bottom edge. */
+.bottom-left .text-container { transform-origin: bottom left; }
+.bottom-right .text-container { transform-origin: bottom right; }
+
+/* Overlay both text variants while letting container size naturally */
+.text-container > .text-version { grid-area: 1 / 1; }
+
+/* Align content within the container based on corner */
+.top-left .text-container
+.top-right .text-container { align-items: start; }
+.bottom-left .text-container,
+.bottom-right .text-container { align-items: end; }
+.top-left .text-container,
+.bottom-left .text-container { justify-items: start; }
+.top-right .text-container,
+.bottom-right .text-container { justify-items: end; }
+
+.text-version {
+  color: rgba(255, 255, 255, 1);
+  white-space: nowrap;
+  font-size: 200%;
+  transition: filter 1.2s ease-in-out, opacity 1.2s ease-in-out;
+  display: block;
+}
+
+/* Right alignment handled by grid on container */
+
+.corner-text:hover .text-version {
+  color: rgba(255, 255, 255, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fullscreen-bg { will-change: auto; }
+}
+
+@media (min-width: 900px) {
+  .corner-text { font-size: 20px; }
+}
+
+/* Small screens < 800px: stack tightly at bottom-right and enlarge text by 10% */
+@media (max-width: 800px) {
+  .corner-texts-wrapper {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 3;
+    padding: 8px !important;
+  }
+
+  /* Make each item tight with no inner padding/margins and 10% bigger */
+  .corner-texts-wrapper .corner-text {
+    font-size: 110% !important;
+    display: block;
+    bottom: initial;
+    top: initial;
+    left: initial;
+    right: initial;
+    position: initial;
+    padding: 0;
+  }
+
+  /* Remove scale-based layout gap; use natural size instead */
+  .corner-texts-wrapper .text-container {
+    transform: none !important;
+    display: inline-grid !important;
+    line-height: 1.3 !important; /* avoid extra line box */
+  }
+
+  /* Keep the texts right-aligned and 1x size when unscaled */
+  .corner-texts-wrapper .text-version {
+    left: 0;
+    font-size: 110%;
+  }
+
+  .top-left .text-container
+  .top-right .text-container { align-items: start; }
+  .bottom-left .text-container,
+  .bottom-right .text-container { align-items: start; }
+  .top-left .text-container,
+  .bottom-left .text-container { justify-items: start; }
+  .top-right .text-container,
+  .bottom-right .text-container { justify-items: start; }
+
+  /* Tweak nav for small screens */
+  .nav-links {
+    top: calc(50% + 150px);
+    gap: 15px;
+    bottom: initial;
+    text-align: center;
+  }
+  .nav-links a { font-size: 22px; }
+}
+
+/* move logo up to make space for small corner text */
+@media (max-width: 800px) and (max-height: 700px) {
+  .main-image {
+    top: calc(50% - 15vh);
+  }
+  .nav-links {
+    top: 5vh;
+  }
+}
+
+/* Page-specific styles (memo, join-us, etc.) */
+.page-bg {
+  opacity: 1;
+  background-position: 50% 15% !important; /* No movement on page */
+}
+
+.page-container {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px 120px;
+  box-sizing: border-box;
+}
+
+.page-content {
+  color: white;
+  text-align: center;
+  font-size: 20px;
+  line-height: 1.6;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+
+.page-content h1 {
+  font-size: 48px;
+  font-weight: 500;
+  margin-bottom: 1.5em;
+  color: white;
+}
+
+.page-content h2 {
+  font-size: 32px;
+  font-weight: 500;
+  margin-top: 1.5em;
+  margin-bottom: 1em;
+  color: white;
+}
+
+.page-content p {
+  margin-bottom: 1em;
+}
+
+.page-content a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+}
+
+.page-content a:hover {
+  color: white;
+}
+
+.page-home-link {
+  text-align: center;
+}
+
+.home-icon {
+  width: 80px;
+  height: 80px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.home-icon:hover {
+  opacity: 1;
+}
+
+@media (max-width: 800px) {
+  .page-content {
+    font-size: 18px;
+  }
+
+  .page-content h1 {
+    font-size: 36px;
+  }
+
+  .page-content h2 {
+    font-size: 28px;
+  }
+
+  .page-container {
+    padding: 20px 15px 100px;
+  }
+}

@@ -23,8 +23,12 @@ def build_site():
     # Copy static assets
     print("Copying static assets...")
     static_files = [
+        "earendil.css",
+        "earendil.js",
         "cursor.svg",
+        "cursor-hover.svg",
         "logo.svg",
+        "back.svg",
         "ocean-10.jpg",
         "ocean-70.jpg",
         "waves-100.jpg",
