@@ -4,11 +4,6 @@
     window.EARENDIL_DISABLE_RIPPLE = false;
   }
 
-  // Parallax effect configuration
-  if (typeof window.EARENDIL_DISABLE_PARALLAX === 'undefined') {
-    window.EARENDIL_DISABLE_PARALLAX = true;
-  }
-
   // Ripple management constants
   if (typeof window.EARENDIL_MAX_RIPPLES === 'undefined') {
     window.EARENDIL_MAX_RIPPLES = 6;
@@ -69,11 +64,17 @@
     }, 3600);
   }
 
-  bg.style.opacity = '0';
-  setTimeout(() => {
-    bg.style.transition = 'opacity 2s';
+  // Skip fade-in animation for pages (memo, join-us, etc)
+  const isPage = bg.classList.contains('page-bg');
+  if (isPage) {
     bg.style.opacity = '1.0';
-  }, 250);
+  } else {
+    bg.style.opacity = '0';
+    setTimeout(() => {
+      bg.style.transition = 'opacity 2s';
+      bg.style.opacity = '1.0';
+    }, 250);
+  }
 
   img.style.opacity = '0';
   setTimeout(() => {
@@ -253,72 +254,4 @@
     });
   }
 
-  // Background parallax motion: follows mouse cursor with smooth decay
-  (function setupBackgroundParallax() {
-    if (window.EARENDIL_DISABLE_PARALLAX) return;
-
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!bg || reduceMotion) return;
-
-    const MAX_OFFSET = 40; // max px offset in any direction
-    const SMOOTHING = 0.01; // how quickly we ease toward target per frame
-    const DECAY_DURATION_MS = 2000; // time to scale down to rest after mouse stops
-
-    let currentX = 0, currentY = 0;
-    let targetX = 0, targetY = 0;
-    let lastMouseMove = performance.now();
-    let isMouseMoving = false;
-
-    // Track mouse position and calculate parallax offset
-    document.addEventListener('mousemove', (e) => {
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-
-      // Calculate normalized position (-1 to 1) from center
-      const normalizedX = (e.clientX - centerX) / centerX;
-      const normalizedY = (e.clientY - centerY) / centerY;
-
-      // Invert for parallax effect (mouse right = background left)
-      targetX = -normalizedX * MAX_OFFSET;
-      targetY = -normalizedY * MAX_OFFSET;
-
-      lastMouseMove = performance.now();
-      isMouseMoving = true;
-    });
-
-    function animate(now) {
-      // Calculate decay factor if mouse stopped moving
-      const timeSinceMove = now - lastMouseMove;
-      let decayFactor = 1;
-
-      if (timeSinceMove > 100) { // Small delay before decay starts
-        isMouseMoving = false;
-        const decayProgress = Math.min((timeSinceMove - 100) / DECAY_DURATION_MS, 1);
-        // Ease out cubic for smooth deceleration
-        decayFactor = 1 - (decayProgress < 1 ? 1 - Math.pow(1 - decayProgress, 3) : 1);
-      }
-
-      // Apply decay to target when not moving
-      const effectiveTargetX = isMouseMoving ? targetX : targetX * decayFactor;
-      const effectiveTargetY = isMouseMoving ? targetY : targetY * decayFactor;
-
-      // Smoothly interpolate current position toward target
-      currentX += (effectiveTargetX - currentX) * SMOOTHING;
-      currentY += (effectiveTargetY - currentY) * SMOOTHING;
-
-      if (Math.abs(currentX) < 0.2) {
-        currentX = 0;
-      }
-      if (Math.abs(currentY) < 0.2) {
-        currentY = 0;
-      }
-
-      bg.style.setProperty('--bg-offset-x', currentX + 'px');
-      bg.style.setProperty('--bg-offset-y', currentY + 'px');
-
-      requestAnimationFrame(animate);
-    }
-
-    requestAnimationFrame(animate);
-  })();
 })();

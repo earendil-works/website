@@ -44,13 +44,11 @@ canvas {
   height: calc(100vh + 80px);
   background-image: url("/ocean-10.jpg");
   background-size: cover;
-  /* Allow small animated offsets via CSS variables */
-  background-position: calc(50% + var(--bg-offset-x, 0px)) calc(15% + var(--bg-offset-y, 0px));
+  background-position: 50% 15%;
   background-repeat: no-repeat;
   transform: translate(-50%, -50%);
   z-index: 1;
   transition: background-image 0.5s ease-in-out;
-  will-change: background-position;
 }
 
 .ripple-container {
