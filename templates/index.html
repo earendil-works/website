@@ -32,15 +32,35 @@ canvas {
   will-change: background-position;
 }
 
-.spotlight {
+.ripple-container {
   position: fixed;
-  width: 500px;
-  height: 500px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.3) 0%, rgba(230, 230, 230, 0) 70%);
-  mix-blend-mode: normal;
-  transform: translate(-50%, -50%);
   z-index: 2;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(230, 230, 230, 0.055) 0%, rgba(230, 230, 230, 0.025) 40%, rgba(230, 230, 230, 0) 70%);
+  mix-blend-mode: lighter;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple-grow 3.6s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes ripple-grow {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(30);
+    opacity: 0;
+  }
 }
 
 .main-image {
@@ -192,21 +212,6 @@ canvas {
   .corner-text { font-size: 20px; }
 }
 
-/* Responsive spotlight sizing */
-@media (max-width: 768px) {
-  .spotlight {
-    width: 200px;
-    height: 200px;
-  }
-}
-
-@media (min-width: 1025px) {
-  .spotlight {
-    width: 700px;
-    height: 700px;
-  }
-}
-
 /* Small screens < 800px: stack tightly at bottom-right and enlarge text by 10% */
 @media (max-width: 800px) {
   .corner-texts-wrapper {
@@ -275,7 +280,7 @@ canvas {
 
 {% block body %}
 <div class="fullscreen-bg"></div>
-<div class="spotlight"></div>
+<div class="ripple-container"></div>
 <img src="/logo.svg" class="main-image" alt="" aria-hidden="true">
 <div class="nav-links">
   <a href="/memo/">memo</a>
@@ -340,7 +345,45 @@ canvas {
     const bg = document.querySelector('.fullscreen-bg');
     const img = document.querySelector('.main-image');
     const navLinks = document.querySelector('.nav-links');
-    const spotlight = document.querySelector('.spotlight');
+    const rippleContainer = document.querySelector('.ripple-container');
+
+    // Ripple management
+    const MAX_RIPPLES = 8;
+    let lastRippleTime = 0;
+    const RIPPLE_INTERVAL = 100; // ms between ripples
+    let restingTimeout = null;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function createRipple(x, y) {
+      if (prefersReducedMotion) return; // Respect reduced motion preference
+
+      const now = Date.now();
+      if (now - lastRippleTime < RIPPLE_INTERVAL) return;
+      lastRippleTime = now;
+
+      // Remove old ripples if at max
+      const ripples = rippleContainer.querySelectorAll('.ripple');
+      if (ripples.length >= MAX_RIPPLES) {
+        ripples[0].remove();
+      }
+
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      ripple.style.width = '100px';
+      ripple.style.height = '100px';
+      ripple.style.pointerEvents = 'none';
+
+      rippleContainer.appendChild(ripple);
+
+      // Remove after animation completes
+      setTimeout(() => {
+        if (ripple.parentNode) {
+          ripple.remove();
+        }
+      }, 3600);
+    }
 
     bg.style.opacity = '0';
     setTimeout(() => {
@@ -354,15 +397,8 @@ canvas {
       img.style.opacity = '0.9';
     }, 600);
 
-    setTimeout(() => {
-      spotlight.style.transition = 'opacity 3s';
-      spotlight.style.opacity = '0.9';
-    }, 600);
-
     document.addEventListener('mousemove', (e) => {
-      const rect = img.getBoundingClientRect();
-      spotlight.style.left = e.pageX + 'px';
-      spotlight.style.top = e.pageY + 'px';
+      createRipple(e.pageX, e.pageY);
     });
 
     // Animate logo transform
