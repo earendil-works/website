@@ -144,6 +144,7 @@ canvas {
   max-width: calc(65vw - 51px);
   align-items: center;
   align-self: stretch;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
 .nav-links a {
@@ -351,7 +352,7 @@ canvas {
   margin: 0 auto;
   padding: 40px 20px 120px;
   box-sizing: border-box;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.7);
 }
 
 .page-content {
