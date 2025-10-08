@@ -318,7 +318,6 @@ canvas {
 
 /* Page-specific styles (memo, join-us, etc.) */
 .page-layer {
-  position: fixed;
   inset: 0;
   display: flex;
   justify-content: center;
@@ -423,6 +422,6 @@ canvas {
   }
 
   .page-container {
-    padding: 20px 15px 100px;
+    padding: 30px 30px 70px;
   }
 }

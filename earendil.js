@@ -494,7 +494,9 @@
                      navigator.maxTouchPoints > 0;
 
     const defaultLanguages = new Map();
+    const hoverStates = new Map();
     const morphStates = new Map();
+    let sharedDefaultLanguage = 'elven';
     const MORPH_DURATION = window.EARENDIL_MORPH_DURATION;
     const INITIAL_ELVEN_REVEAL_DURATION = window.EARENDIL_INITIAL_ELVEN_REVEAL_DURATION;
 
@@ -552,7 +554,8 @@
     }
 
     cornerTexts.forEach((cornerText) => {
-      defaultLanguages.set(cornerText, 'elven');
+      defaultLanguages.set(cornerText, sharedDefaultLanguage);
+      hoverStates.set(cornerText, false);
       const elvenSpan = cornerText.querySelector('.text-version.elven');
       const englishSpan = cornerText.querySelector('.text-version.english');
       elvenSpan.style.transition = 'none';
@@ -590,29 +593,30 @@
     cornerTexts.forEach((cornerText) => startInitialReveal(cornerText, INITIAL_ELVEN_REVEAL_DURATION));
 
     cornerTexts.forEach((cornerText) => {
-      let isHovering = false;
-
       if (!isMobile) {
         cornerText.addEventListener('mouseenter', () => {
-          isHovering = true;
+          hoverStates.set(cornerText, true);
           startMorph(cornerText, 'english');
         });
 
         cornerText.addEventListener('mouseleave', () => {
-          isHovering = false;
+          hoverStates.set(cornerText, false);
           const defaultLang = defaultLanguages.get(cornerText);
           startMorph(cornerText, defaultLang);
         });
       }
 
       cornerText.addEventListener('click', () => {
-        const currentDefault = defaultLanguages.get(cornerText);
-        const newDefault = currentDefault === 'elven' ? 'english' : 'elven';
-        defaultLanguages.set(cornerText, newDefault);
+        const newDefault = sharedDefaultLanguage === 'elven' ? 'english' : 'elven';
+        sharedDefaultLanguage = newDefault;
 
-        if (isMobile || !isHovering) {
-          startMorph(cornerText, newDefault);
-        }
+        cornerTexts.forEach((otherCornerText) => {
+          defaultLanguages.set(otherCornerText, newDefault);
+          const otherIsHovering = hoverStates.get(otherCornerText);
+          if (isMobile || !otherIsHovering) {
+            startMorph(otherCornerText, newDefault);
+          }
+        });
       });
     });
   }
