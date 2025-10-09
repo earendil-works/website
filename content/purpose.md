@@ -1,4 +1,4 @@
-Earendil is a public benefit corporation founded by Armin Ronacher and Colin Daymond Hanna with four facets to its purpose. These are embedded in our founding charter.
+Earendil Inc. is a public benefit corporation founded by Armin Ronacher and Colin Daymond Hanna with four facets to its purpose. These are embedded in our founding charter.
 
 **Craft software and open protocols**  
 We believe in craft and we believe in open. Software governs how information is understood and increasingly, how reality is perceived. That comes with responsibility.

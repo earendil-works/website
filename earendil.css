@@ -273,6 +273,11 @@ canvas {
   pointer-events: auto;
 }
 
+body.view-page .corner-texts-wrapper {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fullscreen-bg { will-change: auto; }
 }
