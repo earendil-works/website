@@ -57,7 +57,8 @@ canvas {
   background-repeat: no-repeat;
   transform: translate(-50%, -50%);
   z-index: 1;
-  transition: background-image 0.5s ease-in-out;
+  opacity: 1;
+  transition: background-image 0.5s ease-in-out, opacity 0.6s ease;
 }
 
 .ripple-container {
@@ -151,7 +152,7 @@ canvas {
   font-family: 'EB Garamond', 'Times New Roman', serif;
   font-weight: 500;
   font-size: 20px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.95);
   text-decoration: none;
   transition: color 0.3s ease;
 }
@@ -163,46 +164,53 @@ canvas {
 /* Corner text styles */
 .corner-text {
   position: fixed;
+  color: rgba(255, 255, 255, 0.8);
   font-family: 'EB Garamond', 'Times New Roman', serif;
   font-weight: 500;
   font-size: 18px;
   z-index: 3;
   user-select: none;
-  padding: 20px;
+  padding: clamp(4px, 0.8vw, 10px) clamp(6px, 1.6vw, 14px);
   overflow: hidden;
 }
 
 .corner-text:hover {
-  color: rgba(255, 255, 255, 1);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .top-left {
   top: 0;
   left: 0;
+  padding-right: 10px;
 }
 
 .top-right {
   top: 0;
   right: 0;
+  padding-left: clamp(6px, 1.5vw, 12px);
 }
 
 .bottom-left {
   bottom: 0;
   left: 0;
+  padding-right: clamp(6px, 1.5vw, 12px);
 }
 
 .bottom-right {
   bottom: 0;
   right: 0;
+  padding-left: clamp(6px, 1.5vw, 12px);
 }
 
 .text-container {
   position: relative;
   display: inline-grid;
   vertical-align: bottom;
-  filter: url(#threshold) blur(0.6px);
   transform-origin: top left;
-  transform: scale(0.5);
+}
+
+.text-container.morphing {
+  filter: url(#threshold) blur(0.6px);
 }
 
 .top-right .text-container { transform-origin: top right; }
@@ -232,17 +240,37 @@ canvas {
 .bottom-right .text-container { justify-items: end; }
 
 .text-version {
-  color: rgba(255, 255, 255, 1);
+  color: rgba(255, 255, 255, 0.8);
   white-space: nowrap;
-  font-size: 200%;
+  font-size: clamp(16px, 1.8vw, 20px);
   transition: filter 1.2s ease-in-out, opacity 1.2s ease-in-out;
   display: block;
+  position: relative;
 }
 
 /* Right alignment handled by grid on container */
 
 .corner-text:hover .text-version {
   color: rgba(255, 255, 255, 1);
+}
+
+.text-version.elven {
+  z-index: 2;
+}
+
+.text-version.english {
+  z-index: 1;
+}
+
+.corner-texts-wrapper {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.corner-texts-wrapper.is-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -303,19 +331,19 @@ canvas {
     gap: 15px;
     bottom: initial;
     text-align: center;
+    transform: translate(-50%, 0);
   }
   .nav-links a { font-size: 22px; }
 }
 
-/* move logo up to make space for small corner text */
 @media (max-width: 800px) and (max-height: 700px) {
-  .main-image {
-    top: calc(50% - 15vh);
-  }
   .nav-links {
     top: 5vh;
+    bottom: initial;
+    transform: translate(-50%, 0);
   }
 }
+
 
 /* Page-specific styles (memo, join-us, etc.) */
 .page-layer {
@@ -335,7 +363,7 @@ canvas {
 }
 
 .page-bg {
-  opacity: 1;
+  opacity: 0.4;
   background-position: 50% 15% !important; /* No movement on page */
 }
 
@@ -352,11 +380,10 @@ canvas {
   margin: 0 auto;
   padding: 40px 20px 120px;
   box-sizing: border-box;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.7);
 }
 
 .page-content {
-  color: white;
+  color: #2b2b2b;
   font-size: 20px;
   line-height: 1.6;
   flex: 1;
@@ -370,7 +397,7 @@ canvas {
   font-size: 48px;
   font-weight: 500;
   margin-bottom: 1.5em;
-  color: white;
+  color: #1a1a1a;
 }
 
 .page-content h2 {
@@ -378,7 +405,7 @@ canvas {
   font-weight: 500;
   margin-top: 1.5em;
   margin-bottom: 1em;
-  color: white;
+  color: #1a1a1a;
 }
 
 .page-content p {
@@ -386,12 +413,21 @@ canvas {
 }
 
 .page-content a {
-  color: rgba(255, 255, 255, 0.9);
+  color: #2b2b2b;
   text-decoration: underline;
 }
 
 .page-content a:hover {
-  color: white;
+  color: #1a1a1a;
+}
+
+.page-content a.cta-email {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.page-content a.cta-email:hover {
+  text-decoration: none;
 }
 
 .page-home-link {

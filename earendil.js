@@ -23,8 +23,71 @@
   const HOME_ROUTE = 'home';
 
   const bg = document.querySelector('.fullscreen-bg');
+  if (bg) {
+    bg.style.backgroundImage = `url(\"/ocean-10.jpg\")`;
+  }
   const img = document.querySelector('.main-image');
   const navLinks = document.querySelector('.nav-links');
+  const cornerTextWrapper = document.querySelector('.corner-texts-wrapper');
+  let cornerTextsFadeTimeout = null;
+  let cornerTextsVisible = false;
+
+  // Debug observer removed after investigation
+
+  function clearCornerTextsFadeTimeout() {
+    if (cornerTextsFadeTimeout !== null) {
+      clearTimeout(cornerTextsFadeTimeout);
+      cornerTextsFadeTimeout = null;
+    }
+  }
+
+  function setCornerTextsVisible(visible, options = {}) {
+    if (!cornerTextWrapper) {
+      return;
+    }
+
+    const {
+      immediate = false,
+      durationSec = 0.6,
+      delayMs = 0,
+    } = options;
+
+    clearCornerTextsFadeTimeout();
+    cornerTextsVisible = visible;
+
+    const applyVisibility = () => {
+      cornerTextWrapper.style.transition = `opacity ${durationSec}s ease`;
+      if (visible) {
+        cornerTextWrapper.classList.add('is-visible');
+      } else {
+        cornerTextWrapper.classList.remove('is-visible');
+      }
+    };
+
+    if (immediate) {
+      const previousTransition = cornerTextWrapper.style.transition;
+      cornerTextWrapper.style.transition = 'none';
+      if (visible) {
+        cornerTextWrapper.classList.add('is-visible');
+      } else {
+        cornerTextWrapper.classList.remove('is-visible');
+      }
+      cornerTextWrapper.getBoundingClientRect();
+      cornerTextWrapper.style.transition = previousTransition;
+      return;
+    }
+
+    if (delayMs > 0) {
+      cornerTextWrapper.style.transition = 'none';
+      cornerTextWrapper.getBoundingClientRect();
+      cornerTextsFadeTimeout = setTimeout(() => {
+        cornerTextsFadeTimeout = null;
+        applyVisibility();
+      }, delayMs);
+    } else {
+      applyVisibility();
+    }
+  }
   const rippleContainer = document.querySelector('.ripple-container');
   const pageLayer = document.querySelector('[data-page-layer]');
   const pageContent = pageLayer ? pageLayer.querySelector('[data-page-content]') : null;
@@ -86,6 +149,7 @@
   }
 
   setHomeElementsVisible(false, { immediate: true });
+  setCornerTextsVisible(false, { immediate: true });
 
   routeTemplates.forEach((template) => {
     const slug = template.dataset.page;
@@ -175,6 +239,26 @@
     }
   }
 
+  function fadeInHomeElement(el, targetOpacity, durationSec, delayMs) {
+    if (!el) {
+      return;
+    }
+
+    const meta = homeElementMeta.get(el);
+    if (meta) {
+      meta.storedTransition = `opacity ${durationSec}s ease`;
+    }
+
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.getBoundingClientRect();
+
+    setTimeout(() => {
+      el.style.transition = `opacity ${durationSec}s ease`;
+      el.style.opacity = `${targetOpacity}`;
+    }, delayMs);
+  }
+
   function runInitialHomeIntro() {
     if (homeIntroDone) {
       return;
@@ -189,20 +273,11 @@
       }, 250);
     }
 
-    if (img) {
-      img.style.opacity = '0';
-      setTimeout(() => {
-        img.style.transition = 'opacity 5s ease';
-        img.style.opacity = '0.9';
-      }, 600);
-    }
-
-    if (navLinks) {
-      navLinks.style.opacity = '0';
-      setTimeout(() => {
-        navLinks.style.transition = 'opacity 3s ease';
-        navLinks.style.opacity = '1';
-      }, 600);
+    fadeInHomeElement(img, 0.9, 5, 600);
+    fadeInHomeElement(navLinks, 1, 3, 600);
+    if (cornerTextWrapper) {
+      cornerTextWrapper.classList.add('is-visible');
+      fadeInHomeElement(cornerTextWrapper, 1, 3, 900);
     }
   }
 
@@ -219,6 +294,8 @@
       bg.classList.toggle('page-bg', !isHome);
       if (isHome && immediate) {
         bg.style.opacity = '1.0';
+      } else if (!isHome && immediate) {
+        bg.style.opacity = '0.4';
       }
     }
 
@@ -245,6 +322,9 @@
           navLinks.style.transition = navLinks.style.transition || 'opacity 3s ease';
           navLinks.style.opacity = '1';
         }
+        setCornerTextsVisible(true, { durationSec: 0.6, delayMs: 120 });
+      } else if (immediate) {
+        setCornerTextsVisible(true, { immediate: true });
       }
     } else {
       const page = routes.get(route);
@@ -261,9 +341,19 @@
 
       showPageLayer(immediate || initial);
 
-      if (bg && (initial || immediate)) {
-        bg.style.opacity = '1.0';
+      if (bg) {
+        if (initial || immediate) {
+          bg.style.opacity = '0.4';
+        } else {
+          bg.style.transition = 'opacity 0.6s ease';
+          bg.style.opacity = '0.4';
+        }
       }
+
+      setCornerTextsVisible(false, {
+        immediate: true,
+        durationSec: immediate || initial ? 0.2 : 0.4,
+      });
     }
   }
 
@@ -494,30 +584,44 @@
                      navigator.maxTouchPoints > 0;
 
     const defaultLanguages = new Map();
-    const hoverStates = new Map();
     const morphStates = new Map();
     let sharedDefaultLanguage = 'elven';
     const MORPH_DURATION = window.EARENDIL_MORPH_DURATION;
     const INITIAL_ELVEN_REVEAL_DURATION = window.EARENDIL_INITIAL_ELVEN_REVEAL_DURATION;
+
+    function updateTextContainerMorphState(cornerElement, fraction) {
+      const container = cornerElement.querySelector('.text-container');
+      if (!container) {
+        return;
+      }
+      const epsilon = 0.005;
+      if (fraction > epsilon && fraction < 1 - epsilon) {
+        container.classList.add('morphing');
+      } else {
+        container.classList.remove('morphing');
+      }
+    }
 
     function setMorph(cornerElement, fraction) {
       const elvenSpan = cornerElement.querySelector('.text-version.elven');
       const englishSpan = cornerElement.querySelector('.text-version.english');
 
       const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-      const f = clamp(fraction, 0.0001, 0.9999);
+      const f = clamp(fraction, 0, 1);
 
-      const englishBlur = Math.min(8 / f - 8, 100);
-      const elvenBlur = Math.min(8 / (1 - f) - 8, 100);
+      const englishBlur = f <= 0 ? 100 : Math.min(8 / f - 8, 100);
+      const elvenBlur = f >= 1 ? 100 : Math.min(8 / (1 - f) - 8, 100);
 
-      const englishOpacity = Math.pow(f, 0.4);
-      const elvenOpacity = Math.pow(1 - f, 0.4);
+      const englishOpacity = f <= 0 ? 0 : Math.pow(f, 0.4);
+      const elvenOpacity = f >= 1 ? 0 : Math.pow(1 - f, 0.4);
 
       englishSpan.style.filter = `blur(${englishBlur}px)`;
       englishSpan.style.opacity = `${englishOpacity}`;
 
       elvenSpan.style.filter = `blur(${elvenBlur}px)`;
       elvenSpan.style.opacity = `${elvenOpacity}`;
+
+      updateTextContainerMorphState(cornerElement, f);
     }
 
     function startMorph(cornerElement, targetLanguage) {
@@ -555,54 +659,22 @@
 
     cornerTexts.forEach((cornerText) => {
       defaultLanguages.set(cornerText, sharedDefaultLanguage);
-      hoverStates.set(cornerText, false);
       const elvenSpan = cornerText.querySelector('.text-version.elven');
       const englishSpan = cornerText.querySelector('.text-version.english');
       elvenSpan.style.transition = 'none';
       englishSpan.style.transition = 'none';
-      morphStates.set(cornerText, { f: 0, raf: null });
-      elvenSpan.style.opacity = '0';
-      elvenSpan.style.filter = 'blur(100px)';
-      englishSpan.style.opacity = '0';
-      englishSpan.style.filter = 'blur(100px)';
+      const initialF = sharedDefaultLanguage === 'english' ? 1 : 0;
+      morphStates.set(cornerText, { f: initialF, raf: null });
+      setMorph(cornerText, initialF);
     });
-
-    function startInitialReveal(cornerElement, durationSec) {
-      const elvenSpan = cornerElement.querySelector('.text-version.elven');
-      const start = performance.now();
-      const step = (now) => {
-        const t = (now - start) / (durationSec * 1000);
-        const clamped = t <= 0 ? 0 : t >= 1 ? 1 : t;
-        const ease = clamped < 0.5
-          ? 4 * clamped * clamped * clamped
-          : 1 - Math.pow(-2 * clamped + 2, 3) / 2;
-        const f = Math.max(ease, 0.0001);
-        const blur = Math.min(8 / f - 8, 100);
-        const opacity = Math.pow(ease, 0.4);
-        elvenSpan.style.filter = `blur(${blur}px)`;
-        elvenSpan.style.opacity = `${opacity}`;
-        if (clamped < 1) {
-          requestAnimationFrame(step);
-        } else {
-          setMorph(cornerElement, 0);
-        }
-      };
-      requestAnimationFrame(step);
-    }
-
-    cornerTexts.forEach((cornerText) => startInitialReveal(cornerText, INITIAL_ELVEN_REVEAL_DURATION));
 
     cornerTexts.forEach((cornerText) => {
       if (!isMobile) {
         cornerText.addEventListener('mouseenter', () => {
-          hoverStates.set(cornerText, true);
-          startMorph(cornerText, 'english');
-        });
-
-        cornerText.addEventListener('mouseleave', () => {
-          hoverStates.set(cornerText, false);
-          const defaultLang = defaultLanguages.get(cornerText);
-          startMorph(cornerText, defaultLang);
+          const currentDefault = defaultLanguages.get(cornerText) ?? sharedDefaultLanguage;
+          const nextDefault = currentDefault === 'elven' ? 'english' : 'elven';
+          defaultLanguages.set(cornerText, nextDefault);
+          startMorph(cornerText, nextDefault);
         });
       }
 
@@ -612,10 +684,7 @@
 
         cornerTexts.forEach((otherCornerText) => {
           defaultLanguages.set(otherCornerText, newDefault);
-          const otherIsHovering = hoverStates.get(otherCornerText);
-          if (isMobile || !otherIsHovering) {
-            startMorph(otherCornerText, newDefault);
-          }
+          startMorph(otherCornerText, newDefault);
         });
       });
     });
