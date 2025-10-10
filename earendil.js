@@ -23,9 +23,6 @@
   const HOME_ROUTE = 'home';
 
   const bg = document.querySelector('.fullscreen-bg');
-  if (bg) {
-    bg.style.backgroundImage = `url(\"/ocean-10.jpg\")`;
-  }
   const img = document.querySelector('.main-image');
   const navLinks = document.querySelector('.nav-links');
   const cornerTextWrapper = document.querySelector('.corner-texts-wrapper');

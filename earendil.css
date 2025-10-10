@@ -51,7 +51,7 @@ canvas {
   left: 50%;
   width: calc(100vw + 80px);
   height: calc(100vh + 80px);
-  background-image: url("/ocean-10.jpg");
+  background-image: url("/ocean-progressive.jpg");
   background-size: cover;
   background-position: 50% 15%;
   background-repeat: no-repeat;

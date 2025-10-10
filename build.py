@@ -29,7 +29,7 @@ def build_site():
         "cursor-hover.svg",
         "logo.svg",
         "back.svg",
-        "ocean-10.jpg",
+        "ocean-progressive.jpg",
         "CNAME",
     ]
     for file in static_files:
