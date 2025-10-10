@@ -30,9 +30,6 @@ def build_site():
         "logo.svg",
         "back.svg",
         "ocean-10.jpg",
-        "ocean-70.jpg",
-        "waves-100.jpg",
-        "waves-80.jpg",
         "CNAME",
     ]
     for file in static_files:
