@@ -25,66 +25,9 @@
   const bg = document.querySelector('.fullscreen-bg');
   const img = document.querySelector('.main-image');
   const navLinks = document.querySelector('.nav-links');
-  const cornerTextWrapper = document.querySelector('.corner-texts-wrapper');
-  let cornerTextsFadeTimeout = null;
-  let cornerTextsVisible = false;
 
   // Debug observer removed after investigation
 
-  function clearCornerTextsFadeTimeout() {
-    if (cornerTextsFadeTimeout !== null) {
-      clearTimeout(cornerTextsFadeTimeout);
-      cornerTextsFadeTimeout = null;
-    }
-  }
-
-  function setCornerTextsVisible(visible, options = {}) {
-    if (!cornerTextWrapper) {
-      return;
-    }
-
-    const {
-      immediate = false,
-      durationSec = 0.6,
-      delayMs = 0,
-    } = options;
-
-    clearCornerTextsFadeTimeout();
-    cornerTextsVisible = visible;
-
-    const applyVisibility = () => {
-      cornerTextWrapper.style.transition = `opacity ${durationSec}s ease`;
-      if (visible) {
-        cornerTextWrapper.classList.add('is-visible');
-      } else {
-        cornerTextWrapper.classList.remove('is-visible');
-      }
-    };
-
-    if (immediate) {
-      const previousTransition = cornerTextWrapper.style.transition;
-      cornerTextWrapper.style.transition = 'none';
-      if (visible) {
-        cornerTextWrapper.classList.add('is-visible');
-      } else {
-        cornerTextWrapper.classList.remove('is-visible');
-      }
-      cornerTextWrapper.getBoundingClientRect();
-      cornerTextWrapper.style.transition = previousTransition;
-      return;
-    }
-
-    if (delayMs > 0) {
-      cornerTextWrapper.style.transition = 'none';
-      cornerTextWrapper.getBoundingClientRect();
-      cornerTextsFadeTimeout = setTimeout(() => {
-        cornerTextsFadeTimeout = null;
-        applyVisibility();
-      }, delayMs);
-    } else {
-      applyVisibility();
-    }
-  }
   const rippleContainer = document.querySelector('.ripple-container');
   const pageLayer = document.querySelector('[data-page-layer]');
   const pageContent = pageLayer ? pageLayer.querySelector('[data-page-content]') : null;
@@ -146,7 +89,6 @@
   }
 
   setHomeElementsVisible(false, { immediate: true });
-  setCornerTextsVisible(false, { immediate: true });
 
   routeTemplates.forEach((template) => {
     const slug = template.dataset.page;
@@ -272,10 +214,6 @@
 
     fadeInHomeElement(img, 0.9, 5, 600);
     fadeInHomeElement(navLinks, 1, 3, 600);
-    if (cornerTextWrapper) {
-      cornerTextWrapper.classList.add('is-visible');
-      fadeInHomeElement(cornerTextWrapper, 1, 3, 900);
-    }
   }
 
   function applyRoute(route, options = {}) {
@@ -319,9 +257,6 @@
           navLinks.style.transition = navLinks.style.transition || 'opacity 3s ease';
           navLinks.style.opacity = '1';
         }
-        setCornerTextsVisible(true, { durationSec: 0.6, delayMs: 120 });
-      } else if (immediate) {
-        setCornerTextsVisible(true, { immediate: true });
       }
     } else {
       const page = routes.get(route);
@@ -346,11 +281,6 @@
           bg.style.opacity = '0.4';
         }
       }
-
-      setCornerTextsVisible(false, {
-        immediate: true,
-        durationSec: immediate || initial ? 0.2 : 0.4,
-      });
     }
   }
 
@@ -569,121 +499,6 @@
         cancelAnimationFrame(cursorGlowAnimationHandle);
         cursorGlowAnimationHandle = null;
       }
-    });
-  }
-
-  // Corner text language morphing
-  const cornerTexts = document.querySelectorAll('.corner-text');
-
-  if (cornerTexts.length > 0) {
-    const isMobile = window.matchMedia('(max-width: 768px)').matches ||
-                     'ontouchstart' in window ||
-                     navigator.maxTouchPoints > 0;
-
-    const defaultLanguages = new Map();
-    const morphStates = new Map();
-    let sharedDefaultLanguage = 'elven';
-    const MORPH_DURATION = window.EARENDIL_MORPH_DURATION;
-    const INITIAL_ELVEN_REVEAL_DURATION = window.EARENDIL_INITIAL_ELVEN_REVEAL_DURATION;
-
-    function updateTextContainerMorphState(cornerElement, fraction) {
-      const container = cornerElement.querySelector('.text-container');
-      if (!container) {
-        return;
-      }
-      const epsilon = 0.005;
-      if (fraction > epsilon && fraction < 1 - epsilon) {
-        container.classList.add('morphing');
-      } else {
-        container.classList.remove('morphing');
-      }
-    }
-
-    function setMorph(cornerElement, fraction) {
-      const elvenSpan = cornerElement.querySelector('.text-version.elven');
-      const englishSpan = cornerElement.querySelector('.text-version.english');
-
-      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-      const f = clamp(fraction, 0, 1);
-
-      const englishBlur = f <= 0 ? 100 : Math.min(8 / f - 8, 100);
-      const elvenBlur = f >= 1 ? 100 : Math.min(8 / (1 - f) - 8, 100);
-
-      const englishOpacity = f <= 0 ? 0 : Math.pow(f, 0.4);
-      const elvenOpacity = f >= 1 ? 0 : Math.pow(1 - f, 0.4);
-
-      englishSpan.style.filter = `blur(${englishBlur}px)`;
-      englishSpan.style.opacity = `${englishOpacity}`;
-
-      elvenSpan.style.filter = `blur(${elvenBlur}px)`;
-      elvenSpan.style.opacity = `${elvenOpacity}`;
-
-      updateTextContainerMorphState(cornerElement, f);
-    }
-
-    function startMorph(cornerElement, targetLanguage) {
-      let state = morphStates.get(cornerElement);
-      if (!state) {
-        state = { f: 0, raf: null };
-        morphStates.set(cornerElement, state);
-      }
-
-      const targetF = targetLanguage === 'english' ? 1 : 0;
-      const startF = state.f;
-      const startTime = performance.now();
-
-      if (state.raf) {
-        cancelAnimationFrame(state.raf);
-      }
-
-      const step = (now) => {
-        const t = (now - startTime) / (MORPH_DURATION * 1000);
-        const ease = t <= 0 ? 0 : t >= 1 ? 1 : (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-        const f = startF + (targetF - startF) * ease;
-        state.f = f;
-        setMorph(cornerElement, f);
-        if (t < 1) {
-          state.raf = requestAnimationFrame(step);
-        } else {
-          state.raf = null;
-          state.f = targetF;
-          setMorph(cornerElement, targetF);
-        }
-      };
-
-      state.raf = requestAnimationFrame(step);
-    }
-
-    cornerTexts.forEach((cornerText) => {
-      defaultLanguages.set(cornerText, sharedDefaultLanguage);
-      const elvenSpan = cornerText.querySelector('.text-version.elven');
-      const englishSpan = cornerText.querySelector('.text-version.english');
-      elvenSpan.style.transition = 'none';
-      englishSpan.style.transition = 'none';
-      const initialF = sharedDefaultLanguage === 'english' ? 1 : 0;
-      morphStates.set(cornerText, { f: initialF, raf: null });
-      setMorph(cornerText, initialF);
-    });
-
-    cornerTexts.forEach((cornerText) => {
-      if (!isMobile) {
-        cornerText.addEventListener('mouseenter', () => {
-          const currentDefault = defaultLanguages.get(cornerText) ?? sharedDefaultLanguage;
-          const nextDefault = currentDefault === 'elven' ? 'english' : 'elven';
-          defaultLanguages.set(cornerText, nextDefault);
-          startMorph(cornerText, nextDefault);
-        });
-      }
-
-      cornerText.addEventListener('click', () => {
-        const newDefault = sharedDefaultLanguage === 'elven' ? 'english' : 'elven';
-        sharedDefaultLanguage = newDefault;
-
-        cornerTexts.forEach((otherCornerText) => {
-          defaultLanguages.set(otherCornerText, newDefault);
-          startMorph(otherCornerText, newDefault);
-        });
-      });
     });
   }
 })();

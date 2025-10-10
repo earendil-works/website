@@ -161,175 +161,11 @@ canvas {
   color: rgba(255, 255, 255, 1);
 }
 
-/* Corner text styles */
-.corner-text {
-  position: fixed;
-  color: rgba(255, 255, 255, 0.8);
-  font-family: 'EB Garamond', 'Times New Roman', serif;
-  font-weight: 500;
-  font-size: 18px;
-  z-index: 3;
-  user-select: none;
-  padding: clamp(4px, 0.8vw, 10px) clamp(6px, 1.6vw, 14px);
-  overflow: hidden;
-}
-
-.corner-text:hover {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.top-left {
-  top: 0;
-  left: 0;
-  padding-right: 10px;
-}
-
-.top-right {
-  top: 0;
-  right: 0;
-  padding-left: clamp(6px, 1.5vw, 12px);
-}
-
-.bottom-left {
-  bottom: 0;
-  left: 0;
-  padding-right: clamp(6px, 1.5vw, 12px);
-}
-
-.bottom-right {
-  bottom: 0;
-  right: 0;
-  padding-left: clamp(6px, 1.5vw, 12px);
-}
-
-.text-container {
-  position: relative;
-  display: inline-grid;
-  vertical-align: bottom;
-  transform-origin: top left;
-}
-
-.text-container.morphing {
-  filter: url(#threshold) blur(0.6px);
-}
-
-.top-right .text-container { transform-origin: top right; }
-
-/* Ensure top corners sit flush with the top edge on large screens */
-.top-left .text-container,
-.top-right .text-container {
-  vertical-align: top;
-}
-
-/* For bottom corners, anchor the scaled box to the bottom
-   so the visible text sits on the container's bottom edge. */
-.bottom-left .text-container { transform-origin: bottom left; }
-.bottom-right .text-container { transform-origin: bottom right; }
-
-/* Overlay both text variants while letting container size naturally */
-.text-container > .text-version { grid-area: 1 / 1; }
-
-/* Align content within the container based on corner */
-.top-left .text-container
-.top-right .text-container { align-items: start; }
-.bottom-left .text-container,
-.bottom-right .text-container { align-items: end; }
-.top-left .text-container,
-.bottom-left .text-container { justify-items: start; }
-.top-right .text-container,
-.bottom-right .text-container { justify-items: end; }
-
-.text-version {
-  color: rgba(255, 255, 255, 0.8);
-  white-space: nowrap;
-  font-size: clamp(16px, 1.8vw, 20px);
-  transition: filter 1.2s ease-in-out, opacity 1.2s ease-in-out;
-  display: block;
-  position: relative;
-}
-
-/* Right alignment handled by grid on container */
-
-.corner-text:hover .text-version {
-  color: rgba(255, 255, 255, 1);
-}
-
-.text-version.elven {
-  z-index: 2;
-}
-
-.text-version.english {
-  z-index: 1;
-}
-
-.corner-texts-wrapper {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.6s ease;
-}
-
-.corner-texts-wrapper.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-body.view-page .corner-texts-wrapper {
-  opacity: 0 !important;
-  pointer-events: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .fullscreen-bg { will-change: auto; }
 }
 
-@media (min-width: 900px) {
-  .corner-text { font-size: 20px; }
-}
-
-/* Small screens < 800px: stack tightly at bottom-right and enlarge text by 10% */
 @media (max-width: 800px) {
-  .corner-texts-wrapper {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    z-index: 3;
-    padding: 8px !important;
-  }
-
-  /* Make each item tight with no inner padding/margins and 10% bigger */
-  .corner-texts-wrapper .corner-text {
-    font-size: 110% !important;
-    display: block;
-    bottom: initial;
-    top: initial;
-    left: initial;
-    right: initial;
-    position: initial;
-    padding: 0;
-  }
-
-  /* Remove scale-based layout gap; use natural size instead */
-  .corner-texts-wrapper .text-container {
-    transform: none !important;
-    display: inline-grid !important;
-    line-height: 1.3 !important; /* avoid extra line box */
-  }
-
-  /* Keep the texts right-aligned and 1x size when unscaled */
-  .corner-texts-wrapper .text-version {
-    left: 0;
-    font-size: 110%;
-  }
-
-  .top-left .text-container
-  .top-right .text-container { align-items: start; }
-  .bottom-left .text-container,
-  .bottom-right .text-container { align-items: start; }
-  .top-left .text-container,
-  .bottom-left .text-container { justify-items: start; }
-  .top-right .text-container,
-  .bottom-right .text-container { justify-items: start; }
-
   /* Tweak nav for small screens */
   .nav-links {
     top: calc(50% + 150px);
@@ -348,7 +184,6 @@ body.view-page .corner-texts-wrapper {
     transform: translate(-50%, 0);
   }
 }
-
 
 /* Page-specific styles (memo, join-us, etc.) */
 .page-layer {
