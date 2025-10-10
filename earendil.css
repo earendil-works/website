@@ -267,7 +267,7 @@ canvas {
 }
 
 .page-content a.cta-email:hover {
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .page-home-link {
