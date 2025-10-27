@@ -29,6 +29,7 @@ def build_site():
         "cursor-hover.svg",
         "logo.svg",
         "back.svg",
+        "back-hover.svg",
         "ocean-progressive.jpg",
         "CNAME",
     ]
