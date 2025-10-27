@@ -32,8 +32,8 @@ body.view-page [data-home-el] {
   cursor: inherit;
 }
 
-a { 
-  cursor: url('cursor-hover.svg') 17 17, auto!important;
+a {
+  cursor: url('cursor-hover.svg') 12 12, auto!important;
 }
 
 canvas {
