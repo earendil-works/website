@@ -50,6 +50,7 @@ def build_site():
     page_sources = [
         {"slug": "purpose", "file": "purpose.md"},
         {"slug": "join-us", "file": "join-us.md"},
+        {"slug": "updates", "file": "updates.md"},
     ]
 
     pages = []

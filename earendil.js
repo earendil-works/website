@@ -24,7 +24,7 @@
 
   const bg = document.querySelector('.fullscreen-bg');
   const img = document.querySelector('.main-image');
-  const navLinks = document.querySelector('.nav-links');
+  const cornerLinks = document.querySelectorAll('.corner-link');
 
   // Debug observer removed after investigation
 
@@ -89,6 +89,162 @@
   }
 
   setHomeElementsVisible(false, { immediate: true });
+
+  // Updates page form initialization
+  function initUpdatesForm() {
+    var input = document.getElementById('updates-email');
+    var display = document.getElementById('updates-display');
+    var cursor = document.getElementById('updates-cursor');
+    var enterBtn = document.getElementById('updates-enter');
+    var messageEl = document.getElementById('updates-message');
+    var container = document.querySelector('.updates-input-container');
+    var wrapper = document.querySelector('.updates-input-wrapper');
+    var PLACEHOLDER = 'your@email.here';
+    var isPlaceholder = true;
+    var lastValidValue = '';
+
+    if (!input) return;
+
+    // Valid email: user@domain.tld where tld has 2+ chars after final dot
+    function isValidEmail(email) {
+      var atIndex = email.indexOf('@');
+      if (atIndex < 1) return false;
+      var domain = email.slice(atIndex + 1);
+      var lastDot = domain.lastIndexOf('.');
+      if (lastDot < 1) return false;
+      var tld = domain.slice(lastDot + 1);
+      return tld.length >= 2;
+    }
+
+    function showAnimatedDisplay(val) {
+      if (!display) return;
+      // Build character spans with staggered animation
+      var chars = val.split('').map(function(c, i) {
+        return '<span class="updates-char" style="animation-delay:' + (i * 30) + 'ms">' + c + '</span>';
+      }).join('');
+      display.innerHTML = chars;
+      display.hidden = false;
+      display.classList.add('valid');
+      input.classList.add('has-display');
+      lastValidValue = val;
+    }
+
+    function hideAnimatedDisplay() {
+      if (!display) return;
+      display.hidden = true;
+      display.classList.remove('valid');
+      input.classList.remove('has-display');
+    }
+
+    function updateState() {
+      var val = input.value;
+
+      if (val === PLACEHOLDER && isPlaceholder) {
+        input.classList.add('placeholder-text');
+        hideAnimatedDisplay();
+        if (enterBtn) enterBtn.hidden = true;
+      } else if (isValidEmail(val)) {
+        input.classList.remove('placeholder-text');
+        if (val !== lastValidValue) {
+          showAnimatedDisplay(val);
+        }
+        if (enterBtn) enterBtn.hidden = false;
+      } else {
+        input.classList.remove('placeholder-text');
+        hideAnimatedDisplay();
+        if (enterBtn) enterBtn.hidden = true;
+      }
+    }
+
+    function showCursor() {
+      if (cursor) cursor.classList.add('visible');
+    }
+
+    function hideCursor() {
+      if (cursor) cursor.classList.remove('visible');
+    }
+
+    input.addEventListener('focus', function() {
+      hideCursor();
+      if (isPlaceholder) {
+        // Use timeout to ensure select happens after click event
+        setTimeout(function() { input.select(); }, 0);
+      } else if (isValidEmail(input.value)) {
+        // Re-apply display state immediately to prevent spacing flicker
+        input.classList.add('has-display');
+      }
+    });
+
+    input.addEventListener('input', function() {
+      isPlaceholder = false;
+      updateState();
+    });
+
+    input.addEventListener('blur', function() {
+      if (input.value === '' || input.value === PLACEHOLDER) {
+        input.value = PLACEHOLDER;
+        isPlaceholder = true;
+        hideAnimatedDisplay();
+        input.classList.add('placeholder-text');
+        showCursor();
+        if (enterBtn) enterBtn.hidden = true;
+      }
+    });
+
+    if (wrapper) {
+      wrapper.addEventListener('click', function(e) {
+        if (e.target !== input) input.focus();
+      });
+    }
+
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && isValidEmail(input.value)) {
+        e.preventDefault();
+        submit();
+      }
+    });
+
+    if (enterBtn) {
+      enterBtn.addEventListener('click', function() {
+        if (isValidEmail(input.value)) submit();
+      });
+    }
+
+    function submit() {
+      var email = input.value;
+
+      fetch('https://script.google.com/macros/s/AKfycbxtaYo7U3mpdwBnfl3O735PTKySaypH3JbYczz4tLJ7je-qBRgjQrZS0ZyB6bMRwt-4cQ/exec', {
+        method: 'POST',
+        body: JSON.stringify({ email: email })
+      })
+      .then(function() {
+        // Assume success (Google Apps Script doesn't support CORS well)
+        if (wrapper) {
+          wrapper.style.transition = 'opacity 0.4s ease';
+          wrapper.style.opacity = '0';
+        }
+        setTimeout(function() {
+          if (container) container.style.display = 'none';
+          if (messageEl) messageEl.hidden = false;
+        }, 400);
+      })
+      .catch(function(err) {
+        var originalValue = input.value;
+        input.value = 'Something went wrong';
+        input.classList.add('updates-error');
+        hideAnimatedDisplay();
+        if (enterBtn) enterBtn.hidden = true;
+        setTimeout(function() {
+          input.value = originalValue;
+          input.classList.remove('updates-error');
+          updateState();
+        }, 2000);
+      });
+    }
+
+    // Initialize: cursor visible, placeholder shown
+    showCursor();
+  }
 
   routeTemplates.forEach((template) => {
     const slug = template.dataset.page;
@@ -213,7 +369,9 @@
     }
 
     fadeInHomeElement(img, 0.9, 5, 600);
-    fadeInHomeElement(navLinks, 1, 3, 600);
+    cornerLinks.forEach(function(link) {
+      fadeInHomeElement(link, 1, 3, 600);
+    });
   }
 
   function applyRoute(route, options = {}) {
@@ -253,10 +411,10 @@
           img.style.transition = img.style.transition || 'opacity 5s ease';
           img.style.opacity = '0.9';
         }
-        if (navLinks) {
-          navLinks.style.transition = navLinks.style.transition || 'opacity 3s ease';
-          navLinks.style.opacity = '1';
-        }
+        cornerLinks.forEach(function(link) {
+          link.style.transition = link.style.transition || 'opacity 3s ease';
+          link.style.opacity = '1';
+        });
       }
     } else {
       const page = routes.get(route);
@@ -269,6 +427,10 @@
 
       if (pageContent) {
         pageContent.innerHTML = page.html;
+        // Initialize updates form if on updates page
+        if (route === 'updates') {
+          initUpdatesForm();
+        }
       }
 
       showPageLayer(immediate || initial);
