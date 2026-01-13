@@ -249,9 +249,16 @@
       // Ignore if already focused or if it's a modifier key
       if (document.activeElement === input) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key.length === 1) {
-        // It's a printable character
+      if (e.key.length === 1 && isPlaceholder) {
+        // It's a printable character - clear placeholder and type fresh
+        e.preventDefault();
+        input.value = e.key;
+        isPlaceholder = false;
+        hideCursor();
         input.focus();
+        // Move cursor to end
+        input.setSelectionRange(1, 1);
+        updateState();
       }
     }
     document.addEventListener('keydown', handleGlobalKeydown);
