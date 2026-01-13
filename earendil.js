@@ -215,10 +215,12 @@
 
       fetch('https://script.google.com/macros/s/AKfycbxtaYo7U3mpdwBnfl3O735PTKySaypH3JbYczz4tLJ7je-qBRgjQrZS0ZyB6bMRwt-4cQ/exec', {
         method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ email: email })
       })
       .then(function() {
-        // Assume success (Google Apps Script doesn't support CORS well)
+        // With no-cors, we can't read response but request was sent
         if (wrapper) {
           wrapper.style.transition = 'opacity 0.4s ease';
           wrapper.style.opacity = '0';
@@ -241,6 +243,18 @@
         }, 2000);
       });
     }
+
+    // Auto-focus on any keypress so typing immediately works
+    function handleGlobalKeydown(e) {
+      // Ignore if already focused or if it's a modifier key
+      if (document.activeElement === input) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key.length === 1) {
+        // It's a printable character
+        input.focus();
+      }
+    }
+    document.addEventListener('keydown', handleGlobalKeydown);
 
     // Initialize: cursor visible, placeholder shown
     showCursor();
