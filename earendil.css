@@ -375,7 +375,7 @@ a:hover .home-icon {
   user-select: text;
   text-align: center;
   width: auto;
-  min-width: 100px;
+  min-width: 300px;
 }
 
 .updates-input.placeholder-text {
