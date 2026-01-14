@@ -134,6 +134,7 @@
       display.hidden = true;
       display.classList.remove('valid');
       input.classList.remove('has-display');
+      lastValidValue = '';
     }
 
     function updateState() {
@@ -166,12 +167,15 @@
 
     input.addEventListener('focus', function() {
       hideCursor();
+      // Hide enter button when focused (user is editing)
+      if (enterBtn) enterBtn.hidden = true;
       if (isPlaceholder) {
         // Use timeout to ensure select happens after click event
         setTimeout(function() { input.select(); }, 0);
-      } else if (isValidEmail(input.value)) {
-        // Re-apply display state immediately to prevent spacing flicker
-        input.classList.add('has-display');
+      } else {
+        // Remove display overlay so native input cursor is visible
+        input.classList.remove('has-display');
+        hideAnimatedDisplay();
       }
     });
 
@@ -188,6 +192,10 @@
         input.classList.add('placeholder-text');
         showCursor();
         if (enterBtn) enterBtn.hidden = true;
+      } else if (isValidEmail(input.value)) {
+        // Show animated display and enter button when blurring with valid email
+        showAnimatedDisplay(input.value);
+        if (enterBtn) enterBtn.hidden = false;
       }
     });
 
@@ -213,6 +221,18 @@
     function submit() {
       var email = input.value;
 
+      // Show loading message immediately
+      if (wrapper) {
+        wrapper.style.transition = 'opacity 0.25s ease';
+        wrapper.style.opacity = '0';
+      }
+      setTimeout(function() {
+        if (wrapper) wrapper.style.visibility = 'hidden';
+        if (messageEl) {
+          showAnimatedMessage('Storing at the speed of light');
+        }
+      }, 250);
+
       fetch('https://script.google.com/macros/s/AKfycbxtaYo7U3mpdwBnfl3O735PTKySaypH3JbYczz4tLJ7je-qBRgjQrZS0ZyB6bMRwt-4cQ/exec', {
         method: 'POST',
         mode: 'no-cors',
@@ -220,28 +240,36 @@
         body: JSON.stringify({ email: email })
       })
       .then(function() {
-        // With no-cors, we can't read response but request was sent
-        if (wrapper) {
-          wrapper.style.transition = 'opacity 0.4s ease';
-          wrapper.style.opacity = '0';
-        }
-        setTimeout(function() {
-          if (container) container.style.display = 'none';
-          if (messageEl) messageEl.hidden = false;
-        }, 400);
+        // Show success message with animation
+        showAnimatedMessage('We are grateful for your trust');
       })
       .catch(function(err) {
-        var originalValue = input.value;
-        input.value = 'Something went wrong';
-        input.classList.add('updates-error');
-        hideAnimatedDisplay();
-        if (enterBtn) enterBtn.hidden = true;
+        showAnimatedMessage('Something went wrong');
         setTimeout(function() {
-          input.value = originalValue;
-          input.classList.remove('updates-error');
+          // Reset to allow retry
+          if (wrapper) {
+            wrapper.style.visibility = 'visible';
+            wrapper.style.opacity = '1';
+          }
+          if (messageEl) {
+            messageEl.hidden = true;
+            messageEl.classList.remove('valid');
+          }
           updateState();
         }, 2000);
       });
+    }
+
+    function showAnimatedMessage(text) {
+      if (!messageEl) return;
+      var chars = text.split('').map(function(c, i) {
+        // Use &nbsp; for spaces to preserve them
+        var char = c === ' ' ? '&nbsp;' : c;
+        return '<span class="updates-char" style="animation-delay:' + (i * 30) + 'ms">' + char + '</span>';
+      }).join('');
+      messageEl.innerHTML = chars;
+      messageEl.classList.add('valid');
+      messageEl.hidden = false;
     }
 
     // Auto-focus on any keypress so typing immediately works
@@ -254,6 +282,7 @@
         e.preventDefault();
         input.value = e.key;
         isPlaceholder = false;
+        input.classList.remove('placeholder-text');
         hideCursor();
         input.focus();
         // Move cursor to end
