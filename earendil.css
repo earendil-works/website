@@ -397,6 +397,7 @@ a:hover .home-icon {
 .updates-display .updates-char,
 .updates-message .updates-char {
   color: #2b2b2b;
+  white-space: pre;
 }
 
 .updates-display.valid .updates-char,
