@@ -48,6 +48,15 @@
   const routes = new Map();
   const pathToRoute = new Map();
 
+  function clearElement(el) {
+    if (!el) {
+      return;
+    }
+    while (el.firstChild) {
+      el.removeChild(el.firstChild);
+    }
+  }
+
   function setHomeElementsVisible(visible, options = {}) {
     const { immediate = false, includeManual = true } = options;
     homeElements.forEach((el) => {
@@ -93,17 +102,15 @@
   // Updates page form initialization
   function initUpdatesForm() {
     var input = document.getElementById('updates-email');
+    if (!input) return;
+
     var display = document.getElementById('updates-display');
     var cursor = document.getElementById('updates-cursor');
     var enterBtn = document.getElementById('updates-enter');
     var messageEl = document.getElementById('updates-message');
-    var container = document.querySelector('.updates-input-container');
     var wrapper = document.querySelector('.updates-input-wrapper');
-    var PLACEHOLDER = 'your@email.here';
-    var isPlaceholder = true;
+    var isPlaceholder = input.value === '';
     var lastValidValue = '';
-
-    if (!input) return;
 
     // Valid email: user@domain.tld where tld has 2+ chars after final dot
     function isValidEmail(email) {
@@ -119,10 +126,16 @@
     function showAnimatedDisplay(val) {
       if (!display) return;
       // Build character spans with staggered animation
-      var chars = val.split('').map(function(c, i) {
-        return '<span class="updates-char" style="animation-delay:' + (i * 30) + 'ms">' + c + '</span>';
-      }).join('');
-      display.innerHTML = chars;
+      clearElement(display);
+      var fragment = document.createDocumentFragment();
+      val.split('').forEach(function(c, i) {
+        var span = document.createElement('span');
+        span.className = 'updates-char';
+        span.style.animationDelay = (i * 30) + 'ms';
+        span.textContent = c;
+        fragment.appendChild(span);
+      });
+      display.appendChild(fragment);
       display.hidden = false;
       display.classList.add('valid');
       input.classList.add('has-display');
@@ -139,18 +152,22 @@
 
     function updateState() {
       var val = input.value;
+      var isEmpty = val === '';
 
-      if (val === PLACEHOLDER && isPlaceholder) {
+      if (isEmpty) {
+        isPlaceholder = true;
         input.classList.add('placeholder-text');
         hideAnimatedDisplay();
         if (enterBtn) enterBtn.hidden = true;
       } else if (isValidEmail(val)) {
+        isPlaceholder = false;
         input.classList.remove('placeholder-text');
         if (val !== lastValidValue) {
           showAnimatedDisplay(val);
         }
         if (enterBtn) enterBtn.hidden = false;
       } else {
+        isPlaceholder = false;
         input.classList.remove('placeholder-text');
         hideAnimatedDisplay();
         if (enterBtn) enterBtn.hidden = true;
@@ -169,10 +186,7 @@
       hideCursor();
       // Hide enter button when focused (user is editing)
       if (enterBtn) enterBtn.hidden = true;
-      if (isPlaceholder) {
-        // Use timeout to ensure select happens after click event
-        setTimeout(function() { input.select(); }, 0);
-      } else {
+      if (!isPlaceholder) {
         // Remove display overlay so native input cursor is visible
         input.classList.remove('has-display');
         hideAnimatedDisplay();
@@ -180,13 +194,11 @@
     });
 
     input.addEventListener('input', function() {
-      isPlaceholder = false;
       updateState();
     });
 
     input.addEventListener('blur', function() {
-      if (input.value === '' || input.value === PLACEHOLDER) {
-        input.value = PLACEHOLDER;
+      if (input.value === '') {
         isPlaceholder = true;
         hideAnimatedDisplay();
         input.classList.add('placeholder-text');
@@ -220,6 +232,10 @@
 
     function submit() {
       var email = input.value;
+      if (isPlaceholder || !isValidEmail(email)) {
+        updateState();
+        return;
+      }
 
       // Show loading message immediately
       if (wrapper) {
@@ -262,12 +278,16 @@
 
     function showAnimatedMessage(text) {
       if (!messageEl) return;
-      var chars = text.split('').map(function(c, i) {
-        // Use &nbsp; for spaces to preserve them
-        var char = c === ' ' ? '&nbsp;' : c;
-        return '<span class="updates-char" style="animation-delay:' + (i * 30) + 'ms">' + char + '</span>';
-      }).join('');
-      messageEl.innerHTML = chars;
+      clearElement(messageEl);
+      var fragment = document.createDocumentFragment();
+      text.split('').forEach(function(c, i) {
+        var span = document.createElement('span');
+        span.className = 'updates-char';
+        span.style.animationDelay = (i * 30) + 'ms';
+        span.textContent = c;
+        fragment.appendChild(span);
+      });
+      messageEl.appendChild(fragment);
       messageEl.classList.add('valid');
       messageEl.hidden = false;
     }
@@ -293,7 +313,12 @@
     document.addEventListener('keydown', handleGlobalKeydown);
 
     // Initialize: cursor visible, placeholder shown
-    showCursor();
+    updateState();
+    if (isPlaceholder) {
+      showCursor();
+    } else {
+      hideCursor();
+    }
   }
 
   routeTemplates.forEach((template) => {
@@ -304,9 +329,8 @@
     const rawPath = template.dataset.path || `/${slug}/`;
     const path = ensureTrailingSlash(rawPath);
     const title = template.dataset.title || slug;
-    const html = template.innerHTML.trim();
 
-    routes.set(slug, { slug, path, title, html });
+    routes.set(slug, { slug, path, title, template });
     pathToRoute.set(path, slug);
   });
 
@@ -476,7 +500,8 @@
       document.title = `${page.title} - EARENDIL`;
 
       if (pageContent) {
-        pageContent.innerHTML = page.html;
+        clearElement(pageContent);
+        pageContent.appendChild(page.template.content.cloneNode(true));
         // Initialize updates form if on updates page
         if (route === 'updates') {
           initUpdatesForm();
