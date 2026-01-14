@@ -8,6 +8,6 @@
       <span id="updates-display" class="updates-display" hidden></span>
       <span id="updates-enter" class="updates-enter" hidden>↩︎</span>
     </div>
-    <p id="updates-message" class="updates-message" hidden>We are grateful for your trust</p>
+    <p id="updates-message" class="updates-message" hidden>Welcome aboard</p>
   </div>
 </div>
