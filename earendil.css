@@ -510,4 +510,8 @@ a:hover .home-icon {
   .updates-message {
     font-size: 18px;
   }
+
+  .updates-cursor {
+    transform: translateX(-50%) scaleX(0.5);
+  }
 }
