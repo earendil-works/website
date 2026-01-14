@@ -284,7 +284,8 @@
         var span = document.createElement('span');
         span.className = 'updates-char';
         span.style.animationDelay = (i * 30) + 'ms';
-        span.textContent = c;
+        // Use non-breaking space to preserve spaces
+        span.textContent = c === ' ' ? '\u00A0' : c;
         fragment.appendChild(span);
       });
       messageEl.appendChild(fragment);
