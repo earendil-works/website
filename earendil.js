@@ -257,7 +257,7 @@
       })
       .then(function() {
         // Show success message with animation
-        showAnimatedMessage('We are grateful for your trust');
+        showAnimatedMessage('Welcome aboard');
       })
       .catch(function(err) {
         showAnimatedMessage('Something went wrong');
