@@ -1,4 +1,4 @@
 ---
-title: Ocean Waves
+title: Welcome
 template: index
 ---
