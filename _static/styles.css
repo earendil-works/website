@@ -18,6 +18,9 @@ body.has-overlay {
   overflow-y: auto;
   height: auto;
 }
+html:has(body.has-overlay) {
+  overflow: visible;
+}
 .theme-night, .theme-night body {
   background: #1a1a1a;
 }
