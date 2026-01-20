@@ -2,12 +2,9 @@ name: Build and Deploy Website
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 6 * * *'
-    - cron: '0 18 * * *'
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -31,14 +28,8 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Set up Python
-        run: uv python install
-
-      - name: Install dependencies
-        run: uv sync --frozen
-
       - name: Build site
-        run: uv run python build.py
+        run: make build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -48,7 +39,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./build
+          path: ./_build
 
   deploy:
     if: github.ref == 'refs/heads/main'

@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block page_attrs %} data-page-type="404"{% endblock %}
+
+{% block body %}
+  <div class="error-text" role="alert" aria-label="{{ page.aria_label }}">
+    {{ content }}
+  </div>
+{% endblock %}

@@ -1,0 +1,304 @@
+/* Commit Mono Font
+ * License: SIL Open Font License 1.1 (see commit-mono-license.txt)
+ * https://commitmono.com/
+ */
+
+/* === UNUSED WEIGHTS (commented out) ===
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-200-Regular.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-200-Italic.otf') format('opentype');
+  font-weight: 200;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-225-Regular.otf') format('opentype');
+  font-weight: 225;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-225-Italic.otf') format('opentype');
+  font-weight: 225;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-250-Regular.otf') format('opentype');
+  font-weight: 250;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-250-Italic.otf') format('opentype');
+  font-weight: 250;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-275-Regular.otf') format('opentype');
+  font-weight: 275;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-275-Italic.otf') format('opentype');
+  font-weight: 275;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-325-Regular.otf') format('opentype');
+  font-weight: 325;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-325-Italic.otf') format('opentype');
+  font-weight: 325;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-350-Regular.otf') format('opentype');
+  font-weight: 350;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-350-Italic.otf') format('opentype');
+  font-weight: 350;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-375-Regular.otf') format('opentype');
+  font-weight: 375;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-375-Italic.otf') format('opentype');
+  font-weight: 375;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-425-Regular.otf') format('opentype');
+  font-weight: 425;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-425-Italic.otf') format('opentype');
+  font-weight: 425;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-450-Regular.otf') format('opentype');
+  font-weight: 450;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-450-Italic.otf') format('opentype');
+  font-weight: 450;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-475-Regular.otf') format('opentype');
+  font-weight: 475;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-475-Italic.otf') format('opentype');
+  font-weight: 475;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-500-Regular.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-500-Italic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-525-Regular.otf') format('opentype');
+  font-weight: 525;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-525-Italic.otf') format('opentype');
+  font-weight: 525;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-550-Regular.otf') format('opentype');
+  font-weight: 550;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-550-Italic.otf') format('opentype');
+  font-weight: 550;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-575-Regular.otf') format('opentype');
+  font-weight: 575;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-575-Italic.otf') format('opentype');
+  font-weight: 575;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-600-Regular.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-600-Italic.otf') format('opentype');
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-625-Regular.otf') format('opentype');
+  font-weight: 625;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-625-Italic.otf') format('opentype');
+  font-weight: 625;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-650-Regular.otf') format('opentype');
+  font-weight: 650;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-650-Italic.otf') format('opentype');
+  font-weight: 650;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-675-Regular.otf') format('opentype');
+  font-weight: 675;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-675-Italic.otf') format('opentype');
+  font-weight: 675;
+  font-style: italic;
+}
+
+=== END UNUSED WEIGHTS === */
+
+/* === ACTIVE WEIGHTS === */
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-300-Regular.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-300-Italic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-400-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-400-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-700-Regular.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('CommitMono-700-Italic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+}

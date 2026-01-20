@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block body %}
+  <div class="updates-overlay" aria-hidden="true" data-page="{{ slug }}">
+    <div class="updates-letter" role="dialog" aria-label="{{ page.aria_label }}">
+      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">[close]</a>
+      <div class="letter-body">
+        {{ content }}
+      </div>
+    </div>
+  </div>
+{% endblock %}

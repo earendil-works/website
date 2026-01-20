@@ -1,6 +1,2 @@
-build/
-.venv/
-__pycache__/
-*.pyc
-.worktrees
-.DS_Store
+/_build/
+/.venv

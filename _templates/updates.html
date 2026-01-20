@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block body %}
+  <div class="updates-overlay" aria-hidden="true">
+    <div class="updates-letter" role="dialog" aria-label="{{ page.aria_label }}">
+      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">[back]</a>
+      <div class="email-meta">
+        <p>Date: {{ page.date_day or page.date }}</p>
+        <p>From: {{ page.from }}</p>
+        <p>To: {{ page.to }}</p>
+        <p>Subject: {{ page.title }}</p>
+      </div>
+      <div class="letter-body">
+        {{ content }}
+      </div>
+      <div class="letter-footer">
+        <div class="signature-delimiter">--</div>
+        <div class="signature-detail"><a href="https://earendil.com" target="_blank" rel="noopener noreferrer">earendil.com</a></div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

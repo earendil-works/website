@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/fonts/commit-mono.css">
+  <link rel="stylesheet" href="/static/fonts/louize.css">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link href="/posts/feed.atom" rel="alternate" title="Earendil Posts" type="application/atom+xml">
+  <link href="/posts/feed.rss" rel="alternate" title="Earendil Posts" type="application/rss+xml">
+</head>
+<body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML" class="{% if slug != "/" %}skip-intro{% endif %}">
+  <div id="fps">FPS: --</div>
+  <div id="site-footer">2026 EARENDIL INC.</div>
+  <button id="theme-toggle" type="button" aria-label="Toggle color theme"><span class="value"></span></button>
+
+  <div class="page" hx-history-elt{% block page_attrs %}{% endblock %}>
+    <div class="logo-stack">
+      <a href="/" class="logo-link"><img class="main-logo" id="logo" src="/static/earendil-logo.svg" alt="Earendil"></a>
+      <div class="logo-links">
+        <a class="updates-link" href="/purpose/">Purpose</a>
+        <a class="updates-link" href="/posts/">Posts</a>
+        <a class="updates-link" href="/join/">Join Us</a>
+        <a class="updates-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+
+    <div class="body">
+      {% block body %}{% endblock %}
+    </div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+  <script src="/static/htmx-bundle.min.js"></script>
+  <script>
+    htmx.config.scrollIntoViewOnBoost = false;
+
+    function htmxFallbackToNative(evt) {
+      var path = evt.detail?.pathInfo?.requestPath || evt.detail?.requestConfig?.path;
+      if (path) {
+        window.location.href = path;
+      }
+    }
+
+    htmx.on('htmx:sendError', htmxFallbackToNative);
+    htmx.on('htmx:swapError', htmxFallbackToNative);
+    htmx.on('htmx:responseError', htmxFallbackToNative);
+
+    // Ensure logo/sidebar are visible immediately on HTMX navigation
+    htmx.on('htmx:beforeSwap', function() {
+      document.body.classList.add('skip-intro');
+    });
+  </script>
+  <script src="/static/script.js"></script>
+</body>
+</html>

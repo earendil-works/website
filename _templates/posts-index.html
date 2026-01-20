@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block body %}
+  <div class="updates-overlay" aria-hidden="true">
+    <div class="updates-letter" role="dialog" aria-label="Earendil posts">
+      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">[close]</a>
+      <div class="letter-body">
+        <div class="posts-title">Posts</div>
+        {% if posts %}
+        <ul class="posts-list">
+          {% for post in posts %}
+          <li>
+            <a href="{{ post.slug }}">
+              {% if post.parsed_date %}
+              <span class="post-date">{{ post.parsed_date.strftime("%Y/%m/%d") }}</span>
+              {% endif %}
+              <span class="post-name">{{ post.title }}</span>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        <p><a href="/posts/subscribe/">[Hear from us]</a></p>
+      </div>
+    </div>
+  </div>
+{% endblock %}
