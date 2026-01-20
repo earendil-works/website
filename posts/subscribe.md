@@ -29,4 +29,4 @@ Hear from Earendil
   <span id="updates-message" class="updates-message" hidden></span>
 </div>
 
-<a href="/posts/feed.atom">Atom</a> · <a href="/posts/feed.rss">RSS</a>
+<a href="/posts/feed.atom" hx-boost="false">Atom</a> · <a href="/posts/feed.rss" hx-boost="false">RSS</a>
