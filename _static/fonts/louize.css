@@ -3,6 +3,7 @@
   src: url('LouizeTrial-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -10,6 +11,7 @@
   src: url('LouizeTrial-Italic.otf') format('opentype');
   font-weight: 400;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -17,6 +19,7 @@
   src: url('LouizeTrial-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -24,4 +27,5 @@
   src: url('LouizeTrial-BoldItalic.otf') format('opentype');
   font-weight: 700;
   font-style: italic;
+  font-display: swap;
 }
