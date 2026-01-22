@@ -155,7 +155,6 @@ canvas.shader-ready { opacity: 1; }
   letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
   transition: color 0.2s ease, opacity 0.2s ease;
   cursor: var(--cursor-light), pointer;
 }
