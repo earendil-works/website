@@ -4,7 +4,7 @@ template: page
 aria_label: Earendil purpose
 ---
 
-<a href="/" class="mono-bold">Earendil</a> is a public benefit corporation founded by <a href="https://ronacher.eu/" target="_blank" rel="noopener noreferrer">Armin Ronacher</a> and <a href="https://c01.in/" target="_blank" rel="noopener noreferrer">Colin Daymond Hanna</a>
+<a href="/" class="mono-bold">Earendil</a> is a public benefit corporation founded by <a href="https://ronacher.eu/" target="_blank" rel="noopener noreferrer">Armin Ronacher</a> and <a href="https://colin.day/" target="_blank" rel="noopener noreferrer">Colin Daymond Hanna</a>
 
 <span class="mono-bold">Our purpose is embedded in our founding charter:</span>
 
