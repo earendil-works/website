@@ -286,7 +286,6 @@ canvas.shader-ready { opacity: 1; }
   border: 1px solid rgba(25, 20, 12, 0.2);
   font: 15px/1.5 var(--mono-font);
   color: #1c1b1a;
-  letter-spacing: 0.02em;
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.35s ease, transform 0.35s ease;
