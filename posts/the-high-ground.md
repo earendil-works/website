@@ -4,7 +4,7 @@ template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>
 to: You
-date: Thu, 12 Feb 2026
+date: Thu, 12 Feb 2026 00:00:00 +0100
 subject: The High Ground
 ---
 
