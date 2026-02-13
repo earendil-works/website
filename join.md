@@ -1,6 +1,7 @@
 ---
 title: Join Us
 template: page
+typography: serif
 aria_label: Join Earendil
 ---
 

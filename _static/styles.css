@@ -47,7 +47,8 @@ canvas.shader-ready { opacity: 1; }
   color: rgba(255, 255, 255, 0.95);
   font: 14px/1 var(--mono-font);
   padding: 6px 10px;
-  z-index: 120;
+  /* Keep above overlays */
+  z-index: 260;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
@@ -60,7 +61,8 @@ canvas.shader-ready { opacity: 1; }
   color: rgba(255, 255, 255, 0.95);
   font: 14px/1 var(--mono-font);
   padding: 6px 10px;
-  z-index: 120;
+  /* Keep above overlays */
+  z-index: 260;
   cursor: var(--cursor-light), pointer;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
   transition: color 0.2s ease;
@@ -98,6 +100,7 @@ canvas.shader-ready { opacity: 1; }
   justify-content: flex-end;
   align-items: flex-start;
   gap: 12px;
+  /* Keep the main logo behind overlays (paper/dialog). */
   z-index: 10;
   pointer-events: none;
 }
@@ -110,13 +113,6 @@ canvas.shader-ready { opacity: 1; }
   transform: translate(-50%, -50%);
 }
 
-.logo-stack .logo-links {
-  pointer-events: none;
-}
-
-.logo-stack .logo-links a {
-  pointer-events: auto;
-}
 
 .logo-link {
   display: block;
@@ -135,13 +131,22 @@ canvas.shader-ready { opacity: 1; }
 }
 
 .logo-links {
+  position: fixed;
+  top: 75px;
+  right: 75px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: flex-end;
   opacity: 0;
   margin-top: 0;
+  z-index: 260;
+  pointer-events: none;
   transition: opacity 0.35s ease;
+}
+
+.logo-links a {
+  pointer-events: auto;
 }
 
 .loaded .logo-links,
@@ -208,6 +213,11 @@ canvas.shader-ready { opacity: 1; }
     right: 40px;
   }
 
+  .logo-links {
+    top: 40px;
+    right: 40px;
+  }
+
   .main-logo {
     width: 210px;
     max-width: calc(65vw * 0.7);
@@ -228,6 +238,11 @@ canvas.shader-ready { opacity: 1; }
   .logo-stack {
     top: 28px;
     left: 28px;
+    right: 28px;
+  }
+
+  .logo-links {
+    top: 28px;
     right: 28px;
   }
 
@@ -361,6 +376,46 @@ canvas.shader-ready { opacity: 1; }
   content: "•";
   position: absolute;
   left: 0;
+}
+
+/* Serif typography: more editorial rhythm (tighter lists, deeper indent).
+   Enabled per-page via frontmatter: `typography: serif` (see templates). */
+.updates-letter.typography-serif .letter-body {
+  font-family: 'EB Garamond', Garamond, serif;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.updates-letter.typography-serif .letter-body p {
+  margin-bottom: 14px;
+}
+
+.updates-letter.typography-serif .letter-body p + ul,
+.updates-letter.typography-serif .letter-body p + ol {
+  margin-top: 8px;
+}
+
+.updates-letter.typography-serif .letter-body ul,
+.updates-letter.typography-serif .letter-body ol {
+  list-style-position: outside;
+  padding-left: 2.2em;
+  margin: 10px 0 18px;
+}
+
+.updates-letter.typography-serif .letter-body ul { list-style: disc; }
+.updates-letter.typography-serif .letter-body ol { list-style: decimal; }
+
+.updates-letter.typography-serif .letter-body li {
+  padding-left: 0.2em;
+  margin: 0.12em 0;
+}
+
+.updates-letter.typography-serif .letter-body li::before {
+  content: none;
+}
+
+.updates-letter.typography-serif .letter-body li::marker {
+  font-size: 0.95em;
 }
 
 .posts-list li {
@@ -632,10 +687,3 @@ canvas.shader-ready { opacity: 1; }
   margin: 0;
 }
 
-/* Purpose and Join pages - Louize font */
-[data-page="/purpose/"] .letter-body,
-[data-page="/join/"] .letter-body {
-  font-family: 'EB Garamond', Garamond, serif;
-  font-size: 20px;
-  line-height: 1.6;
-}

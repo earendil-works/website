@@ -2,7 +2,7 @@
 
 {% block body %}
   <div class="updates-overlay" aria-hidden="true">
-    <div class="updates-letter" role="dialog" aria-label="{{ page.aria_label }}">
+    <div class="updates-letter{% if page.typography %} typography-{{ page.typography }}{% endif %}" role="dialog" aria-label="{{ page.aria_label }}">
       <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">[back]</a>
       <div class="email-meta">
         <p>Date: {{ page.date_day or page.date }}</p>

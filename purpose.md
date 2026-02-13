@@ -1,6 +1,7 @@
 ---
 title: Purpose
 template: page
+typography: serif
 aria_label: Earendil purpose
 ---
 
