@@ -12,7 +12,7 @@
           <li>
             <a href="{{ post.slug }}">
               {% if post.parsed_date %}
-              <span class="post-date">{{ post.parsed_date.strftime("%Y/%m/%d") }}</span>
+              <span class="post-date">{{ post.parsed_date.strftime("%b %d %Y") }}</span>
               {% endif %}
               <span class="post-name">{{ post.title }}</span>
             </a>
