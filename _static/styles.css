@@ -22,7 +22,7 @@ html:has(body.has-overlay) {
   overflow: visible;
 }
 .theme-night, .theme-night body {
-  background: #1a1a1a;
+  background: #14120a;
 }
 * { cursor: inherit; }
 canvas {
@@ -106,7 +106,7 @@ canvas.shader-ready { opacity: 1; }
   pointer-events: auto;
   position: fixed;
   left: 50%;
-  top: 50%;
+  top: 35%;
   transform: translate(-50%, -50%);
 }
 
@@ -234,7 +234,7 @@ canvas.shader-ready { opacity: 1; }
   .logo-stack .logo-link {
     position: fixed;
     left: 50%;
-    top: 50%;
+    top: 35%;
     transform: translate(-50%, -50%);
   }
 
@@ -634,8 +634,263 @@ canvas.shader-ready { opacity: 1; }
 
 /* Purpose and Join pages - Louize font */
 [data-page="/purpose/"] .letter-body,
-[data-page="/join/"] .letter-body {
+[data-page="/join/"] .letter-body,
+[data-page="/about/"] .letter-body,
+[data-page="/work-with-us/"] .letter-body {
   font-family: 'EB Garamond', Garamond, serif;
   font-size: 20px;
   line-height: 1.6;
+}
+
+.letter-body h2 {
+  font-family: var(--mono-font);
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+
+.letter-body h2:first-child {
+  margin-top: 0;
+}
+
+.letter-body h3 {
+  font-family: var(--mono-font);
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+/* ========================================
+   LANGUAGE SWITCHER
+   ======================================== */
+
+#language-switcher {
+  position: fixed;
+  bottom: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.95);
+  font: 14px/1 var(--mono-font);
+  padding: 6px 10px;
+  z-index: 120;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+#language-switcher a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+#language-switcher a:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+#language-switcher a.lang-active {
+  color: rgba(255, 255, 255, 1);
+  font-weight: 700;
+}
+
+@media (max-width: 800px) {
+  #language-switcher {
+    bottom: 40px;
+  }
+}
+
+@media (max-width: 520px) {
+  #language-switcher {
+    bottom: 28px;
+  }
+}
+
+/* ========================================
+   CONTACT FORM STYLES
+   ======================================== */
+
+.contact-form-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 32px 0;
+  padding: 24px;
+  background: linear-gradient(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04));
+  border: 1px solid rgba(25, 20, 12, 0.15);
+}
+
+.theme-night .contact-form-area {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(240, 240, 240, 0.15);
+}
+
+.contact-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.contact-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(25, 20, 12, 0.25);
+  outline: none;
+  font-family: var(--mono-font);
+  font-size: 15px;
+  line-height: 1.6;
+  color: inherit;
+  padding: 8px 0;
+  caret-color: rgba(25, 24, 22, 0.8);
+  transition: border-color 0.2s ease;
+}
+
+.contact-input:focus {
+  border-bottom-color: rgba(25, 20, 12, 0.6);
+}
+
+.contact-input.placeholder-text {
+  color: rgba(25, 24, 22, 0.5);
+}
+
+.contact-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.theme-night .contact-input {
+  border-bottom-color: rgba(240, 240, 240, 0.25);
+  caret-color: rgba(240, 240, 240, 0.8);
+}
+
+.theme-night .contact-input:focus {
+  border-bottom-color: rgba(240, 240, 240, 0.6);
+}
+
+.theme-night .contact-input.placeholder-text {
+  color: rgba(240, 240, 240, 0.45);
+}
+
+.contact-submit {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid rgba(25, 20, 12, 0.4);
+  color: inherit;
+  font-family: var(--mono-font);
+  font-size: 14px;
+  padding: 10px 20px;
+  cursor: var(--cursor-dark), pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.contact-submit:hover {
+  background: rgba(25, 20, 12, 0.08);
+  border-color: rgba(25, 20, 12, 0.6);
+}
+
+.theme-night .contact-submit {
+  border-color: rgba(240, 240, 240, 0.4);
+  cursor: var(--cursor-light), pointer;
+}
+
+.theme-night .contact-submit:hover {
+  background: rgba(240, 240, 240, 0.08);
+  border-color: rgba(240, 240, 240, 0.6);
+}
+
+.contact-enter {
+  margin-left: 4px;
+  opacity: 0.7;
+}
+
+.contact-message-status {
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.contact-message-status.valid {
+  color: #2d7d46;
+}
+
+.contact-message-status.error {
+  color: #c44536;
+}
+
+/* ========================================
+   USE CASES STYLES
+   ======================================== */
+
+.use-cases-letter {
+  max-width: 1100px;
+}
+
+.use-cases-body {
+  font-family: 'EB Garamond', Garamond, serif;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.use-cases-body h2 {
+  font-family: var(--mono-font);
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 48px;
+  margin-bottom: 24px;
+  color: inherit;
+}
+
+.use-cases-body h2:first-child {
+  margin-top: 0;
+}
+
+.use-case-image {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  display: block;
+  margin: 24px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.use-cases-body hr {
+  border: none;
+  border-top: 1px solid rgba(25, 20, 12, 0.2);
+  margin: 48px 0;
+}
+
+.theme-night .use-cases-body hr {
+  border-top-color: rgba(240, 240, 240, 0.2);
+}
+
+.use-cases-body ul {
+  margin: 20px 0;
+  padding-left: 0;
+}
+
+.use-cases-body li {
+  position: relative;
+  padding-left: 1.4em;
+  margin: 8px 0;
+}
+
+.use-cases-body li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: inherit;
+}
+
+@media (max-width: 600px) {
+  .use-cases-body {
+    font-size: 16px;
+  }
+  
+  .use-cases-body h2 {
+    font-size: 18px;
+  }
+  
+  .contact-form-area {
+    padding: 16px;
+  }
 }

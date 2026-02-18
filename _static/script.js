@@ -1773,3 +1773,95 @@ if (document.body.classList.contains('skip-intro')) {
 }
 
 })();
+
+// ========================================
+// CONTACT FORM HANDLING
+// ========================================
+
+(function() {
+  const form = document.querySelector('[data-contact-form]');
+  if (!form) return;
+
+  const nameInput = document.getElementById('contact-name');
+  const emailInput = document.getElementById('contact-email');
+  const companyInput = document.getElementById('contact-company');
+  const messageInput = document.getElementById('contact-message');
+  const submitBtn = form.querySelector('.contact-submit');
+  const statusEl = document.getElementById('contact-message-status');
+
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function validateForm() {
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const message = messageInput.value.trim();
+    
+    return name && validateEmail(email) && message;
+  }
+
+  function showStatus(message, isError) {
+    statusEl.textContent = message;
+    statusEl.hidden = false;
+    statusEl.className = 'contact-message-status ' + (isError ? 'error' : 'valid');
+  }
+
+  function clearStatus() {
+    statusEl.hidden = true;
+    statusEl.className = 'contact-message-status';
+  }
+
+  // Get all input elements (including optional company field)
+  const allInputs = [nameInput, emailInput, messageInput];
+  if (companyInput) allInputs.push(companyInput);
+
+  // Remove placeholder class on input
+  allInputs.forEach(input => {
+    if (!input) return;
+    input.addEventListener('input', function() {
+      if (this.value) {
+        this.classList.remove('placeholder-text');
+      } else {
+        this.classList.add('placeholder-text');
+      }
+      clearStatus();
+    });
+  });
+
+  // Form submission
+  submitBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      showStatus('Please fill in all fields with a valid email.', true);
+      return;
+    }
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const company = companyInput ? companyInput.value.trim() : '';
+    const message = messageInput.value.trim();
+
+    // Create mailto link
+    const subject = encodeURIComponent('Work With Us - ' + name + (company ? ' (' + company + ')' : ''));
+    let bodyText = 'Name: ' + name + '\n' +
+      'Email: ' + email + '\n';
+    if (company) bodyText += 'Company: ' + company + '\n';
+    bodyText += '\nMessage:\n' + message;
+    const body = encodeURIComponent(bodyText);
+    
+    window.location.href = 'mailto:work@espirai.com?subject=' + subject + '&body=' + body;
+    
+    showStatus('Opening your email client...', false);
+    
+    // Reset form
+    nameInput.value = '';
+    emailInput.value = '';
+    if (companyInput) companyInput.value = '';
+    messageInput.value = '';
+    allInputs.forEach(input => {
+      if (input) input.classList.add('placeholder-text');
+    });
+  });
+})();

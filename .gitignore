@@ -1,2 +1,12 @@
-/_build/
-/.venv
+# macOS
+.DS_Store
+
+# Build output
+_build/
+
+# Source assets (not needed in repo)
+_static/favicon/Espira.svg
+_static/favicon/Espirai.png
+_static/favicon/Newsquaresvg.svg
+_static/favicon/Subtract.png
+_static/favicon/Subtract.svg

@@ -30,7 +30,7 @@ BUILD_DIR = ROOT / "_build"
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 
-SITE_URL = "https://earendil.com/"
+SITE_URL = "https://espirai.com/"
 UPDATES_FEED_LIMIT = 10
 UPDATE_IGNORED_FILES = {"_index.md", "subscribe.md"}
 

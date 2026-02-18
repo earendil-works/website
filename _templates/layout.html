@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ title }} | EARENDIL</title>
+  <title>{{ title }} | ESPIRAI</title>
   <link rel="icon" type="image/svg+xml" href="/static/favicon/square.svg">
   <link rel="icon" type="image/x-icon" href="/static/favicon/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
@@ -21,22 +21,25 @@
   <link rel="preload" href="/static/paper-dark.png" as="image">
   <link rel="preload" href="/static/cursor-light.svg" as="image">
   <link rel="preload" href="/static/cursor-dark.svg" as="image">
-  <link href="/posts/feed.atom" rel="alternate" title="Earendil Posts" type="application/atom+xml">
-  <link href="/posts/feed.rss" rel="alternate" title="Earendil Posts" type="application/rss+xml">
+  <link href="/posts/feed.atom" rel="alternate" title="Espirai Posts" type="application/atom+xml">
+  <link href="/posts/feed.rss" rel="alternate" title="Espirai Posts" type="application/rss+xml">
 </head>
 <body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML" class="{% if slug != "/" %}skip-intro{% endif %}">
   <div id="fps">FPS: --</div>
-  <div id="site-footer">EARENDIL INC.</div>
+  <div id="site-footer">ESPIRAI INC.</div>
+  <div id="language-switcher">
+    <a href="/" class="lang-active">EN</a> · <a href="/fr/">FR</a>
+  </div>
   <button id="theme-toggle" type="button" aria-label="Toggle color theme"><span class="value"></span></button>
 
   <div class="page" hx-history-elt{% block page_attrs %}{% endblock %}>
     <div class="logo-stack">
-      <a href="/" class="logo-link"><img class="main-logo" id="logo" src="/static/earendil-logo.svg" alt="Earendil"></a>
+      <a href="/" class="logo-link"><img class="main-logo" id="logo" src="/static/espirai-logo.svg" alt="Espirai"></a>
       <div class="logo-links">
-        <a class="updates-link" href="/purpose/">Purpose</a>
-        <a class="updates-link" href="/join/">Join Us</a>
+        <a class="updates-link" href="/about/">About Us</a>
+        <a class="updates-link" href="/work-with-us/">Work With Us</a>
+        <a class="updates-link" href="/use-cases/">Use Cases</a>
         <a class="updates-link" href="/posts/">Posts</a>
-        <a class="updates-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">Works</a>
       </div>
     </div>
 

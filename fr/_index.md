@@ -1,0 +1,4 @@
+---
+title: Accueil
+template: index
+---

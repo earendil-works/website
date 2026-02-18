@@ -1,10 +1,10 @@
 ---
 title: Subscribe to posts
 template: page
-aria_label: Subscribe to Earendil posts
+aria_label: Subscribe to Espirai posts
 ---
 
-Hear from Earendil
+Hear from Espirai
 
 <div class="updates-form-area" data-subscribe-form>
   <div class="updates-input-wrapper">
