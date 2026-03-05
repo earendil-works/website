@@ -11,11 +11,9 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon/android-chrome-192x192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon/android-chrome-512x512.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" href="/static/fonts/CommitMono-400-Regular.otf" as="font" type="font/otf" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/fonts/commit-mono.css">
+  <link rel="preload" href="/static/fonts/DepartureMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/fonts/departure-mono.css">
+  <link rel="stylesheet" href="/static/fonts/plantin-mt-pro.css">
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="preload" href="/static/paper.png" as="image">
   <link rel="preload" href="/static/paper-dark.png" as="image">
@@ -26,7 +24,7 @@
 </head>
 <body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML" class="{% if slug != "/" %}skip-intro{% endif %}">
   <div id="fps">FPS: --</div>
-  <div id="site-footer">EARENDIL WORKS CO.</div>
+  <div id="site-footer">EARENDIL INC.</div>
   <button id="theme-toggle" type="button" aria-label="Toggle color theme"><span class="value"></span></button>
 
   <div class="page" hx-history-elt{% block page_attrs %}{% endblock %}>

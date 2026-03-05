@@ -2,7 +2,8 @@
 :root {
   --cursor-light: url('/static/cursor-light.svg') 12 12;
   --cursor-dark: url('/static/cursor-dark.svg') 12 12;
-  --mono-font: 'Commit Mono', 'SFMono-Regular', ui-monospace, monospace;
+  --mono-font: 'Departure Mono', 'SFMono-Regular', ui-monospace, monospace;
+  --serif-font: 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
 }
 html, body {
   cursor: var(--cursor-light), auto;
@@ -37,7 +38,7 @@ canvas {
   transition: opacity 1000ms ease;
 }
 canvas.shader-ready { opacity: 1; }
-#fps { position: fixed; top: 10px; left: 10px; color: white; font: 16px monospace; background: rgba(0,0,0,0.5); padding: 5px 10px; z-index: 100; display: none; }
+#fps { position: fixed; top: 10px; left: 10px; color: white; font: 16px var(--mono-font); background: rgba(0,0,0,0.5); padding: 5px 10px; z-index: 100; display: none; }
 #fps.visible { display: block; }
 
 #site-footer {
@@ -315,6 +316,7 @@ canvas.shader-ready { opacity: 1; }
   top: 18px;
   right: 18px;
   text-decoration: none;
+  text-transform: uppercase;
   color: rgba(25, 24, 22, 0.7);
   font-size: inherit;
   cursor: var(--cursor-dark), pointer;
@@ -338,6 +340,41 @@ canvas.shader-ready { opacity: 1; }
 .email-meta p {
   margin-bottom: 0;
   line-height: 1.5;
+}
+
+.email-meta a {
+  color: inherit;
+  text-decoration: none;
+  cursor: var(--cursor-dark), pointer;
+}
+
+.theme-night .email-meta a {
+  cursor: var(--cursor-light), pointer;
+}
+
+.email-meta a:hover,
+.theme-night .email-meta a:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* Post body copy (after email metadata) uses serif */
+.email-meta + .letter-body {
+  font-family: var(--serif-font);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.email-meta + .letter-body em,
+.email-meta + .letter-body i {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.email-meta + .letter-body strong,
+.email-meta + .letter-body b,
+.email-meta + .letter-body a {
+  font-weight: 700;
 }
 
 .letter-body p {
@@ -380,8 +417,13 @@ canvas.shader-ready { opacity: 1; }
   font-weight: 400;
 }
 
-.post-name {
+.posts-list .post-name {
   margin-left: 0.6em;
+  font-family: var(--serif-font);
+  font-size: 18px;
+  line-height: 1.1;
+  font-style: italic;
+  font-weight: 400;
 }
 
 .letter-body a {
@@ -632,10 +674,20 @@ canvas.shader-ready { opacity: 1; }
   margin: 0;
 }
 
-/* Purpose and Join pages - Louize font */
+/* Purpose and Join pages */
 [data-page="/purpose/"] .letter-body,
 [data-page="/join/"] .letter-body {
-  font-family: 'EB Garamond', Garamond, serif;
+  font-family: var(--serif-font);
+  font-weight: 400;
   font-size: 20px;
   line-height: 1.6;
+}
+
+[data-page="/purpose/"] .letter-body strong,
+[data-page="/purpose/"] .letter-body b,
+[data-page="/purpose/"] .letter-body a,
+[data-page="/join/"] .letter-body strong,
+[data-page="/join/"] .letter-body b,
+[data-page="/join/"] .letter-body a {
+  font-weight: 700;
 }

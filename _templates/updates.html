@@ -6,8 +6,8 @@
       <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">[back]</a>
       <div class="email-meta">
         <p>Date: {{ page.date_day or page.date }}</p>
-        <p>From: {{ page.from }}</p>
-        <p>To: {{ page.to }}</p>
+        <p>From: {{ page.from_html if page.from_html else page.from }}</p>
+        <p>To: {{ page.to_html if page.to_html else page.to }}</p>
         <p>Subject: {{ page.title }}</p>
       </div>
       <div class="letter-body">

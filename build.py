@@ -74,6 +74,17 @@ def format_day_from_date(date_str: str) -> str:
         return date_str
 
 
+def linkify_email_header(value: str) -> str:
+    if not value:
+        return ""
+    # Convert <email@domain> to &lt;<a href="mailto:email@domain">email@domain</a>&gt;
+    return re.sub(
+        r"<([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})>",
+        r"&lt;<a href=\"mailto:\1\">\1</a>&gt;",
+        value,
+    )
+
+
 def slug_for_path(path: Path) -> str:
     rel = path.relative_to(ROOT)
     if rel.name == "_index.md":
@@ -313,6 +324,8 @@ def build_to(build_dir: Path) -> None:
         page = dict(frontmatter)
         if "date" in page:
             page["date_day"] = format_day_from_date(page.get("date", ""))
+        page["from_html"] = safe(linkify_email_header(str(page.get("from", ""))))
+        page["to_html"] = safe(linkify_email_header(str(page.get("to", ""))))
         rendered = env.render_template(
             template_name,
             title=frontmatter.get("title", "Earendil"),

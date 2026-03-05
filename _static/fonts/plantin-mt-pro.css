@@ -1,0 +1,44 @@
+/* Plantin MT Pro (local/system font lookup) */
+@font-face {
+  font-family: 'Plantin MT Pro';
+  src: local('Plantin MT Pro'),
+       local('PlantinMTPro-Regular'),
+       local('Plantin MT Std'),
+       local('PlantinMTStd-Regular');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plantin MT Pro';
+  src: local('Plantin MT Pro Italic'),
+       local('PlantinMTPro-Italic'),
+       local('Plantin MT Std Italic'),
+       local('PlantinMTStd-Italic');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plantin MT Pro';
+  src: local('Plantin MT Pro Bold'),
+       local('PlantinMTPro-Bold'),
+       local('Plantin MT Std Bold'),
+       local('PlantinMTStd-Bold');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plantin MT Pro';
+  src: local('Plantin MT Pro Bold Italic'),
+       local('PlantinMTPro-BoldItalic'),
+       local('Plantin MT Std Bold Italic'),
+       local('PlantinMTStd-BoldItalic');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
