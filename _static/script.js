@@ -1564,23 +1564,24 @@ function isInteractiveUiTarget(event) {
   return !!event.target.closest('.logo-links a, #theme-toggle, .updates-overlay, .updates-dismiss');
 }
 
-window.addEventListener('pointerdown', (event) => {
-  if (isUpdateOverlayOpen() || isInteractiveUiTarget(event)) {
-    return;
-  }
-  isDrawing = true;
-  queueLightPoints(event);
-});
-
-window.addEventListener('pointermove', (event) => {
-  if (isDrawing) {
-    queueLightPoints(event);
-  }
-});
-
-window.addEventListener('pointerup', () => {
-  isDrawing = false;
-});
+// Light painting disabled — clouds render too pixelated at reduced canvas resolution.
+// window.addEventListener('pointerdown', (event) => {
+//   if (isUpdateOverlayOpen() || isInteractiveUiTarget(event)) {
+//     return;
+//   }
+//   isDrawing = true;
+//   queueLightPoints(event);
+// });
+//
+// window.addEventListener('pointermove', (event) => {
+//   if (isDrawing) {
+//     queueLightPoints(event);
+//   }
+// });
+//
+// window.addEventListener('pointerup', () => {
+//   isDrawing = false;
+// });
 
 // Ripple on click
 canvas.addEventListener('click', (e) => {
