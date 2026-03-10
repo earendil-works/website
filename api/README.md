@@ -3,11 +3,13 @@
 Cloudflare Worker that handles:
 
 - `POST /api/subscribe` → adds a contact to Website Subscribers.
+- `GET/POST /api/unsubscribe` → marks a contact as unsubscribed in Resend.
 - `POST /api/resend/inbound-lefos-alpha` → adds inbound senders to Lefos Alpha.
 
 ## Endpoints
 
 - `POST /api/subscribe` with `{"email":"..."}` → `{"ok": true}`
+- `GET/POST /api/unsubscribe?email=...` → `{"ok": true}`
 - `POST /api/resend/inbound-lefos-alpha` for Resend inbound webhook payloads
 - `GET /health` (or `/api/health`) → `{"ok": true}`
 

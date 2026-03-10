@@ -88,7 +88,7 @@ async function addToSegment(
 function corsHeaders(origin: string): HeadersInit {
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
 }
@@ -105,6 +105,71 @@ function json(
       ...corsHeaders(origin),
     },
   });
+}
+
+async function markUnsubscribed(
+  email: string,
+  env: Env
+): Promise<{ ok: boolean; error?: unknown }> {
+  const patch = await fetch(
+    `https://api.resend.com/contacts/${encodeURIComponent(email)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ unsubscribed: true }),
+    }
+  );
+
+  if (patch.ok) return { ok: true };
+
+  const patchBody = await patch.json().catch(() => ({}));
+  const patchMsg = ((patchBody as { message?: string }).message || "").toLowerCase();
+  const notFound = patch.status === 404 || patchMsg.includes("not found");
+
+  if (!notFound) {
+    return { ok: false, error: patchBody };
+  }
+
+  const create = await fetch("https://api.resend.com/contacts", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      unsubscribed: true,
+    }),
+  });
+
+  if (create.ok) return { ok: true };
+
+  const createBody = await create.json().catch(() => ({}));
+  const createMsg = ((createBody as { message?: string }).message || "").toLowerCase();
+  const alreadyExists =
+    create.status === 409 || createMsg.includes("already") || createMsg.includes("exists");
+
+  if (!alreadyExists) return { ok: false, error: createBody };
+
+  const retryPatch = await fetch(
+    `https://api.resend.com/contacts/${encodeURIComponent(email)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ unsubscribed: true }),
+    }
+  );
+
+  if (retryPatch.ok) return { ok: true };
+
+  const retryBody = await retryPatch.json().catch(() => ({}));
+  return { ok: false, error: retryBody };
 }
 
 export default {
@@ -147,6 +212,37 @@ export default {
       }
 
       return json({ ok: true }, 200, origin);
+    }
+
+    // Public unsubscribe endpoint
+    if (url.pathname === "/api/unsubscribe") {
+      if (!["GET", "POST"].includes(request.method)) {
+        return json({ ok: false, error: "method_not_allowed" }, 405, origin);
+      }
+
+      let email = String(url.searchParams.get("email") || "")
+        .trim()
+        .toLowerCase();
+
+      if (request.method === "POST" && !email) {
+        const contentType = request.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const body = await request.json().catch(() => ({} as { email?: string }));
+          email = String(body?.email || "").trim().toLowerCase();
+        }
+      }
+
+      if (!isValidEmail(email)) {
+        return json({ ok: false, error: "invalid_email" }, 400, origin);
+      }
+
+      const result = await markUnsubscribed(email, env);
+      if (!result.ok) {
+        console.error("Unsubscribe failed:", result.error);
+        return json({ ok: false, error: "unsubscribe_failed" }, 500, origin);
+      }
+
+      return json({ ok: true, email }, 200, origin);
     }
 
     // Resend inbound webhook for Lefos Alpha rolling sync

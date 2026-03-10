@@ -277,6 +277,70 @@
   document.body.addEventListener('htmx:afterSettle', initUpdatesForm);
 })();
 
+// Unsubscribe flow handling
+(function() {
+  function initUnsubscribePage() {
+    var statusEl = document.getElementById('unsubscribe-status');
+    if (!statusEl) return;
+
+    var inputEl = document.getElementById('unsubscribe-email');
+    var buttonEl = document.getElementById('unsubscribe-submit');
+
+    function runUnsubscribe(email) {
+      if (!email) {
+        statusEl.textContent = 'Please enter your email address.';
+        return;
+      }
+
+      statusEl.textContent = 'Unsubscribing...';
+
+      fetch('/api/unsubscribe?email=' + encodeURIComponent(email), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      })
+        .then(function(response) {
+          if (!response.ok) throw new Error('unsubscribe_failed');
+          return response.json().catch(function() { return { ok: true }; });
+        })
+        .then(function(payload) {
+          if (!payload || payload.ok !== true) throw new Error('unsubscribe_failed');
+          statusEl.textContent = 'You have been unsubscribed.';
+        })
+        .catch(function() {
+          statusEl.textContent = 'We could not process your unsubscribe request. Please email team@earendil.com.';
+        });
+    }
+
+    var params = new URLSearchParams(window.location.search);
+    var email = (params.get('email') || '').trim().toLowerCase();
+
+    if (inputEl) {
+      inputEl.value = email;
+      inputEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          runUnsubscribe(inputEl.value.trim().toLowerCase());
+        }
+      });
+    }
+
+    if (buttonEl) {
+      buttonEl.addEventListener('click', function() {
+        var value = inputEl ? inputEl.value.trim().toLowerCase() : email;
+        runUnsubscribe(value);
+      });
+    }
+
+    if (email) {
+      runUnsubscribe(email);
+    }
+  }
+
+  initUnsubscribePage();
+  document.body.addEventListener('htmx:afterSettle', initUnsubscribePage);
+})();
+
 // WebGL ocean rendering (runs once)
 (function() {
 if (window.__earendilInitialized) return;
