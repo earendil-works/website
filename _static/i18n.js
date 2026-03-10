@@ -183,12 +183,15 @@
       if (html !== key) {
         // Convert newlines to <br> for proper formatting
         html = html.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-        // Sanitize: parse and rebuild with only allowed elements
-        var template = document.createElement('template');
-        template.innerHTML = html;
-        sanitizeNode(template.content);
-        el.innerHTML = '';
-        el.appendChild(template.content.cloneNode(true));
+        // Parse using DOMParser (safer than innerHTML on live elements)
+        // Then sanitize and transfer to target element
+        var parser = new DOMParser();
+        var doc = parser.parseFromString('<div>' + html + '</div>', 'text/html');
+        var content = doc.body.firstChild;
+        sanitizeNode(content);
+        // Clear and append sanitized content
+        while (el.firstChild) el.removeChild(el.firstChild);
+        while (content.firstChild) el.appendChild(content.firstChild);
       }
     });
     

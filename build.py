@@ -449,15 +449,25 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         elif file_path.endswith("/"):
             file_path = file_path + "index.html"
 
-        # Prevent path traversal attacks
+        # Prevent path traversal attacks by validating the path
         base_dir = Path(self.directory).resolve()
-        full_path = (base_dir / file_path).resolve()
-        if not str(full_path).startswith(str(base_dir)):
+        # Use os.path.normpath to collapse ../ sequences before joining
+        safe_path = os.path.normpath(file_path).lstrip(os.sep)
+        # Reject any path that still tries to escape
+        if safe_path.startswith('..') or os.path.isabs(safe_path):
+            self.send_error(403, "Forbidden")
+            return
+        full_path = base_dir / safe_path
+        # Final check: resolved path must be under base_dir
+        try:
+            full_path = full_path.resolve()
+            full_path.relative_to(base_dir)
+        except ValueError:
             self.send_error(403, "Forbidden")
             return
 
         try:
-            if full_path.exists() and full_path.is_file() and file_path.endswith(".html"):
+            if full_path.exists() and full_path.is_file() and safe_path.endswith(".html"):
                 content = full_path.read_text(encoding="utf-8")
                 if "</body>" in content:
                     content = content.replace("</body>", f"{RELOAD_SCRIPT}</body>")
@@ -469,14 +479,14 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 self.send_header("Content-Length", str(len(content.encode("utf-8"))))
                 self.end_headers()
                 self.wfile.write(content.encode("utf-8"))
-            elif full_path.exists() and full_path.is_file() and file_path.endswith(".js"):
+            elif full_path.exists() and full_path.is_file() and safe_path.endswith(".js"):
                 content = full_path.read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/javascript; charset=utf-8")
                 self.send_header("Content-Length", str(len(content)))
                 self.end_headers()
                 self.wfile.write(content)
-            elif full_path.exists() and full_path.is_file() and file_path.endswith(".json"):
+            elif full_path.exists() and full_path.is_file() and safe_path.endswith(".json"):
                 content = full_path.read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
