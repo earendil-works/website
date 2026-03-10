@@ -224,7 +224,7 @@
         }
       }, 250);
 
-      fetch('/api/subscribe', {
+      fetch('https://earendil-subscribe-api.earendil-subscribe.workers.dev/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email })

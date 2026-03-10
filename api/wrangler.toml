@@ -1,0 +1,10 @@
+name = "earendil-subscribe-api"
+main = "worker.ts"
+compatibility_date = "2024-01-01"
+
+# Production secrets (set via `wrangler secret put`):
+# - RESEND_API_KEY
+# - RESEND_SEGMENT_ID
+
+[vars]
+ALLOWED_ORIGIN = "https://earendil.com"

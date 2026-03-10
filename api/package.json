@@ -3,12 +3,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "wrangler dev",
+    "dev:local": "tsx watch index.ts",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.11",
     "hono": "^4.12.5",
     "resend": "^6.9.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241106.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.91.0"
   }
 }
