@@ -642,6 +642,11 @@ canvas.shader-ready { opacity: 1; }
   .updates-letter {
     padding: 44px 40px 40px;
   }
+
+  .posts-list .post-name {
+    display: block;
+    margin-left: 0;
+  }
 }
 
 /* 404 Error Page */
@@ -679,8 +684,8 @@ canvas.shader-ready { opacity: 1; }
 [data-page="/join/"] .letter-body {
   font-family: var(--serif-font);
   font-weight: 400;
-  font-size: 20px;
-  line-height: 1.6;
+  font-size: 18px;
+  line-height: 1.5;
 }
 
 [data-page="/purpose/"] .letter-body strong,
