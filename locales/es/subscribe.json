@@ -1,0 +1,7 @@
+{
+  "subscribe.title": "Recibe noticias de Earendil",
+  "subscribe.placeholder": "tu@correo.com",
+  "subscribe.loading": "Almacenando a la velocidad de la luz",
+  "subscribe.success": "Bienvenido a bordo",
+  "subscribe.error": "Algo salió mal"
+}

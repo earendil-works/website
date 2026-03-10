@@ -4,7 +4,7 @@ template: page
 aria_label: Subscribe to Earendil posts
 ---
 
-Hear from Earendil
+<span data-i18n="subscribe.subscribe.title">Hear from Earendil</span>
 
 <div class="updates-form-area" data-subscribe-form>
   <div class="updates-input-wrapper">
@@ -14,6 +14,7 @@ Hear from Earendil
       name="fake-field-to-disable-autofill"
       class="updates-input placeholder-text"
       placeholder="your@email.com"
+      data-i18n-placeholder="subscribe.subscribe.placeholder"
       autocomplete="off"
       autocapitalize="off"
       autocorrect="off"
@@ -29,4 +30,4 @@ Hear from Earendil
   <span id="updates-message" class="updates-message" hidden></span>
 </div>
 
-<a href="/posts/feed.atom" hx-boost="false">Atom</a> · <a href="/posts/feed.rss" hx-boost="false">RSS</a>
+<a href="/posts/feed.atom" hx-boost="false" data-i18n="posts.posts.feedAtom">Atom</a> · <a href="/posts/feed.rss" hx-boost="false" data-i18n="posts.posts.feedRss">RSS</a>

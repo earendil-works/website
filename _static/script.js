@@ -57,6 +57,12 @@
     if (event.target.closest('.updates-letter')) return;
     if (event.target.closest('.updates-dismiss')) return;
     if (event.target.closest('a')) return;
+    // Ignore clicks on chrome elements (controls, nav, footer)
+    if (event.target.closest('.bottom-controls')) return;
+    if (event.target.closest('.top-nav')) return;
+    if (event.target.closest('#site-footer')) return;
+    if (event.target.closest('.lang-menu')) return;
+    if (event.target.closest('.center-logo')) return;
     var dismissLink = overlay.querySelector('.updates-dismiss');
     var dismissUrl = (dismissLink && dismissLink.getAttribute('data-dismiss-url')) || '/';
     closeOverlayWithAnimation(overlay, function() {
@@ -220,7 +226,7 @@
       setTimeout(function() {
         if (wrapper) wrapper.style.display = 'none';
         if (messageEl) {
-          showAnimatedMessage('Storing at the speed of light');
+          showAnimatedMessage(window.i18n ? window.i18n.t('subscribe.subscribe.loading') : 'Storing at the speed of light');
         }
       }, 250);
 
@@ -239,10 +245,10 @@
         if (!payload || payload.ok !== true) {
           throw new Error('subscribe_failed');
         }
-        showAnimatedMessage('Welcome aboard');
+        showAnimatedMessage(window.i18n ? window.i18n.t('subscribe.subscribe.success') : 'Welcome aboard');
       })
       .catch(function() {
-        showAnimatedMessage('Something went wrong');
+        showAnimatedMessage(window.i18n ? window.i18n.t('subscribe.subscribe.error') : 'Something went wrong');
         setTimeout(function() {
           if (wrapper) {
             wrapper.style.display = '';
@@ -297,11 +303,14 @@ const LOGO_SVG_URL = '/static/earendil-logo.svg';
 
 const THEME_STORAGE_KEY = 'earendil-theme-mode';
 const THEME_MODES = ['auto', 'night', 'day'];
-const THEME_LABELS = {
-  auto: 'AUTO',
-  night: 'DARK',
-  day: 'LIGHT'
-};
+function getThemeLabel(mode) {
+  if (window.i18n) {
+    var keys = { auto: 'common.theme.auto', night: 'common.theme.dark', day: 'common.theme.light' };
+    return window.i18n.t(keys[mode] || keys.auto);
+  }
+  var fallbacks = { auto: 'AUTO', night: 'DARK', day: 'LIGHT' };
+  return fallbacks[mode] || fallbacks.auto;
+}
 
 // Quality settings for slower computers
 const QUALITY_LEVELS = ['low', 'medium', 'high'];
@@ -391,8 +400,8 @@ function applyThemePreference() {
 
 function updateThemeToggle() {
   const valueSpan = themeToggle.querySelector('.value');
-  valueSpan.textContent = THEME_LABELS[themeMode] || THEME_LABELS.auto;
-  themeToggle.setAttribute('aria-label', `Appearance: ${THEME_LABELS[themeMode]}`);
+  valueSpan.textContent = getThemeLabel(themeMode);
+  themeToggle.setAttribute('aria-label', 'Appearance: ' + getThemeLabel(themeMode));
   applyThemePreference();
 }
 
@@ -412,7 +421,16 @@ themeToggle.addEventListener('click', () => {
   updateThemeToggle();
 });
 
+// Update theme toggle when language changes
+window.addEventListener('languagechange', updateThemeToggle);
+
+// Initial update (with fallback labels)
 updateThemeToggle();
+
+// Update again once i18n is ready (with translated labels)
+if (window.i18n) {
+  window.i18n.onReady(updateThemeToggle);
+}
 
 
 

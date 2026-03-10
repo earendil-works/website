@@ -26,6 +26,7 @@ import markdown as md_lib
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "_templates"
 STATIC_DIR = ROOT / "_static"
+LOCALES_DIR = ROOT / "locales"
 BUILD_DIR = ROOT / "_build"
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
@@ -116,11 +117,11 @@ def iter_markdown_files() -> list[Path]:
     markdown_files: list[Path] = []
     for root, dirs, files in os.walk(ROOT):
         root_path = Path(root)
-        # Skip build artifacts and template/static dirs
+        # Skip build artifacts, template/static dirs, and node_modules
         dirs[:] = [
             d
             for d in dirs
-            if d not in {"_build", "_build_tmp"} and not d.startswith(("_", "."))
+            if d not in {"_build", "_build_tmp", "node_modules", "locales"} and not d.startswith(("_", "."))
         ]
         for filename in files:
             if not filename.endswith(".md"):
@@ -161,6 +162,7 @@ def collect_update_entries() -> list[dict[str, Any]]:
             "date": frontmatter.get("date", ""),
             "parsed_date": parsed_date,
             "subject": frontmatter.get("subject", ""),
+            "i18n_key": frontmatter.get("i18n_key", ""),
             "content": render_markdown(body),
         })
     # Sort by date, newest first
@@ -287,6 +289,11 @@ def build_to(build_dir: Path) -> None:
         static_count = sum(1 for f in static_files if f.is_file())
         print(f"  Copied {static_count} static files", flush=True)
 
+    if LOCALES_DIR.exists():
+        shutil.copytree(LOCALES_DIR, build_dir / "locales")
+        locale_files = list(LOCALES_DIR.rglob("*.json"))
+        print(f"  Copied {len(locale_files)} locale files", flush=True)
+
     cname_file = ROOT / "CNAME"
     if cname_file.exists():
         shutil.copy(cname_file, build_dir / "CNAME")
@@ -303,6 +310,7 @@ def build_to(build_dir: Path) -> None:
             "date": update["date"],
             "parsed_date": update["parsed_date"],
             "subject": update["subject"],
+            "i18n_key": update["i18n_key"],
         }
         for update in update_entries
     ]
@@ -432,32 +440,44 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 RELOAD_EVENTS.pop(connection_id, None)
 
     def handle_file_with_reload(self):
-        """Handle regular file requests, injecting reload script into HTML."""
-        parsed_path = urlparse(self.path)
-        file_path = parsed_path.path.lstrip("/")
-
-        if not file_path:
-            file_path = "index.html"
-        elif file_path.endswith("/"):
-            file_path = file_path + "index.html"
-
-        full_path = Path(self.directory) / file_path
-
+        """Handle file requests. For HTML, inject live reload script."""
+        # Let parent class handle the actual file serving securely
+        # We just need to intercept HTML responses to inject reload script
+        
+        # Check if this looks like an HTML request
+        path = self.path.split('?')[0]
+        if not (path.endswith('.html') or path.endswith('/') or path == '/' or '.' not in path.split('/')[-1]):
+            super().do_GET()
+            return
+        
+        # For HTML requests, we need to intercept the response
+        # Use parent's translate_path which is secure
+        fs_path = self.translate_path(self.path)
+        
+        # Check if it's a directory (serve index.html)
+        if os.path.isdir(fs_path):
+            fs_path = os.path.join(fs_path, "index.html")
+        
+        if not os.path.isfile(fs_path) or not fs_path.endswith('.html'):
+            super().do_GET()
+            return
+        
         try:
-            if full_path.exists() and full_path.is_file() and file_path.endswith(".html"):
-                content = full_path.read_text(encoding="utf-8")
-                if "</body>" in content:
-                    content = content.replace("</body>", f"{RELOAD_SCRIPT}</body>")
-                else:
-                    content += RELOAD_SCRIPT
-
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(content.encode("utf-8"))))
-                self.end_headers()
-                self.wfile.write(content.encode("utf-8"))
+            with open(fs_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Inject reload script
+            if "</body>" in content:
+                content = content.replace("</body>", f"{RELOAD_SCRIPT}</body>")
             else:
-                super().do_GET()
+                content += RELOAD_SCRIPT
+            
+            encoded = content.encode('utf-8')
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(encoded)))
+            self.end_headers()
+            self.wfile.write(encoded)
         except Exception:
             super().do_GET()
 

@@ -1,0 +1,13 @@
+{
+  "posts.title": "โพสต์",
+  "posts.hearFromUs": "[รับข่าวสารจากเรา]",
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "email.date": "วันที่:",
+  "email.date.post.invitation": "อา. 18 ม.ค. 2026",
+  "email.date.post.highground": "พฤ. 12 ก.พ. 2026",
+  "email.from": "จาก:",
+  "email.to": "ถึง:",
+  "email.to.value": "คุณ",
+  "email.subject": "หัวข้อ:"
+}

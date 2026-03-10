@@ -1,0 +1,13 @@
+{
+  "posts.title": "পোস্ট",
+  "posts.hearFromUs": "[আমাদের কাছ থেকে শুনুন]",
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "email.date": "তারিখ:",
+  "email.date.post.invitation": "রবি, ১৮ জানু ২০২৬",
+  "email.date.post.highground": "বৃহ, ১২ ফেব্রু ২০২৬",
+  "email.from": "প্রেরক:",
+  "email.to": "প্রাপক:",
+  "email.to.value": "আপনি",
+  "email.subject": "বিষয়:"
+}

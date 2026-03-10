@@ -1,0 +1,22 @@
+{
+  "subscribe.title": {
+    "message": "Hear from Earendil",
+    "context": "Title on the subscribe page"
+  },
+  "subscribe.placeholder": {
+    "message": "your@email.com",
+    "context": "Placeholder text in email input field"
+  },
+  "subscribe.loading": {
+    "message": "Storing at the speed of light",
+    "context": "Message shown while subscribing"
+  },
+  "subscribe.success": {
+    "message": "Welcome aboard",
+    "context": "Message shown after successful subscription"
+  },
+  "subscribe.error": {
+    "message": "Something went wrong",
+    "context": "Message shown when subscription fails"
+  }
+}

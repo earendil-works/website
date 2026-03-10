@@ -3,24 +3,24 @@
 {% block body %}
   <div class="updates-overlay" aria-hidden="true">
     <div class="updates-letter" role="dialog" aria-label="Earendil posts">
-      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">[close]</a>
+      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}" data-i18n="common.action.close">[close]</a>
       <div class="letter-body">
-        <div class="posts-title">POSTS</div>
+        <div class="posts-title" data-i18n="posts.posts.title">POSTS</div>
         {% if posts %}
         <ul class="posts-list">
           {% for post in posts %}
           <li>
             <a href="{{ post.slug }}">
               {% if post.parsed_date %}
-              <span class="post-date">{{ post.parsed_date.strftime("%b %d %Y") }}</span>
+              <span class="post-date" data-i18n="posts.email.date.{{ post.i18n_key }}">{{ post.parsed_date.strftime("%b %d %Y") }}</span>
               {% endif %}
-              <span class="post-name">{{ post.title }}</span>
+              <span class="post-name" data-i18n="content.{{ post.i18n_key }}.title">{{ post.title }}</span>
             </a>
           </li>
           {% endfor %}
         </ul>
         {% endif %}
-        <p><a href="/posts/subscribe/">[Hear from us]</a></p>
+        <p><a href="/posts/subscribe/" data-i18n="posts.posts.hearFromUs">[Hear from us]</a></p>
       </div>
     </div>
   </div>

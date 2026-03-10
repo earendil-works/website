@@ -1,0 +1,13 @@
+{
+  "posts.title": "投稿",
+  "posts.hearFromUs": "[お知らせを受け取る]",
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "email.date": "日付：",
+  "email.date.post.invitation": "2026年1月18日（日）",
+  "email.date.post.highground": "2026年2月12日（木）",
+  "email.from": "差出人：",
+  "email.to": "宛先：",
+  "email.to.value": "あなた",
+  "email.subject": "件名："
+}

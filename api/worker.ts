@@ -2,7 +2,7 @@
 
 export interface Env {
   RESEND_API_KEY: string;
-  RESEND_SEGMENT_ID: string;
+  RESEND_AUDIENCE_ID: string;
   ALLOWED_ORIGIN?: string;
 }
 
@@ -17,7 +17,7 @@ function isValidEmail(email: unknown): email is string {
   return domain.slice(dot + 1).length >= 2;
 }
 
-async function addToSegment(
+async function addToAudience(
   email: string,
   env: Env
 ): Promise<{ ok: boolean; error?: unknown }> {
@@ -30,13 +30,15 @@ async function addToSegment(
     body: JSON.stringify({
       email,
       unsubscribed: false,
-      segments: [{ id: env.RESEND_SEGMENT_ID }],
+      audience_id: env.RESEND_AUDIENCE_ID,
     }),
   });
 
   if (res.ok) return { ok: true };
 
   const body = await res.json().catch(() => ({}));
+  console.log("Resend response:", res.status, JSON.stringify(body));
+  
   const msg = ((body as { message?: string }).message || "").toLowerCase();
   const alreadyExists =
     res.status === 409 || msg.includes("already") || msg.includes("exists");
@@ -105,8 +107,8 @@ export default {
       return json({ ok: false, error: "invalid_email" }, 400, origin);
     }
 
-    // Add to Resend
-    const result = await addToSegment(email, env);
+    // Add to Resend audience
+    const result = await addToAudience(email, env);
     if (!result.ok) {
       console.error("Subscribe failed:", result.error);
       return json({ ok: false, error: "subscribe_failed" }, 500, origin);
