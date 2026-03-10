@@ -1,0 +1,42 @@
+# Translation Glossary for Earendil Website
+# This file defines terms that should be handled specially during translation.
+# Derived from elwing's glossary for consistency across all Earendil products.
+
+# Terms that should NEVER be translated (keep in English exactly as-is)
+neverTranslate:
+  - Lefos
+  - Earendil
+  - Earendil Works
+  - AI
+  - LLM
+  - LLMs
+
+# =============================================================================
+# Product terms that should be TRANSLITERATED (not translated) for non-Latin
+# scripts. These are Earendil-specific concepts that should sound the same
+# across all languages for brand consistency.
+#
+# For Latin-script languages (es, fr, de, it, pt, etc.): keep English spelling
+# For non-Latin scripts: use phonetic transliteration below
+# =============================================================================
+transliterate:
+  Entity:
+    _note: "An AI persona within a Garden - Earendil product concept"
+    ar: إنتيتي      # entītī
+    bn: এনটিটি      # enṭiṭi
+    fa: انتیتی      # entītī
+    he: אנטיטי      # entīṭī
+    hi: एंटिटी      # enṭiṭī
+    ja: エンティティ  # entitī
+    ko: 엔티티       # entiti
+    ru: энтити      # entiti
+    ta: என்டிட்டி   # eṇṭiṭṭi
+    te: ఎంటిటీ      # eṇṭiṭī
+    th: เอนทิตี     # ʻēnthitī
+    uk: ентіті      # entiti
+    zh: 实体        # shítǐ (this one translates naturally)
+
+# Terms that should be translated consistently (same translation used everywhere)
+consistentTranslation:
+  - garden
+  - email
