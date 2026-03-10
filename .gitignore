@@ -3,3 +3,4 @@
 /api/node_modules/
 /api/dist/
 /api/.env
+/api/.wrangler/

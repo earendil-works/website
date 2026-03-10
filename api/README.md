@@ -1,32 +1,27 @@
-# Earendil subscribe API (Hono + Resend)
+# Earendil Subscribe API
 
-This API provides:
+Cloudflare Worker that adds contacts to a Resend audience.
 
-- `POST /api/subscribe` → adds a contact to the Resend segment configured via env.
+## Endpoint
 
-## Setup
+`POST /api/subscribe` with `{"email": "..."}` → `{"ok": true}`
+
+**Production:** https://earendil-subscribe-api.earendil-subscribe.workers.dev
+
+## Local dev
 
 ```bash
-cd api
 npm install
-cp .env.example .env
-# set RESEND_API_KEY + RESEND_SEGMENT_ID
-npm run dev
+npx wrangler dev
 ```
 
-## Deploy target
+## Deploy
 
-Expected public endpoint:
+```bash
+npm run deploy
+```
 
-- `https://earendil.com/api/subscribe`
+## Secrets (set via `wrangler secret put`)
 
-The website frontend (`/_static/script.js`) already posts to this endpoint.
-
-## Deployment files
-
-- `api/Dockerfile` — container image for ECS
-- `.github/workflows/deploy-api.yml` — build/push to ECR + ECS rollout
-- `api/DEPLOYMENT_CHECKLIST.md` — minimal infra checklist
-
-`deploy-api.yml` can be pointed to exact infra names via GitHub variables:
-`WEBSITE_API_AWS_REGION`, `WEBSITE_API_ECR_REPOSITORY`, `WEBSITE_API_ECS_CLUSTER`, `WEBSITE_API_ECS_SERVICE`.
+- `RESEND_API_KEY`
+- `RESEND_SEGMENT_ID`
