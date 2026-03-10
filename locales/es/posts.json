@@ -1,0 +1,13 @@
+{
+  "posts.title": "PUBLICACIONES",
+  "posts.hearFromUs": "[Recibe nuestras noticias]",
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "email.date": "Fecha:",
+  "email.date.post.invitation": "Dom, 18 Ene 2026",
+  "email.date.post.highground": "Jue, 12 Feb 2026",
+  "email.from": "De:",
+  "email.to": "Para:",
+  "email.to.value": "Tú",
+  "email.subject": "Asunto:"
+}

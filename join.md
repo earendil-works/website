@@ -4,6 +4,6 @@ template: page
 aria_label: Join Earendil
 ---
 
-*We're hiring Members of our Technical Staff and Founder's Office*
+<p><em data-i18n="content.join.title">We're hiring Members of our Technical Staff and Founder's Office</em></p>
 
-<a href="mailto:join@earendil.com" class="mono-bold">join@earendil.com</a>
+<p><a href="mailto:join@earendil.com" class="mono-bold">join@earendil.com</a></p>

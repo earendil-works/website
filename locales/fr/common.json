@@ -1,0 +1,14 @@
+{
+  "site.title": "EARENDIL",
+  "site.footer": "EARENDIL INC.",
+  "nav.purpose": "Mission",
+  "nav.joinUs": "Rejoignez-nous",
+  "nav.lefos": "Lefos",
+  "nav.posts": "Articles",
+  "nav.works": "Œuvres",
+  "action.back": "[retour]",
+  "action.close": "[fermer]",
+  "theme.auto": "AUTO",
+  "theme.dark": "SOMBRE",
+  "theme.light": "CLAIR"
+}

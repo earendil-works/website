@@ -1,0 +1,33 @@
+{
+  "fallbackLanguage": "en",
+  "languages": [
+    { "code": "en", "name": "English", "dir": "ltr" },
+    { "code": "ar", "name": "العربية", "dir": "rtl" },
+    { "code": "bn", "name": "বাংলা", "dir": "ltr" },
+    { "code": "de", "name": "Deutsch", "dir": "ltr" },
+    { "code": "es", "name": "Español", "dir": "ltr" },
+    { "code": "fa", "name": "فارسی", "dir": "rtl" },
+    { "code": "fr", "name": "Français", "dir": "ltr" },
+    { "code": "he", "name": "עברית", "dir": "rtl" },
+    { "code": "hi", "name": "हिन्दी", "dir": "ltr" },
+    { "code": "id", "name": "Bahasa Indonesia", "dir": "ltr" },
+    { "code": "it", "name": "Italiano", "dir": "ltr" },
+    { "code": "ja", "name": "日本語", "dir": "ltr" },
+    { "code": "ko", "name": "한국어", "dir": "ltr" },
+    { "code": "ms", "name": "Bahasa Melayu", "dir": "ltr" },
+    { "code": "nl", "name": "Nederlands", "dir": "ltr" },
+    { "code": "no", "name": "Norsk", "dir": "ltr" },
+    { "code": "pt", "name": "Português", "dir": "ltr" },
+    { "code": "ru", "name": "Русский", "dir": "ltr" },
+    { "code": "sv", "name": "Svenska", "dir": "ltr" },
+    { "code": "sw", "name": "Kiswahili", "dir": "ltr" },
+    { "code": "ta", "name": "தமிழ்", "dir": "ltr" },
+    { "code": "te", "name": "తెలుగు", "dir": "ltr" },
+    { "code": "th", "name": "ไทย", "dir": "ltr" },
+    { "code": "tr", "name": "Türkçe", "dir": "ltr" },
+    { "code": "uk", "name": "Українська", "dir": "ltr" },
+    { "code": "vi", "name": "Tiếng Việt", "dir": "ltr" },
+    { "code": "zh", "name": "中文", "dir": "ltr" }
+  ],
+  "namespaces": ["common", "posts", "subscribe", "errors"]
+}

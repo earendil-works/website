@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,28 +23,42 @@
   <link href="/posts/feed.rss" rel="alternate" title="Earendil Posts" type="application/rss+xml">
 </head>
 <body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML" class="{% if slug != "/" %}skip-intro{% endif %}">
-  <div id="fps">FPS: --</div>
-  <div id="site-footer">EARENDIL INC.</div>
-  <button id="theme-toggle" type="button" aria-label="Toggle color theme"><span class="value"></span></button>
+  <!-- Background layer -->
+  <canvas id="canvas"></canvas>
+  
+  <!-- Center logo (behind overlays) -->
+  <a href="/" class="center-logo" dir="ltr">
+    <img class="main-logo" id="logo" src="/static/earendil-logo.svg" alt="Earendil">
+  </a>
 
+  <!-- Page content layer -->
   <div class="page" hx-history-elt{% block page_attrs %}{% endblock %}>
-    <div class="logo-stack">
-      <a href="/" class="logo-link"><img class="main-logo" id="logo" src="/static/earendil-logo.svg" alt="Earendil"></a>
-      <div class="logo-links">
-        <a class="updates-link" href="/purpose/">Purpose</a>
-        <a class="updates-link" href="/join/">Join Us</a>
-        <a class="updates-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer">Lefos</a>
-        <a class="updates-link" href="/posts/">Posts</a>
-        <a class="updates-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">Works</a>
-      </div>
-    </div>
-
-    <div class="body">
-      {% block body %}{% endblock %}
-    </div>
+    {% block body %}{% endblock %}
   </div>
 
-  <canvas id="canvas"></canvas>
+  <!-- Chrome layer (always on top) -->
+  <div id="fps">FPS: --</div>
+  
+  <nav class="top-nav" dir="ltr">
+    <a class="nav-link" href="/purpose/" data-i18n="common.nav.purpose">Purpose</a>
+    <a class="nav-link" href="/join/" data-i18n="common.nav.joinUs">Join Us</a>
+    <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer" data-i18n="common.nav.lefos">Lefos</a>
+    <a class="nav-link" href="/posts/" data-i18n="common.nav.posts">Posts</a>
+    <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer" data-i18n="common.nav.works">Works</a>
+  </nav>
+
+  <div id="site-footer" dir="ltr" data-i18n="common.site.footer">EARENDIL INC.</div>
+  
+  <div class="bottom-controls" dir="ltr">
+    <div id="lang-picker" class="lang-picker">
+      <button id="lang-toggle" type="button" aria-label="Change language" aria-expanded="false" aria-haspopup="listbox">
+        <span class="lang-current">EN</span>
+      </button>
+      <ul id="lang-menu" class="lang-menu" role="listbox" aria-label="Select language" hidden></ul>
+    </div>
+    <button id="theme-toggle" type="button" aria-label="Toggle color theme"><span class="value"></span></button>
+  </div>
+
   <script src="/static/htmx-bundle.min.js"></script>
   <script>
     htmx.config.scrollIntoViewOnBoost = false;
@@ -60,11 +74,17 @@
     htmx.on('htmx:swapError', htmxFallbackToNative);
     htmx.on('htmx:responseError', htmxFallbackToNative);
 
-    // Ensure logo/sidebar are visible immediately on HTMX navigation
     htmx.on('htmx:beforeSwap', function() {
       document.body.classList.add('skip-intro');
     });
+
+    htmx.on('htmx:afterSettle', function() {
+      if (window.i18n) {
+        window.i18n.updateDOM();
+      }
+    });
   </script>
+  <script src="/static/i18n.js"></script>
   <script src="/static/script.js"></script>
 </body>
 </html>

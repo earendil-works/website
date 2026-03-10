@@ -26,6 +26,7 @@ import markdown as md_lib
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "_templates"
 STATIC_DIR = ROOT / "_static"
+LOCALES_DIR = ROOT / "locales"
 BUILD_DIR = ROOT / "_build"
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
@@ -116,11 +117,11 @@ def iter_markdown_files() -> list[Path]:
     markdown_files: list[Path] = []
     for root, dirs, files in os.walk(ROOT):
         root_path = Path(root)
-        # Skip build artifacts and template/static dirs
+        # Skip build artifacts, template/static dirs, and node_modules
         dirs[:] = [
             d
             for d in dirs
-            if d not in {"_build", "_build_tmp"} and not d.startswith(("_", "."))
+            if d not in {"_build", "_build_tmp", "node_modules", "locales"} and not d.startswith(("_", "."))
         ]
         for filename in files:
             if not filename.endswith(".md"):
@@ -161,6 +162,7 @@ def collect_update_entries() -> list[dict[str, Any]]:
             "date": frontmatter.get("date", ""),
             "parsed_date": parsed_date,
             "subject": frontmatter.get("subject", ""),
+            "i18n_key": frontmatter.get("i18n_key", ""),
             "content": render_markdown(body),
         })
     # Sort by date, newest first
@@ -287,6 +289,11 @@ def build_to(build_dir: Path) -> None:
         static_count = sum(1 for f in static_files if f.is_file())
         print(f"  Copied {static_count} static files", flush=True)
 
+    if LOCALES_DIR.exists():
+        shutil.copytree(LOCALES_DIR, build_dir / "locales")
+        locale_files = list(LOCALES_DIR.rglob("*.json"))
+        print(f"  Copied {len(locale_files)} locale files", flush=True)
+
     cname_file = ROOT / "CNAME"
     if cname_file.exists():
         shutil.copy(cname_file, build_dir / "CNAME")
@@ -303,6 +310,7 @@ def build_to(build_dir: Path) -> None:
             "date": update["date"],
             "parsed_date": update["parsed_date"],
             "subject": update["subject"],
+            "i18n_key": update["i18n_key"],
         }
         for update in update_entries
     ]
@@ -456,6 +464,20 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 self.send_header("Content-Length", str(len(content.encode("utf-8"))))
                 self.end_headers()
                 self.wfile.write(content.encode("utf-8"))
+            elif full_path.exists() and full_path.is_file() and file_path.endswith(".js"):
+                content = full_path.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/javascript; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+            elif full_path.exists() and full_path.is_file() and file_path.endswith(".json"):
+                content = full_path.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
             else:
                 super().do_GET()
         except Exception:

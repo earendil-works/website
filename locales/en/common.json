@@ -1,0 +1,50 @@
+{
+  "site.title": {
+    "message": "EARENDIL",
+    "context": "Site name shown in title and footer"
+  },
+  "site.footer": {
+    "message": "EARENDIL INC.",
+    "context": "Footer company name"
+  },
+  "nav.purpose": {
+    "message": "Purpose",
+    "context": "Navigation link to purpose page"
+  },
+  "nav.joinUs": {
+    "message": "Join Us",
+    "context": "Navigation link to join page"
+  },
+  "nav.lefos": {
+    "message": "Lefos",
+    "context": "Navigation link to Lefos product (external)"
+  },
+  "nav.posts": {
+    "message": "Posts",
+    "context": "Navigation link to posts/blog section"
+  },
+  "nav.works": {
+    "message": "Works",
+    "context": "Navigation link to GitHub works (external)"
+  },
+  "action.back": {
+    "message": "[back]",
+    "context": "Back/dismiss button text"
+  },
+  "action.close": {
+    "message": "[close]",
+    "context": "Close button text"
+  },
+  "theme.auto": {
+    "message": "AUTO",
+    "context": "Theme toggle: automatic/system preference"
+  },
+  "theme.dark": {
+    "message": "DARK",
+    "context": "Theme toggle: dark mode"
+  },
+  "theme.light": {
+    "message": "LIGHT",
+    "context": "Theme toggle: light mode"
+  }
+}

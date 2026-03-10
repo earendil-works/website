@@ -1,0 +1,170 @@
+name: Machine Translations
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
+    paths:
+      - 'locales/en/**'
+
+jobs:
+  check-missing:
+    name: Check for Missing Translations
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.ref != 'main'
+    outputs:
+      has_missing: ${{ steps.check.outputs.has_missing }}
+      has_edited: ${{ steps.check-edited.outputs.has_edited }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check for missing translations
+        id: check
+        run: |
+          MISSING=false
+          LANGS=$(ls -d locales/*/ | xargs -n1 basename | grep -v '^en$')
+          
+          for en_file in locales/en/*.json; do
+            filename=$(basename "$en_file")
+            en_keys=$(jq -r 'keys[]' "$en_file" 2>/dev/null | sort)
+            
+            for lang in $LANGS; do
+              lang_file="locales/$lang/$filename"
+              if [ -f "$lang_file" ]; then
+                lang_keys=$(jq -r 'keys[]' "$lang_file" 2>/dev/null | sort)
+                missing_keys=$(comm -23 <(echo "$en_keys") <(echo "$lang_keys"))
+                if [ -n "$missing_keys" ]; then
+                  echo "Missing in $lang/$filename: $(echo "$missing_keys" | head -3 | tr '\n' ' ')"
+                  MISSING=true
+                fi
+              else
+                echo "Missing file: $lang/$filename"
+                MISSING=true
+              fi
+            done
+          done
+          
+          echo "has_missing=$MISSING" >> $GITHUB_OUTPUT
+
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Check for edited English keys
+        id: check-edited
+        run: |
+          EDITED=false
+          BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- "locales/en/*.json" 2>/dev/null || true)
+          
+          if [ -z "$CHANGED" ]; then
+            echo "has_edited=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          LANGS=$(ls -d locales/*/ | xargs -n1 basename | grep -v '^en$')
+          
+          for en_file in $CHANGED; do
+            filename=$(basename "$en_file")
+            OLD=$(git show "$BASE_REF":"$en_file" 2>/dev/null || echo "{}")
+            NEW=$(cat "$en_file" 2>/dev/null || echo "{}")
+            
+            # Find edited keys (message changed)
+            EDITED_KEYS=$(jq -r --argjson old "$OLD" --argjson new "$NEW" -n '
+              ($new | keys[]) as $key |
+              select($old[$key].message != null) |
+              select($new[$key].message != null) |
+              select($old[$key].message != $new[$key].message) |
+              $key
+            ' 2>/dev/null || true)
+            
+            if [ -n "$EDITED_KEYS" ]; then
+              echo "Edited keys in $filename: $EDITED_KEYS"
+              EDITED=true
+            fi
+          done
+          
+          echo "has_edited=$EDITED" >> $GITHUB_OUTPUT
+
+  translate:
+    name: Translate Missing Keys
+    runs-on: ubuntu-latest
+    needs: check-missing
+    if: |
+      needs.check-missing.outputs.has_missing == 'true' ||
+      needs.check-missing.outputs.has_edited == 'true' ||
+      contains(github.event.pull_request.labels.*.name, 'machine_translations_triggered')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Detect edited keys needing re-translation
+        env:
+          GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: node scripts/translations/detect-edited-keys.js
+
+      - name: Run machine translation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/translations/translate.js
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit translations
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(i18n): add missing translations"
+          git push
+
+      - name: Comment on PR
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: '✅ **Machine translations added!**\n\nMissing translations have been automatically generated and committed.\n\n*Generated using Claude*'
+            });
+
+      - name: Summary
+        run: |
+          echo "## Translation Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.changes.outputs.has_changes }}" == "true" ]; then
+            echo "✅ Machine translations committed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No missing translations." >> $GITHUB_STEP_SUMMARY
+          fi

@@ -6,7 +6,10 @@ from: Earendil <rfc@earendil.com>
 to: You
 date: Sun, 18 Jan 2026 18:17:19 +0100
 subject: An Invitation to Begin a Correspondence
+i18n_key: post.invitation
 ---
+
+<div data-i18n-html="content.post.invitation.body">
 
 Hello,
 
@@ -18,3 +21,5 @@ We work out of <span class="mono-bold">Vienna, Austria</span>, a city of coffee,
 
 With care,  
 Armin and Colin
+
+</div>

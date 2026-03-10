@@ -1,0 +1,10 @@
+{
+  "error.404.title": {
+    "message": "Not Found",
+    "context": "404 page title"
+  },
+  "error.404.message": {
+    "message": "It was lost, and has not been seen again.",
+    "context": "404 error message displayed to user"
+  }
+}

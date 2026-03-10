@@ -1,0 +1,46 @@
+{
+  "posts.title": {
+    "message": "POSTS",
+    "context": "Title of the posts/blog listing page"
+  },
+  "posts.hearFromUs": {
+    "message": "[Hear from us]",
+    "context": "Link to subscribe to posts"
+  },
+  "posts.feedAtom": {
+    "message": "Atom",
+    "context": "Link to Atom feed"
+  },
+  "posts.feedRss": {
+    "message": "RSS",
+    "context": "Link to RSS feed"
+  },
+  "email.date": {
+    "message": "Date:",
+    "context": "Email header label for date"
+  },
+  "email.date.post.invitation": {
+    "message": "Sun, 18 Jan 2026",
+    "context": "Date for invitation post"
+  },
+  "email.date.post.highground": {
+    "message": "Thu, 12 Feb 2026",
+    "context": "Date for high ground post"
+  },
+  "email.from": {
+    "message": "From:",
+    "context": "Email header label for sender"
+  },
+  "email.to": {
+    "message": "To:",
+    "context": "Email header label for recipient"
+  },
+  "email.to.value": {
+    "message": "You",
+    "context": "Email recipient value"
+  },
+  "email.subject": {
+    "message": "Subject:",
+    "context": "Email header label for subject"
+  }
+}
