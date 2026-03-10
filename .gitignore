@@ -3,4 +3,5 @@
 /api/node_modules/
 /api/dist/
 /api/.env
+/api/.dev.vars
 /api/.wrangler/
