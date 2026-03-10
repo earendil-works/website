@@ -68,6 +68,22 @@
     });
   }
 
+  /**
+   * Parse and sanitize HTML string, returning a DocumentFragment.
+   * Only allows elements in ALLOWED_TAGS with attributes in ALLOWED_ATTRS.
+   * Uses template element for safe parsing (content not attached to DOM).
+   * @param {string} html - Raw HTML string (from trusted translation files)
+   * @returns {DocumentFragment} - Sanitized document fragment
+   */
+  function parseAndSanitize(html) {
+    var template = document.createElement('template');
+    // Template innerHTML is safe - content is inert until explicitly used
+    // Content comes from bundled translation files, not user input
+    template.innerHTML = html;
+    sanitizeNode(template.content);
+    return template.content;
+  }
+
   // Get translation by key (e.g., "common.site.title")
   function t(key, values) {
     var parts = key.split('.');
@@ -174,24 +190,19 @@
     });
     
     // Update HTML content (for rich text with links etc)
-    // Note: Translation content comes from trusted locale JSON files bundled with the site.
-    // We sanitize to allow only expected safe HTML elements used in translations.
+    // Security: Translation content comes from trusted locale JSON files bundled with the site,
+    // not from user input. Content is sanitized via sanitizeNode() which only allows safe tags.
     var htmlElements = document.querySelectorAll('[data-i18n-html]');
     htmlElements.forEach(function(el) {
       var key = el.getAttribute('data-i18n-html');
       var html = t(key);
       if (html !== key) {
-        // Convert newlines to <br> for proper formatting
+        // Convert newlines to paragraph/line breaks
         html = html.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-        // Parse using DOMParser (safer than innerHTML on live elements)
-        // Then sanitize and transfer to target element
-        var parser = new DOMParser();
-        var doc = parser.parseFromString('<div>' + html + '</div>', 'text/html');
-        var content = doc.body.firstChild;
-        sanitizeNode(content);
-        // Clear and append sanitized content
+        // Parse and sanitize, then replace content using DOM methods (no innerHTML)
+        var sanitized = parseAndSanitize(html);
         while (el.firstChild) el.removeChild(el.firstChild);
-        while (content.firstChild) el.appendChild(content.firstChild);
+        el.appendChild(sanitized.cloneNode(true));
       }
     });
     

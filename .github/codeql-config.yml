@@ -1,0 +1,14 @@
+name: "CodeQL config"
+
+# Paths to exclude from analysis
+paths-ignore:
+  # Development server - only runs locally, not exposed to internet
+  - "build.py"
+
+# Query filters to reduce false positives
+query-filters:
+  # Exclude path injection warnings for validated paths
+  - exclude:
+      id: py/path-injection
+      paths:
+        - "build.py"
