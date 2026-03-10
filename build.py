@@ -440,51 +440,44 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 RELOAD_EVENTS.pop(connection_id, None)
 
     def handle_file_with_reload(self):
-        """Handle regular file requests, injecting reload script into HTML."""
-        parsed_path = urlparse(self.path)
-        file_path = parsed_path.path.lstrip("/")
-
-        if not file_path:
-            file_path = "index.html"
-        elif file_path.endswith("/"):
-            file_path = file_path + "index.html"
-
-        # Only handle HTML files specially (for live reload injection)
-        # All other files use the standard handler
-        if not file_path.endswith(".html"):
+        """Handle file requests. For HTML, inject live reload script."""
+        # Let parent class handle the actual file serving securely
+        # We just need to intercept HTML responses to inject reload script
+        
+        # Check if this looks like an HTML request
+        path = self.path.split('?')[0]
+        if not (path.endswith('.html') or path.endswith('/') or path == '/' or '.' not in path.split('/')[-1]):
             super().do_GET()
             return
-
-        # For HTML files, inject live reload script
-        # Use a hardcoded safe path within the build directory
-        base_dir = Path(self.directory).resolve()
-        # Normalize path and ensure it's safe
-        normalized = os.path.normpath(file_path)
-        if normalized.startswith('..') or os.path.isabs(normalized):
-            self.send_error(403, "Forbidden")
+        
+        # For HTML requests, we need to intercept the response
+        # Use parent's translate_path which is secure
+        fs_path = self.translate_path(self.path)
+        
+        # Check if it's a directory (serve index.html)
+        if os.path.isdir(fs_path):
+            fs_path = os.path.join(fs_path, "index.html")
+        
+        if not os.path.isfile(fs_path) or not fs_path.endswith('.html'):
+            super().do_GET()
             return
         
-        html_path = base_dir / normalized
         try:
-            resolved = html_path.resolve()
-            if not resolved.is_relative_to(base_dir):
-                self.send_error(403, "Forbidden")
-                return
-            if not resolved.exists() or not resolved.is_file():
-                super().do_GET()
-                return
-                
-            content = resolved.read_text(encoding="utf-8")
+            with open(fs_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Inject reload script
             if "</body>" in content:
                 content = content.replace("</body>", f"{RELOAD_SCRIPT}</body>")
             else:
                 content += RELOAD_SCRIPT
-
+            
+            encoded = content.encode('utf-8')
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(content.encode("utf-8"))))
+            self.send_header("Content-Length", str(len(encoded)))
             self.end_headers()
-            self.wfile.write(content.encode("utf-8"))
+            self.wfile.write(encoded)
         except Exception:
             super().do_GET()
 

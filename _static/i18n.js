@@ -29,60 +29,11 @@
     return typeof value === 'string' ? value : '';
   }
 
-  // Allowed HTML elements and attributes for translation content sanitization
-  var ALLOWED_TAGS = ['a', 'span', 'em', 'strong', 'br', 'p', 'b', 'i', 'ul', 'ol', 'li'];
-  var ALLOWED_ATTRS = {
-    'a': ['href', 'target', 'rel', 'class'],
-    'span': ['class'],
-    '*': ['class']
+  // DOMPurify configuration for translation content
+  var PURIFY_CONFIG = {
+    ALLOWED_TAGS: ['a', 'span', 'em', 'strong', 'br', 'p', 'b', 'i', 'ul', 'ol', 'li'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
   };
-
-  // Sanitize a DOM node tree to only allow safe elements/attributes
-  function sanitizeNode(node) {
-    var childNodes = Array.from(node.childNodes);
-    childNodes.forEach(function(child) {
-      if (child.nodeType === Node.ELEMENT_NODE) {
-        var tagName = child.tagName.toLowerCase();
-        if (ALLOWED_TAGS.indexOf(tagName) === -1) {
-          // Replace disallowed element with its text content
-          var text = document.createTextNode(child.textContent);
-          node.replaceChild(text, child);
-        } else {
-          // Remove disallowed attributes
-          var allowedForTag = ALLOWED_ATTRS[tagName] || [];
-          var allowedGlobal = ALLOWED_ATTRS['*'] || [];
-          var allowed = allowedForTag.concat(allowedGlobal);
-          Array.from(child.attributes).forEach(function(attr) {
-            if (allowed.indexOf(attr.name) === -1) {
-              child.removeAttribute(attr.name);
-            }
-            // Sanitize href to prevent javascript: URLs
-            if (attr.name === 'href' && /^\s*javascript:/i.test(attr.value)) {
-              child.removeAttribute('href');
-            }
-          });
-          // Recursively sanitize children
-          sanitizeNode(child);
-        }
-      }
-    });
-  }
-
-  /**
-   * Parse and sanitize HTML string, returning a DocumentFragment.
-   * Only allows elements in ALLOWED_TAGS with attributes in ALLOWED_ATTRS.
-   * Uses template element for safe parsing (content not attached to DOM).
-   * @param {string} html - Raw HTML string (from trusted translation files)
-   * @returns {DocumentFragment} - Sanitized document fragment
-   */
-  function parseAndSanitize(html) {
-    var template = document.createElement('template');
-    // Template innerHTML is safe - content is inert until explicitly used
-    // Content comes from bundled translation files, not user input
-    template.innerHTML = html;
-    sanitizeNode(template.content);
-    return template.content;
-  }
 
   // Get translation by key (e.g., "common.site.title")
   function t(key, values) {
@@ -190,8 +141,7 @@
     });
     
     // Update HTML content (for rich text with links etc)
-    // Security: Translation content comes from trusted locale JSON files bundled with the site,
-    // not from user input. Content is sanitized via sanitizeNode() which only allows safe tags.
+    // Security: Content sanitized via DOMPurify before insertion
     var htmlElements = document.querySelectorAll('[data-i18n-html]');
     htmlElements.forEach(function(el) {
       var key = el.getAttribute('data-i18n-html');
@@ -199,10 +149,8 @@
       if (html !== key) {
         // Convert newlines to paragraph/line breaks
         html = html.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-        // Parse and sanitize, then replace content using DOM methods (no innerHTML)
-        var sanitized = parseAndSanitize(html);
-        while (el.firstChild) el.removeChild(el.firstChild);
-        el.appendChild(sanitized.cloneNode(true));
+        // Sanitize with DOMPurify and set content
+        el.innerHTML = DOMPurify.sanitize(html, PURIFY_CONFIG);
       }
     });
     

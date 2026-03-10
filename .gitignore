@@ -10,3 +10,4 @@
 codeql-db/
 codeql-results.csv
 codeql-db-py/
+.codeql-results/
