@@ -6,6 +6,10 @@ on:
     paths:
       - 'locales/en/**'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   check-missing:
     name: Check for Missing Translations

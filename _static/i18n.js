@@ -29,6 +29,45 @@
     return typeof value === 'string' ? value : '';
   }
 
+  // Allowed HTML elements and attributes for translation content sanitization
+  var ALLOWED_TAGS = ['a', 'span', 'em', 'strong', 'br', 'p', 'b', 'i', 'ul', 'ol', 'li'];
+  var ALLOWED_ATTRS = {
+    'a': ['href', 'target', 'rel', 'class'],
+    'span': ['class'],
+    '*': ['class']
+  };
+
+  // Sanitize a DOM node tree to only allow safe elements/attributes
+  function sanitizeNode(node) {
+    var childNodes = Array.from(node.childNodes);
+    childNodes.forEach(function(child) {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        var tagName = child.tagName.toLowerCase();
+        if (ALLOWED_TAGS.indexOf(tagName) === -1) {
+          // Replace disallowed element with its text content
+          var text = document.createTextNode(child.textContent);
+          node.replaceChild(text, child);
+        } else {
+          // Remove disallowed attributes
+          var allowedForTag = ALLOWED_ATTRS[tagName] || [];
+          var allowedGlobal = ALLOWED_ATTRS['*'] || [];
+          var allowed = allowedForTag.concat(allowedGlobal);
+          Array.from(child.attributes).forEach(function(attr) {
+            if (allowed.indexOf(attr.name) === -1) {
+              child.removeAttribute(attr.name);
+            }
+            // Sanitize href to prevent javascript: URLs
+            if (attr.name === 'href' && /^\s*javascript:/i.test(attr.value)) {
+              child.removeAttribute('href');
+            }
+          });
+          // Recursively sanitize children
+          sanitizeNode(child);
+        }
+      }
+    });
+  }
+
   // Get translation by key (e.g., "common.site.title")
   function t(key, values) {
     var parts = key.split('.');
@@ -135,6 +174,8 @@
     });
     
     // Update HTML content (for rich text with links etc)
+    // Note: Translation content comes from trusted locale JSON files bundled with the site.
+    // We sanitize to allow only expected safe HTML elements used in translations.
     var htmlElements = document.querySelectorAll('[data-i18n-html]');
     htmlElements.forEach(function(el) {
       var key = el.getAttribute('data-i18n-html');
@@ -142,7 +183,12 @@
       if (html !== key) {
         // Convert newlines to <br> for proper formatting
         html = html.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-        el.innerHTML = html;
+        // Sanitize: parse and rebuild with only allowed elements
+        var template = document.createElement('template');
+        template.innerHTML = html;
+        sanitizeNode(template.content);
+        el.innerHTML = '';
+        el.appendChild(template.content.cloneNode(true));
       }
     });
     

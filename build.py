@@ -449,7 +449,12 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         elif file_path.endswith("/"):
             file_path = file_path + "index.html"
 
-        full_path = Path(self.directory) / file_path
+        # Prevent path traversal attacks
+        base_dir = Path(self.directory).resolve()
+        full_path = (base_dir / file_path).resolve()
+        if not str(full_path).startswith(str(base_dir)):
+            self.send_error(403, "Forbidden")
+            return
 
         try:
             if full_path.exists() and full_path.is_file() and file_path.endswith(".html"):
