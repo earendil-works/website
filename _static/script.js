@@ -224,13 +224,21 @@
         }
       }, 250);
 
-      fetch('https://script.google.com/macros/s/AKfycbxtaYo7U3mpdwBnfl3O735PTKySaypH3JbYczz4tLJ7je-qBRgjQrZS0ZyB6bMRwt-4cQ/exec', {
+      fetch('/api/subscribe', {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email })
       })
-      .then(function() {
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error('subscribe_failed');
+        }
+        return response.json().catch(function() { return { ok: true }; });
+      })
+      .then(function(payload) {
+        if (!payload || payload.ok !== true) {
+          throw new Error('subscribe_failed');
+        }
         showAnimatedMessage('Welcome aboard');
       })
       .catch(function() {

@@ -1,0 +1,14 @@
+{
+  "name": "earendil-website-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.11",
+    "hono": "^4.12.5",
+    "resend": "^6.9.3"
+  }
+}

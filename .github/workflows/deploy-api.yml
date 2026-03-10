@@ -1,0 +1,96 @@
+name: Deploy Subscribe API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-subscribe-api
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ${{ vars.WEBSITE_API_AWS_REGION || 'us-east-2' }}
+  ECR_REPOSITORY: ${{ vars.WEBSITE_API_ECR_REPOSITORY || 'website-api-prod' }}
+  ECS_CLUSTER: ${{ vars.WEBSITE_API_ECS_CLUSTER || 'website-prod' }}
+  ECS_SERVICE: ${{ vars.WEBSITE_API_ECS_SERVICE || 'website-api-prod' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show resolved deploy targets
+        run: |
+          echo "Region: ${AWS_REGION}"
+          echo "ECR repo: ${ECR_REPOSITORY}"
+          echo "ECS cluster: ${ECS_CLUSTER}"
+          echo "ECS service: ${ECS_SERVICE}"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-WebsiteApiDeploy
+
+      - name: Validate ECS target exists
+        run: |
+          aws ecs describe-services \
+            --cluster "${ECS_CLUSTER}" \
+            --services "${ECS_SERVICE}" \
+            --region "${AWS_REGION}" \
+            --query 'services[0].status' \
+            --output text
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Trigger ECS deployment
+        run: |
+          aws ecs update-service \
+            --cluster "${ECS_CLUSTER}" \
+            --service "${ECS_SERVICE}" \
+            --force-new-deployment \
+            --region "${AWS_REGION}"
+
+      - name: Wait for ECS service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster "${ECS_CLUSTER}" \
+            --services "${ECS_SERVICE}" \
+            --region "${AWS_REGION}"
+
+      - name: Deployment summary
+        run: |
+          echo "## ✅ Subscribe API deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: \`${GITHUB_SHA}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Region: \`${AWS_REGION}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ECR: \`${ECR_REPOSITORY}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ECS cluster: \`${ECS_CLUSTER}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ECS service: \`${ECS_SERVICE}\`" >> $GITHUB_STEP_SUMMARY
