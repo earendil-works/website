@@ -449,53 +449,42 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         elif file_path.endswith("/"):
             file_path = file_path + "index.html"
 
-        # Prevent path traversal attacks by validating the path
+        # Only handle HTML files specially (for live reload injection)
+        # All other files use the standard handler
+        if not file_path.endswith(".html"):
+            super().do_GET()
+            return
+
+        # For HTML files, inject live reload script
+        # Use a hardcoded safe path within the build directory
         base_dir = Path(self.directory).resolve()
-        # Normalize and validate path to prevent directory traversal
-        # This is a local dev server - not exposed to internet
-        safe_path = os.path.normpath(file_path).lstrip(os.sep)
-        if safe_path.startswith('..') or os.path.isabs(safe_path):
+        # Normalize path and ensure it's safe
+        normalized = os.path.normpath(file_path)
+        if normalized.startswith('..') or os.path.isabs(normalized):
             self.send_error(403, "Forbidden")
             return
-        # Construct and verify path is within base directory
-        # nosemgrep: python.lang.security.audit.path-traversal.path-traversal
-        full_path = (base_dir / safe_path).resolve()  # lgtm[py/path-injection]
-        if not full_path.is_relative_to(base_dir):
-            self.send_error(403, "Forbidden")
-            return
-
+        
+        html_path = base_dir / normalized
         try:
-            # lgtm[py/path-injection] - path validated above via is_relative_to check
-            if full_path.exists() and full_path.is_file() and safe_path.endswith(".html"):
-                content = full_path.read_text(encoding="utf-8")
-                if "</body>" in content:
-                    content = content.replace("</body>", f"{RELOAD_SCRIPT}</body>")
-                else:
-                    content += RELOAD_SCRIPT
-
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(content.encode("utf-8"))))
-                self.end_headers()
-                self.wfile.write(content.encode("utf-8"))
-            # lgtm[py/path-injection] - path validated above via is_relative_to check
-            elif full_path.exists() and full_path.is_file() and safe_path.endswith(".js"):
-                content = full_path.read_bytes()
-                self.send_response(200)
-                self.send_header("Content-Type", "application/javascript; charset=utf-8")
-                self.send_header("Content-Length", str(len(content)))
-                self.end_headers()
-                self.wfile.write(content)
-            # lgtm[py/path-injection] - path validated above via is_relative_to check
-            elif full_path.exists() and full_path.is_file() and safe_path.endswith(".json"):
-                content = full_path.read_bytes()
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_header("Content-Length", str(len(content)))
-                self.end_headers()
-                self.wfile.write(content)
-            else:
+            resolved = html_path.resolve()
+            if not resolved.is_relative_to(base_dir):
+                self.send_error(403, "Forbidden")
+                return
+            if not resolved.exists() or not resolved.is_file():
                 super().do_GET()
+                return
+                
+            content = resolved.read_text(encoding="utf-8")
+            if "</body>" in content:
+                content = content.replace("</body>", f"{RELOAD_SCRIPT}</body>")
+            else:
+                content += RELOAD_SCRIPT
+
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(content.encode("utf-8"))))
+            self.end_headers()
+            self.wfile.write(content.encode("utf-8"))
         except Exception:
             super().do_GET()
 
