@@ -337,6 +337,7 @@ def build_to(build_dir: Path) -> None:
         rendered = env.render_template(
             template_name,
             title=frontmatter.get("title", "Earendil"),
+            description=frontmatter.get("description", ""),
             page=page,
             content=safe(html_body),
             slug=slug,
