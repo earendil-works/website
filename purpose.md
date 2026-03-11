@@ -2,6 +2,7 @@
 title: Purpose
 template: page
 aria_label: Earendil purpose
+description: "Earendil crafts software and open protocols, strengthens human agency in the age of AI, bridges division and ignorance, and cultivates lasting joy and understanding."
 ---
 
 <p><em data-i18n-html="content.purpose.intro"><a href="/">Earendil</a> is a public benefit corporation founded by <a href="https://ronacher.eu/" target="_blank" rel="noopener noreferrer">Armin Ronacher</a> and <a href="https://colin.day/" target="_blank" rel="noopener noreferrer">Colin Daymond Hanna</a></em></p>
