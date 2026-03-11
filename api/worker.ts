@@ -3,6 +3,7 @@
 export interface Env {
   RESEND_API_KEY: string;
   RESEND_AUDIENCE_ID: string;
+  RESEND_SEGMENT_ID: string;
   ALLOWED_ORIGIN?: string;
 }
 
@@ -30,7 +31,7 @@ async function addToAudience(
     body: JSON.stringify({
       email,
       unsubscribed: false,
-      audience_id: env.RESEND_AUDIENCE_ID,
+      segments: [{ id: env.RESEND_SEGMENT_ID }],
     }),
   });
 
@@ -72,7 +73,20 @@ function json(
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const origin = env.ALLOWED_ORIGIN || "https://earendil.com";
+    const requestOrigin = request.headers.get("Origin") || "";
+
+    // Allow production and local development origins
+    const allowedOrigins = [
+      "https://earendil.com",
+      "http://localhost:8000",
+      "http://127.0.0.1:8000",
+      "http://0.0.0.0:8000",
+    ];
+
+    // Use the requesting origin if it's in our allowed list, otherwise use configured origin
+    const origin = allowedOrigins.includes(requestOrigin)
+      ? requestOrigin
+      : (env.ALLOWED_ORIGIN || "https://earendil.com");
 
     // CORS preflight
     if (request.method === "OPTIONS") {
