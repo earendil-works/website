@@ -85,6 +85,30 @@
   });
 })();
 
+// Chevron menu toggle (top-right navigation)
+(function() {
+  function initChevronMenu() {
+    var menu = document.querySelector('[data-chevron-menu]');
+    if (!menu) return;
+
+    var button = menu.querySelector('.menu-chevron');
+    var links = menu.querySelector('.menu-links');
+    if (!button || !links || button.dataset.initialized) return;
+
+    button.dataset.initialized = 'true';
+
+    button.addEventListener('click', function() {
+      var isOpen = menu.classList.toggle('is-open');
+      links.hidden = !isOpen;
+      button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      button.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+    });
+  }
+
+  initChevronMenu();
+  document.body.addEventListener('htmx:afterSettle', initChevronMenu);
+})();
+
 // Subscribe form handling (updates page email flow)
 (function() {
   function initUpdatesForm() {

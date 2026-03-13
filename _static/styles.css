@@ -206,6 +206,54 @@ canvas.shader-ready {
   opacity: 0.85;
 }
 
+.menu-chevron {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: 20px/1 var(--mono-font);
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: var(--cursor-light), pointer;
+  transform-origin: center;
+  transition: transform 0.25s ease, color 0.25s ease;
+  animation: chevronPulse 1.1s ease-in-out infinite alternate;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.menu-chevron:hover {
+  color: rgba(255, 255, 255, 1);
+  animation: none;
+  cursor: var(--cursor-dark), pointer;
+}
+
+.top-nav.is-open .menu-chevron {
+  animation: none;
+  transform: rotate(90deg);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.menu-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.menu-links[hidden] {
+  display: none;
+}
+
+@keyframes chevronPulse {
+  from {
+    color: rgba(160, 160, 160, 0.6);
+  }
+  to {
+    color: rgba(255, 255, 255, 0.95);
+  }
+}
+
 .nav-link {
   font: 14px/1.2 var(--mono-font);
   text-transform: uppercase;
@@ -224,11 +272,13 @@ canvas.shader-ready {
   cursor: var(--cursor-dark), pointer;
 }
 
-.theme-night .nav-link {
+.theme-night .nav-link,
+.theme-night .menu-chevron {
   cursor: var(--cursor-dark), pointer;
 }
 
-.theme-night .nav-link:hover {
+.theme-night .nav-link:hover,
+.theme-night .menu-chevron:hover {
   cursor: var(--cursor-light), pointer;
 }
 
@@ -733,10 +783,11 @@ canvas.shader-ready {
 }
 
 /* ==========================================================================
-   Purpose and Join Pages
+   Purpose, Values, and Join Pages
    ========================================================================== */
 
 [data-page="/purpose/"] .letter-body,
+[data-page="/values/"] .letter-body,
 [data-page="/join/"] .letter-body {
   font-family: var(--serif-font);
   font-weight: 400;
@@ -747,10 +798,127 @@ canvas.shader-ready {
 [data-page="/purpose/"] .letter-body strong,
 [data-page="/purpose/"] .letter-body b,
 [data-page="/purpose/"] .letter-body a,
+[data-page="/values/"] .letter-body strong,
+[data-page="/values/"] .letter-body b,
+[data-page="/values/"] .letter-body a,
 [data-page="/join/"] .letter-body strong,
 [data-page="/join/"] .letter-body b,
 [data-page="/join/"] .letter-body a {
   font-weight: 700;
+}
+
+[data-page="/values/"] .letter-body {
+  font-size: 16px;
+}
+
+[data-page="/values/"] .values-major-heading {
+  margin: 0 0 10px;
+}
+
+[data-page="/values/"] .values-major-heading em strong {
+  font-size: 20px;
+}
+
+[data-page="/values/"] .values-major-heading--ops {
+  margin-top: 20px;
+}
+
+[data-page="/values/"] .values-section {
+  margin: 0 0 6px;
+  --chevron-delay: 0;
+}
+
+[data-page="/values/"] .values-section:nth-of-type(1) { --chevron-delay: 0; }
+[data-page="/values/"] .values-section:nth-of-type(2) { --chevron-delay: 1; }
+[data-page="/values/"] .values-section:nth-of-type(3) { --chevron-delay: 2; }
+[data-page="/values/"] .values-section:nth-of-type(4) { --chevron-delay: 3; }
+[data-page="/values/"] .values-section:nth-of-type(5) { --chevron-delay: 4; }
+[data-page="/values/"] .values-section:nth-of-type(6) { --chevron-delay: 5; }
+[data-page="/values/"] .values-section:nth-of-type(7) { --chevron-delay: 6; }
+[data-page="/values/"] .values-section:nth-of-type(8) { --chevron-delay: 7; }
+[data-page="/values/"] .values-section:nth-of-type(9) { --chevron-delay: 8; }
+[data-page="/values/"] .values-section:nth-of-type(10) { --chevron-delay: 9; }
+[data-page="/values/"] .values-section:nth-of-type(11) { --chevron-delay: 10; }
+[data-page="/values/"] .values-section:nth-of-type(12) { --chevron-delay: 11; }
+[data-page="/values/"] .values-section:nth-of-type(13) { --chevron-delay: 12; }
+[data-page="/values/"] .values-section:nth-of-type(14) { --chevron-delay: 13; }
+
+[data-page="/values/"] .values-section summary {
+  list-style: none;
+  cursor: var(--cursor-light), pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+[data-page="/values/"] .values-section summary::-webkit-details-marker {
+  display: none;
+}
+
+[data-page="/values/"] .values-section summary::before {
+  content: ">";
+  font: 11px/1 var(--mono-font);
+  color: rgba(28, 27, 26, 0.9);
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+  transform-origin: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+  margin-top: 3px;
+  animation: valuesChevronPulse 1.1s ease-in-out infinite alternate;
+  animation-delay: calc(var(--chevron-delay) * 0.08s);
+}
+
+[data-page="/values/"] .values-section summary:hover::before {
+  animation: none;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+[data-page="/values/"] .values-section[open] summary::before {
+  transform: rotate(90deg);
+  animation: none;
+  color: rgba(28, 27, 26, 0.9);
+}
+
+[data-page="/values/"] .values-section[open] summary:hover::before {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+[data-page="/values/"] .values-section summary em strong {
+  font-size: 18px;
+  color: rgba(28, 27, 26, 0.9);
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+[data-page="/values/"] .values-section summary:hover em strong {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+@keyframes valuesChevronPulse {
+  from {
+    color: rgba(28, 27, 26, 0.9);
+  }
+  to {
+    color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+[data-page="/values/"] .values-points {
+  margin: 6px 0 14px 20px;
+  padding: 0;
+  list-style: none;
+}
+
+[data-page="/values/"] .values-points li {
+  margin: 0 0 3px;
+  position: relative;
+  padding-left: 16px;
+}
+
+[data-page="/values/"] .values-points li::before {
+  content: "✶";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: rgba(0, 0, 0, 0.95);
 }
 
 /* ==========================================================================
