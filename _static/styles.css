@@ -143,7 +143,7 @@ canvas.shader-ready {
 
 .updates-letter {
   --letter-inline-padding: 70px;
-  --letter-scroll-padding-inline-end: 22px;
+  --letter-scroll-padding-inline-end: 70px;
   position: relative;
   width: min(1000px, 92vw);
   margin: 0;
@@ -220,6 +220,7 @@ canvas.shader-ready {
   padding-inline-end: var(--letter-scroll-padding-inline-end);
   max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Individual post pages: keep [back] fixed, scroll meta+body+footer together */
@@ -236,6 +237,7 @@ canvas.shader-ready {
   padding-inline-end: var(--letter-scroll-padding-inline-end);
   max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-letter .letter-body {
@@ -1152,7 +1154,7 @@ canvas.shader-ready {
   .updates-overlay[data-page="/posts/"] .updates-letter,
   .updates-overlay[data-page^="/posts/"] .updates-letter {
     --letter-inline-padding: 12px;
-    --letter-scroll-padding-inline-end: 10px;
+    --letter-scroll-padding-inline-end: 12px;
     padding: 16px var(--letter-inline-padding) 12px;
   }
 
