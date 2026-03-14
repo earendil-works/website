@@ -319,11 +319,23 @@ def build_to(build_dir: Path) -> None:
     for md_path in md_files:
         raw = md_path.read_text()
         frontmatter, body = parse_frontmatter(raw)
-        template_name = frontmatter.get("template", "index") + ".html"
+        template_key = frontmatter.get("template", "index")
+        template_name = template_key + ".html"
         html_body = render_markdown(body)
         output_path = output_path_for(md_path, build_dir, frontmatter)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         slug = slug_for_path(md_path)
+        overlay_classes: list[str] = []
+        if template_key == "posts-index":
+            overlay_classes.append("overlay--posts")
+        elif template_key == "updates":
+            overlay_classes.extend(["overlay--posts", "overlay--post-detail"])
+
+        extra_overlay_classes = frontmatter.get("overlay_class", "")
+        if isinstance(extra_overlay_classes, str):
+            overlay_classes.extend(extra_overlay_classes.split())
+        elif isinstance(extra_overlay_classes, list):
+            overlay_classes.extend(str(value) for value in extra_overlay_classes if value)
         # Compute dismiss URL (parent directory)
         if slug.startswith("/posts/") and slug != "/posts/":
             dismiss_url = "/posts/"
@@ -344,6 +356,7 @@ def build_to(build_dir: Path) -> None:
             posts=updates,
             is_posts_section=slug.startswith("/posts/"),
             dismiss_url=dismiss_url,
+            overlay_classes=" ".join(overlay_classes),
         )
         output_path.write_text(rendered)
         rel_path = md_path.relative_to(ROOT)

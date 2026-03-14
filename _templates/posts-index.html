@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block body %}
-  <div class="updates-overlay" aria-hidden="true" data-page="{{ slug }}">
+  <div class="updates-overlay{% if overlay_classes %} {{ overlay_classes }}{% endif %}" aria-hidden="true">
     <div class="updates-letter" role="dialog" aria-label="Earendil posts">
       <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">×</a>
       <div class="letter-body">
