@@ -87,14 +87,23 @@
   });
 })();
 
-// Dynamic overlay vertical band: 20px below ABOUT row and 20px above footer/control row
+// Dynamic overlay vertical band: 2% below ABOUT row and 2% above footer/control row
 (function() {
+  function getViewportHeight() {
+    return window.visualViewport ? window.visualViewport.height : (window.innerHeight || document.documentElement.clientHeight);
+  }
+
   function updateOverlayVerticalBand() {
     var guide = document.getElementById('overlay-guide-line');
+    var rootStyle = document.documentElement.style;
+    var viewportHeight = Math.max(1, Math.round(getViewportHeight()));
+
+    // Keep viewport-height in sync for mobile Safari dynamic bars
+    rootStyle.setProperty('--viewport-height', viewportHeight + 'px');
 
     if (!document.body.classList.contains('has-overlay')) {
-      document.documentElement.style.removeProperty('--overlay-top-safe-zone');
-      document.documentElement.style.removeProperty('--overlay-bottom-safe-zone');
+      rootStyle.removeProperty('--overlay-top-safe-zone');
+      rootStyle.removeProperty('--overlay-bottom-safe-zone');
       if (guide) guide.style.display = 'none';
       return;
     }
@@ -104,7 +113,6 @@
     var controls = document.querySelector('.bottom-controls');
     if (!trigger || !footer || !controls) return;
 
-    var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
     var topGap = Math.round(viewportHeight * 0.02);
     var bottomGap = Math.round(viewportHeight * 0.02);
 
@@ -118,8 +126,8 @@
 
     var bottomSafe = Math.max(0, viewportHeight - bottomEdge);
 
-    document.documentElement.style.setProperty('--overlay-top-safe-zone', topEdge + 'px');
-    document.documentElement.style.setProperty('--overlay-bottom-safe-zone', bottomSafe + 'px');
+    rootStyle.setProperty('--overlay-top-safe-zone', topEdge + 'px');
+    rootStyle.setProperty('--overlay-bottom-safe-zone', bottomSafe + 'px');
 
     if (guide) {
       guide.style.display = 'block';
@@ -131,6 +139,10 @@
   window.__updateOverlayVerticalBand = updateOverlayVerticalBand;
   updateOverlayVerticalBand();
   window.addEventListener('resize', updateOverlayVerticalBand);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateOverlayVerticalBand);
+    window.visualViewport.addEventListener('scroll', updateOverlayVerticalBand);
+  }
   document.body.addEventListener('htmx:afterSettle', updateOverlayVerticalBand);
 })();
 

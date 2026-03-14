@@ -14,11 +14,18 @@
   --cursor-dark: url('/static/cursor-dark.svg') 12 12;
   --mono-font: 'Departure Mono', 'SFMono-Regular', ui-monospace, monospace;
   --serif-font: 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
+  --viewport-height: 100vh;
   --overlay-top-safe-zone: 30px;
   --overlay-bottom-safe-zone: 170px;
   --overlay-card-chrome: 150px;
   --overlay-close-clearance: 0px;
   --overlay-border-gap: 2px;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --viewport-height: 100dvh;
+  }
 }
 
 html, body {
@@ -29,7 +36,7 @@ html, body {
 
 body.has-overlay {
   overflow: hidden;
-  height: 100vh;
+  height: var(--viewport-height);
 }
 
 html:has(body.has-overlay) {
@@ -49,7 +56,7 @@ html:has(body.has-overlay) {
 canvas {
   display: block;
   width: 100vw;
-  height: 100vh;
+  height: var(--viewport-height);
   position: fixed;
   top: 0;
   left: 0;
@@ -111,7 +118,7 @@ canvas.shader-ready {
 
 .updates-overlay {
   position: relative;
-  min-height: 100vh;
+  min-height: var(--viewport-height);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -138,7 +145,7 @@ canvas.shader-ready {
   position: relative;
   width: min(1000px, 92vw);
   margin: 0;
-  max-height: calc(100vh - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-border-gap));
+  max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-border-gap));
   overflow: hidden;
   padding: 78px 70px 72px;
   box-sizing: border-box;
@@ -206,7 +213,7 @@ canvas.shader-ready {
 }
 
 .updates-letter .letter-body {
-  max-height: calc(100vh - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
+  max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -226,7 +233,7 @@ canvas.shader-ready {
 
 .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content {
   margin-top: var(--overlay-close-clearance);
-  max-height: calc(100vh - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
+  max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -1010,6 +1017,7 @@ canvas.shader-ready {
 
 [data-page="/values/"] .values-section summary em strong {
   font-size: 16px;
+  font-weight: 500;
   color: rgba(28, 27, 26, 0.9);
   transition: color 0.2s ease, text-shadow 0.2s ease;
 }
@@ -1138,7 +1146,7 @@ canvas.shader-ready {
     width: 98vw;
     max-width: 98vw;
     margin-top: 0;
-    max-height: calc(100vh - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-border-gap));
+    max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-border-gap));
     transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.22s ease;
   }
 
@@ -1163,37 +1171,40 @@ canvas.shader-ready {
   .updates-overlay[data-page="/join/"] .updates-letter .letter-body,
   .updates-overlay[data-page="/posts/"] .updates-letter .letter-body {
     margin-top: var(--overlay-close-clearance);
-    max-height: calc(100vh - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
+    max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
     transition: max-height 0.22s ease;
   }
 
   .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content {
-    max-height: calc(100vh - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
+    max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
   }
 
-  .updates-overlay[data-page="/purpose/"] .letter-body,
+  .updates-overlay[data-page="/purpose/"] .letter-body {
+    font-size: 15px;
+  }
+
   .updates-overlay[data-page="/join/"] .letter-body,
   .updates-overlay[data-page^="/posts/"] .letter-body {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .email-meta {
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
   }
 
   .updates-overlay[data-page="/values/"] .letter-body,
   .updates-overlay[data-page="/values/"] .values-section summary em strong {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .updates-overlay[data-page="/values/"] .values-major-heading em strong {
-    font-size: 16px;
+    font-size: 17px;
   }
 
   .updates-overlay[data-page^="/posts/"] .posts-list .post-name,
   .updates-overlay[data-page^="/posts/"] .post-date {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   #site-footer {
