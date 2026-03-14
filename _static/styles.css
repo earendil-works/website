@@ -1181,12 +1181,12 @@ canvas.shader-ready {
   }
 
   .updates-overlay[data-page="/purpose/"] .letter-body {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .updates-overlay[data-page="/join/"] .letter-body,
   .updates-overlay[data-page^="/posts/"] .letter-body {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .email-meta {
@@ -1196,7 +1196,7 @@ canvas.shader-ready {
 
   .updates-overlay[data-page="/values/"] .letter-body,
   .updates-overlay[data-page="/values/"] .values-section summary em strong {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .updates-overlay[data-page="/values/"] .values-major-heading em strong {
@@ -1205,7 +1205,7 @@ canvas.shader-ready {
 
   .updates-overlay[data-page^="/posts/"] .posts-list .post-name,
   .updates-overlay[data-page^="/posts/"] .post-date {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   #site-footer {
