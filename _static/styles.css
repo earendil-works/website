@@ -14,8 +14,8 @@
   --cursor-dark: url('/static/cursor-dark.svg') 12 12;
   --mono-font: 'Departure Mono', 'SFMono-Regular', ui-monospace, monospace;
   --serif-font: 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
-  --overlay-top-inset: 120px;
   --overlay-bottom-safe-zone: 170px;
+  --overlay-card-chrome: 150px;
 }
 
 html, body {
@@ -99,7 +99,7 @@ canvas.shader-ready {
   position: relative;
   min-height: 100vh;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   padding: 30px;
   background: transparent;
@@ -123,11 +123,9 @@ canvas.shader-ready {
 .updates-letter {
   position: relative;
   width: min(1000px, 92vw);
-  margin: var(--overlay-top-inset) 0 0;
-  max-height: calc(100vh - var(--overlay-top-inset) - var(--overlay-bottom-safe-zone));
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  margin: 0;
+  max-height: calc(100vh - 60px - var(--overlay-bottom-safe-zone));
+  overflow: hidden;
   padding: 78px 70px 72px;
   box-sizing: border-box;
   pointer-events: auto;
@@ -140,10 +138,6 @@ canvas.shader-ready {
   transform: translateY(12px);
   transition: opacity 0.35s ease, transform 0.35s ease;
   cursor: var(--cursor-dark), auto;
-}
-
-.updates-letter::-webkit-scrollbar {
-  display: none;
 }
 
 .theme-night .updates-letter {
@@ -167,6 +161,7 @@ canvas.shader-ready {
   position: absolute;
   top: 18px;
   inset-inline-end: 18px;
+  z-index: 5;
   text-decoration: none;
   text-transform: uppercase;
   color: rgba(25, 24, 22, 0.7);
@@ -182,6 +177,17 @@ canvas.shader-ready {
 .updates-dismiss:hover,
 .theme-night .updates-dismiss:hover {
   color: #fff;
+}
+
+.updates-letter .letter-body {
+  max-height: calc(100vh - 60px - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome));
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.updates-letter .letter-body::-webkit-scrollbar {
+  display: none;
 }
 
 /* ==========================================================================
@@ -1025,8 +1031,8 @@ canvas.shader-ready {
 
 @media (max-width: 800px) {
   :root {
-    --overlay-top-inset: 88px;
     --overlay-bottom-safe-zone: 140px;
+    --overlay-card-chrome: 150px;
   }
 
   .top-nav {
@@ -1056,8 +1062,8 @@ canvas.shader-ready {
 
 @media (max-width: 520px) {
   :root {
-    --overlay-top-inset: 72px;
     --overlay-bottom-safe-zone: 120px;
+    --overlay-card-chrome: 100px;
   }
 
   .top-nav {
