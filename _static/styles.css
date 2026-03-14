@@ -941,6 +941,10 @@ canvas.shader-ready {
   font-weight: 700;
 }
 
+[data-page="/purpose/"] .letter-body em[data-i18n^="content.purpose."][data-i18n$=".title"] {
+  font-weight: 500;
+}
+
 [data-page="/values/"] .letter-body {
   font-size: 16px;
 }
