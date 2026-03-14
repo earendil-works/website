@@ -87,40 +87,123 @@
   });
 })();
 
+// Dynamic overlay vertical band: 20px below ABOUT row and 20px above footer/control row
+(function() {
+  function updateOverlayVerticalBand() {
+    var guide = document.getElementById('overlay-guide-line');
+
+    if (!document.body.classList.contains('has-overlay')) {
+      document.documentElement.style.removeProperty('--overlay-top-safe-zone');
+      document.documentElement.style.removeProperty('--overlay-bottom-safe-zone');
+      if (guide) guide.style.display = 'none';
+      return;
+    }
+
+    var trigger = document.querySelector('.menu-trigger');
+    var footer = document.getElementById('site-footer');
+    var controls = document.querySelector('.bottom-controls');
+    if (!trigger || !footer || !controls) return;
+
+    var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    var topGap = Math.round(viewportHeight * 0.02);
+    var bottomGap = Math.round(viewportHeight * 0.02);
+
+    var topEdge = Math.max(0, Math.ceil(trigger.getBoundingClientRect().bottom + topGap));
+    var bottomChromeTop = Math.min(footer.getBoundingClientRect().top, controls.getBoundingClientRect().top);
+    var bottomEdge = Math.min(viewportHeight, Math.floor(bottomChromeTop - bottomGap));
+
+    if (bottomEdge <= topEdge + 40) {
+      bottomEdge = topEdge + 40;
+    }
+
+    var bottomSafe = Math.max(0, viewportHeight - bottomEdge);
+
+    document.documentElement.style.setProperty('--overlay-top-safe-zone', topEdge + 'px');
+    document.documentElement.style.setProperty('--overlay-bottom-safe-zone', bottomSafe + 'px');
+
+    if (guide) {
+      guide.style.display = 'block';
+      guide.style.top = topEdge + 'px';
+      guide.style.bottom = bottomSafe + 'px';
+    }
+  }
+
+  window.__updateOverlayVerticalBand = updateOverlayVerticalBand;
+  updateOverlayVerticalBand();
+  window.addEventListener('resize', updateOverlayVerticalBand);
+  document.body.addEventListener('htmx:afterSettle', updateOverlayVerticalBand);
+})();
+
 // Chevron menu toggle (top-right navigation)
 (function() {
+  function setMenuExpanded(menu, isOpen) {
+    if (!menu) return;
+    var links = menu.querySelector('.menu-links');
+    var triggerButton = menu.querySelector('.menu-trigger-toggle');
+    if (links) links.hidden = !isOpen;
+    menu.classList.toggle('is-open', !!isOpen);
+    if (triggerButton) {
+      triggerButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      triggerButton.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+    }
+    if (window.__updateOverlayVerticalBand) {
+      window.__updateOverlayVerticalBand();
+    }
+  }
+
+  function collapseMenuIfOverlayOpen(menu) {
+    if (!menu) return;
+    if (document.body.classList.contains('has-overlay')) {
+      setMenuExpanded(menu, false);
+    }
+  }
+
   function initChevronMenu() {
     var menu = document.querySelector('[data-chevron-menu]');
     if (!menu) return;
 
-    var chevronButton = menu.querySelector('.menu-chevron');
-    var aboutButton = menu.querySelector('.menu-about');
-    var links = menu.querySelector('.menu-links');
-    if (!chevronButton || !links || chevronButton.dataset.initialized) return;
+    var triggerButton = menu.querySelector('.menu-trigger-toggle');
+    if (!triggerButton) return;
 
-    chevronButton.dataset.initialized = 'true';
-    if (aboutButton) {
-      aboutButton.dataset.initialized = 'true';
-    }
+    if (!triggerButton.dataset.initialized) {
+      triggerButton.dataset.initialized = 'true';
 
-    function setExpandedState(isOpen) {
-      links.hidden = !isOpen;
-      [chevronButton, aboutButton].forEach(function(btn) {
-        if (!btn) return;
-        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        btn.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+      function toggleMenu() {
+        var isOpen = !menu.classList.contains('is-open');
+        setMenuExpanded(menu, isOpen);
+      }
+
+      function closeMenuOnMobile() {
+        if (!window.matchMedia('(max-width: 800px)').matches) return;
+        setMenuExpanded(menu, false);
+      }
+
+      triggerButton.addEventListener('click', toggleMenu);
+
+      menu.querySelectorAll('.menu-links a').forEach(function(link) {
+        if (link.dataset.mobileCloseBound) return;
+        link.dataset.mobileCloseBound = 'true';
+        link.addEventListener('click', closeMenuOnMobile);
       });
+
+      if (!window.__mobileMenuCollapseBound) {
+        window.__mobileMenuCollapseBound = true;
+        document.body.addEventListener('pointerdown', function(event) {
+          if (!window.matchMedia('(max-width: 800px)').matches) return;
+          var navMenu = document.querySelector('[data-chevron-menu]');
+          if (!navMenu) return;
+          var linksEl = navMenu.querySelector('.menu-links');
+          var isOpen = navMenu.classList.contains('is-open') || (linksEl && !linksEl.hidden);
+          if (!isOpen) return;
+          if (event.target.closest('[data-chevron-menu]')) return;
+          if (event.target.closest('.updates-overlay')) {
+            setMenuExpanded(navMenu, false);
+          }
+        }, true);
+      }
     }
 
-    function toggleMenu() {
-      var isOpen = menu.classList.toggle('is-open');
-      setExpandedState(isOpen);
-    }
-
-    chevronButton.addEventListener('click', toggleMenu);
-    if (aboutButton) {
-      aboutButton.addEventListener('click', toggleMenu);
-    }
+    collapseMenuIfOverlayOpen(menu);
   }
 
   initChevronMenu();
