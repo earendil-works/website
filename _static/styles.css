@@ -938,6 +938,10 @@ canvas.shader-ready {
   margin: 0 0 10px;
 }
 
+.updates-overlay.overlay--values .letter-body .section-heading {
+  margin-bottom: 10px;
+}
+
 .section-heading em strong {
   font-size: 18px;
 }
@@ -955,6 +959,8 @@ canvas.shader-ready {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  --values-chevron-index: 0;
+  --values-chevron-glow: 0;
   color: rgba(28, 27, 26, 0.9);
   cursor: var(--cursor-light), pointer;
   transition: color 0.2s ease;
@@ -967,17 +973,21 @@ canvas.shader-ready {
 .disclosure-summary::before {
   content: ">";
   font: 11px/1 var(--mono-font);
-  color: currentColor;
+  color: rgba(
+    calc(28 + (255 - 28) * var(--values-chevron-glow)),
+    calc(27 + (255 - 27) * var(--values-chevron-glow)),
+    calc(26 + (255 - 26) * var(--values-chevron-glow)),
+    calc(0.9 + 0.05 * var(--values-chevron-glow))
+  );
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
   transform-origin: center;
   transition: transform 0.2s ease, color 0.2s ease;
   margin-top: 3px;
-  animation: valuesChevronPulse 1.1s ease-in-out infinite alternate;
 }
 
 .disclosure[open] .disclosure-summary::before {
   transform: rotate(90deg);
-  animation: none;
+  color: currentColor;
 }
 
 .disclosure-summary:hover,
@@ -987,35 +997,17 @@ canvas.shader-ready {
 
 .disclosure-summary:hover::before,
 .disclosure[open] .disclosure-summary:hover::before {
-  animation: none;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .disclosure-title {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 400;
   color: inherit;
   transition: color 0.2s ease;
 }
 
-@keyframes valuesChevronPulse {
-  from {
-    color: rgba(28, 27, 26, 0.9);
-  }
-  to {
-    color: rgba(255, 255, 255, 0.95);
-  }
-}
-
-@keyframes valuesChevronPulseDark {
-  from {
-    color: rgba(200, 200, 200, 0.65);
-  }
-  to {
-    color: rgba(255, 255, 255, 0.95);
-  }
-}
-
-.icon-list {
+.updates-overlay.overlay--values .letter-body .icon-list {
   margin: 6px 0 14px 20px;
   padding: 0;
   list-style: none;
@@ -1040,7 +1032,12 @@ canvas.shader-ready {
 }
 
 .theme-night .disclosure-summary::before {
-  animation: valuesChevronPulseDark 1.1s ease-in-out infinite alternate;
+  color: rgba(
+    calc(200 + (255 - 200) * var(--values-chevron-glow)),
+    calc(200 + (255 - 200) * var(--values-chevron-glow)),
+    calc(200 + (255 - 200) * var(--values-chevron-glow)),
+    calc(0.65 + 0.3 * var(--values-chevron-glow))
+  );
 }
 
 .theme-night .disclosure[open] .disclosure-summary::before {
@@ -1054,7 +1051,6 @@ canvas.shader-ready {
 
 .theme-night .disclosure-summary:hover::before,
 .theme-night .disclosure[open] .disclosure-summary:hover::before {
-  animation: none;
   color: rgba(255, 255, 255, 0.95);
 }
 

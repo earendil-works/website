@@ -286,6 +286,111 @@
   document.body.addEventListener('htmx:afterSettle', initChevronMenu);
 })();
 
+// Values chevron pulse synchronization (global phase + per-item offset)
+(function() {
+  var VALUES_CHEVRON_CYCLE_MS = 1100;
+  var VALUES_CHEVRON_INDEX_PHASE_OFFSET = 0.07;
+  var chevronSummaries = [];
+  var animationFrameId = null;
+  var reduceMotionQuery = null;
+
+  function getValuesChevronSummaries() {
+    return Array.prototype.slice.call(
+      document.querySelectorAll('.updates-overlay.overlay--values .disclosure-summary')
+    );
+  }
+
+  function setChevronIndices() {
+    chevronSummaries = getValuesChevronSummaries();
+    chevronSummaries.forEach(function(summary, index) {
+      summary.style.setProperty('--values-chevron-index', String(index));
+    });
+  }
+
+  function isReducedMotionEnabled() {
+    return !!(reduceMotionQuery && reduceMotionQuery.matches);
+  }
+
+  function shouldAnimate() {
+    return chevronSummaries.length > 0 && !isReducedMotionEnabled();
+  }
+
+  function normalizedPulse(phase) {
+    return 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
+  }
+
+  function stopAnimation() {
+    if (animationFrameId === null) return;
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+
+  function resetChevronGlow() {
+    chevronSummaries.forEach(function(summary) {
+      if (!summary || !summary.isConnected) return;
+      summary.style.setProperty('--values-chevron-glow', '0');
+    });
+  }
+
+  function renderChevrons(now) {
+    if (animationFrameId === null) return;
+
+    var globalPhase = (now % VALUES_CHEVRON_CYCLE_MS) / VALUES_CHEVRON_CYCLE_MS;
+
+    chevronSummaries.forEach(function(summary, index) {
+      if (!summary || !summary.isConnected) return;
+
+      var indexValue = Number(summary.style.getPropertyValue('--values-chevron-index'));
+      if (!Number.isFinite(indexValue)) {
+        indexValue = index;
+      }
+
+      var phase = globalPhase + indexValue * VALUES_CHEVRON_INDEX_PHASE_OFFSET;
+      phase = phase - Math.floor(phase);
+
+      var glow = normalizedPulse(phase);
+      summary.style.setProperty('--values-chevron-glow', glow.toFixed(4));
+    });
+
+    animationFrameId = requestAnimationFrame(renderChevrons);
+  }
+
+  function startAnimation() {
+    if (animationFrameId !== null || !shouldAnimate()) return;
+    animationFrameId = requestAnimationFrame(renderChevrons);
+  }
+
+  function refreshValuesChevronSync() {
+    setChevronIndices();
+    if (shouldAnimate()) {
+      startAnimation();
+      return;
+    }
+    stopAnimation();
+    resetChevronGlow();
+  }
+
+  if (window.matchMedia) {
+    reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (typeof reduceMotionQuery.addEventListener === 'function') {
+      reduceMotionQuery.addEventListener('change', refreshValuesChevronSync);
+    } else if (typeof reduceMotionQuery.addListener === 'function') {
+      reduceMotionQuery.addListener(refreshValuesChevronSync);
+    }
+  }
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      stopAnimation();
+      return;
+    }
+    refreshValuesChevronSync();
+  });
+
+  refreshValuesChevronSync();
+  document.body.addEventListener('htmx:afterSettle', refreshValuesChevronSync);
+})();
+
 // Subscribe form handling (updates page email flow)
 (function() {
   function initUpdatesForm() {
