@@ -294,12 +294,13 @@ canvas.shader-ready {
   padding: 0;
   margin: 0;
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
   cursor: var(--cursor-light), pointer;
 }
 
 .menu-about {
+  display: inline-block;
   font: 14px/1 var(--mono-font);
   letter-spacing: 0;
   text-transform: uppercase;
@@ -308,10 +309,14 @@ canvas.shader-ready {
 }
 
 .top-nav.is-open .menu-about {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .menu-chevron {
+  display: inline-block;
+  position: relative;
+  top: 1px;
   font: 20px/1 var(--mono-font);
   letter-spacing: 0;
   color: rgba(255, 255, 255, 0.45);
