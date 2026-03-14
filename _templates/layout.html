@@ -60,12 +60,19 @@
   <!-- Chrome layer (always on top) -->
   <div id="fps">FPS: --</div>
   
-  <nav class="top-nav" dir="ltr">
-    <a class="nav-link" href="/purpose/" data-i18n="common.nav.purpose">Purpose</a>
-    <a class="nav-link" href="/join/" data-i18n="common.nav.joinUs">Join Us</a>
-    <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer" data-i18n="common.nav.lefos">Lefos</a>
-    <a class="nav-link" href="/posts/" data-i18n="common.nav.posts">Posts</a>
-    <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer" data-i18n="common.nav.works">Works</a>
+  <nav class="top-nav" dir="ltr" data-chevron-menu>
+    <div class="menu-trigger">
+      <button class="menu-about" type="button" aria-expanded="false" aria-controls="site-menu-links" aria-label="Open menu">ABOUT</button>
+      <button class="menu-chevron" type="button" aria-expanded="false" aria-controls="site-menu-links" aria-label="Open menu">›</button>
+    </div>
+    <div class="menu-links" id="site-menu-links" hidden>
+      <a class="nav-link" href="/purpose/">Purpose</a>
+      <a class="nav-link" href="/values/">Values</a>
+      <a class="nav-link" href="/join/">Join</a>
+      <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer">Lefos</a>
+      <a class="nav-link" href="/posts/">Posts</a>
+      <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">Works</a>
+    </div>
   </nav>
 
   <div id="site-footer" dir="ltr" data-i18n="common.site.footer">EARENDIL INC.</div>

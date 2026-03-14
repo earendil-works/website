@@ -1,5 +1,5 @@
 ---
-title: Join Us
+title: Join
 description: Join Earendil
 template: page
 aria_label: Join Earendil

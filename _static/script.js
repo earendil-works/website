@@ -59,6 +59,8 @@
     if (event.target.closest('a')) return;
     // Ignore clicks on chrome elements (controls, nav, footer)
     if (event.target.closest('.bottom-controls')) return;
+    if (event.target.closest('#lang-picker')) return;
+    if (event.target.closest('#lang-toggle')) return;
     if (event.target.closest('.top-nav')) return;
     if (event.target.closest('#site-footer')) return;
     if (event.target.closest('.lang-menu')) return;
@@ -83,6 +85,46 @@
       });
     }
   });
+})();
+
+// Chevron menu toggle (top-right navigation)
+(function() {
+  function initChevronMenu() {
+    var menu = document.querySelector('[data-chevron-menu]');
+    if (!menu) return;
+
+    var chevronButton = menu.querySelector('.menu-chevron');
+    var aboutButton = menu.querySelector('.menu-about');
+    var links = menu.querySelector('.menu-links');
+    if (!chevronButton || !links || chevronButton.dataset.initialized) return;
+
+    chevronButton.dataset.initialized = 'true';
+    if (aboutButton) {
+      aboutButton.dataset.initialized = 'true';
+    }
+
+    function setExpandedState(isOpen) {
+      links.hidden = !isOpen;
+      [chevronButton, aboutButton].forEach(function(btn) {
+        if (!btn) return;
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        btn.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+      });
+    }
+
+    function toggleMenu() {
+      var isOpen = menu.classList.toggle('is-open');
+      setExpandedState(isOpen);
+    }
+
+    chevronButton.addEventListener('click', toggleMenu);
+    if (aboutButton) {
+      aboutButton.addEventListener('click', toggleMenu);
+    }
+  }
+
+  initChevronMenu();
+  document.body.addEventListener('htmx:afterSettle', initChevronMenu);
 })();
 
 // Subscribe form handling (updates page email flow)
