@@ -942,7 +942,7 @@ canvas.shader-ready {
 }
 
 [data-page="/values/"] .values-major-heading em strong {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 [data-page="/values/"] .values-major-heading--ops {
@@ -1009,7 +1009,7 @@ canvas.shader-ready {
 }
 
 [data-page="/values/"] .values-section summary em strong {
-  font-size: 18px;
+  font-size: 16px;
   color: rgba(28, 27, 26, 0.9);
   transition: color 0.2s ease, text-shadow 0.2s ease;
 }
@@ -1183,9 +1183,12 @@ canvas.shader-ready {
   }
 
   .updates-overlay[data-page="/values/"] .letter-body,
-  .updates-overlay[data-page="/values/"] .values-major-heading em strong,
   .updates-overlay[data-page="/values/"] .values-section summary em strong {
     font-size: 14px;
+  }
+
+  .updates-overlay[data-page="/values/"] .values-major-heading em strong {
+    font-size: 16px;
   }
 
   .updates-overlay[data-page^="/posts/"] .posts-list .post-name,
