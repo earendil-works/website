@@ -198,7 +198,8 @@ canvas.shader-ready {
   text-decoration: none;
   text-transform: uppercase;
   color: rgba(25, 24, 22, 0.7);
-  font-size: inherit;
+  font-size: 1.5em;
+  line-height: 1;
   cursor: var(--cursor-dark), pointer;
 }
 
@@ -1162,7 +1163,7 @@ canvas.shader-ready {
   .updates-overlay[data-page="/values/"] .updates-dismiss,
   .updates-overlay[data-page="/join/"] .updates-dismiss,
   .updates-overlay[data-page^="/posts/"] .updates-dismiss {
-    font-size: 14px;
+    font-size: 21px;
     line-height: 1;
   }
 
