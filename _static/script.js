@@ -148,6 +148,48 @@
 
 // Chevron menu toggle (top-right navigation)
 (function() {
+  function rectanglesOverlap(a, b, epsilon) {
+    if (!a || !b) return false;
+    var overlapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    var overlapY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    return overlapX > epsilon && overlapY > epsilon;
+  }
+
+  function updateMenuOverlapBackdrop(menu) {
+    if (!menu) return;
+
+    var links = menu.querySelector('.menu-links');
+    var isOpen = menu.classList.contains('is-open') && links && !links.hidden;
+    if (!isOpen) {
+      menu.classList.remove('has-overlap-backdrop');
+      return;
+    }
+
+    var overlayCard = document.querySelector('.updates-overlay.is-open .updates-letter');
+    if (!overlayCard) {
+      menu.classList.remove('has-overlap-backdrop');
+      return;
+    }
+
+    var menuRect = menu.getBoundingClientRect();
+    var overlayRect = overlayCard.getBoundingClientRect();
+    var shouldShowBackdrop = rectanglesOverlap(menuRect, overlayRect, 1);
+    menu.classList.toggle('has-overlap-backdrop', shouldShowBackdrop);
+  }
+
+  function scheduleMenuOverlapBackdropUpdate(menu) {
+    if (!menu) return;
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(function() {
+        updateMenuOverlapBackdrop(menu);
+      });
+    } else {
+      setTimeout(function() {
+        updateMenuOverlapBackdrop(menu);
+      }, 0);
+    }
+  }
+
   function setMenuExpanded(menu, isOpen) {
     if (!menu) return;
     var links = menu.querySelector('.menu-links');
@@ -161,6 +203,8 @@
     if (window.__updateOverlayVerticalBand) {
       window.__updateOverlayVerticalBand();
     }
+    updateMenuOverlapBackdrop(menu);
+    scheduleMenuOverlapBackdropUpdate(menu);
   }
 
   function collapseMenuIfOverlayOpen(menu) {
@@ -213,9 +257,29 @@
           }
         }, true);
       }
+
+      if (!window.__menuOverlapBackdropBound) {
+        window.__menuOverlapBackdropBound = true;
+
+        function refreshMenuOverlapBackdrop() {
+          var navMenu = document.querySelector('[data-chevron-menu]');
+          if (!navMenu) return;
+          updateMenuOverlapBackdrop(navMenu);
+          scheduleMenuOverlapBackdropUpdate(navMenu);
+        }
+
+        window.addEventListener('resize', refreshMenuOverlapBackdrop);
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', refreshMenuOverlapBackdrop);
+          window.visualViewport.addEventListener('scroll', refreshMenuOverlapBackdrop);
+        }
+        document.body.addEventListener('htmx:afterSettle', refreshMenuOverlapBackdrop);
+      }
     }
 
     collapseMenuIfOverlayOpen(menu);
+    updateMenuOverlapBackdrop(menu);
+    scheduleMenuOverlapBackdropUpdate(menu);
   }
 
   initChevronMenu();

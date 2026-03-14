@@ -142,12 +142,14 @@ canvas.shader-ready {
 }
 
 .updates-letter {
+  --letter-inline-padding: 70px;
+  --letter-scroll-padding-inline-end: 22px;
   position: relative;
   width: min(1000px, 92vw);
   margin: 0;
   max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-border-gap));
   overflow: hidden;
-  padding: 78px 70px 72px;
+  padding: 78px var(--letter-inline-padding) 72px;
   box-sizing: border-box;
   pointer-events: auto;
   background: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), url('/static/paper.png') center/256px 256px;
@@ -214,14 +216,10 @@ canvas.shader-ready {
 }
 
 .updates-letter .letter-body {
+  margin-inline-end: calc(-1 * var(--letter-inline-padding));
+  padding-inline-end: var(--letter-scroll-padding-inline-end);
   max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.updates-letter .letter-body::-webkit-scrollbar {
-  display: none;
 }
 
 /* Individual post pages: keep [back] fixed, scroll meta+body+footer together */
@@ -234,14 +232,10 @@ canvas.shader-ready {
 
 .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content {
   margin-top: var(--overlay-close-clearance);
+  margin-inline-end: calc(-1 * var(--letter-inline-padding));
+  padding-inline-end: var(--letter-scroll-padding-inline-end);
   max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content::-webkit-scrollbar {
-  display: none;
 }
 
 .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-letter .letter-body {
@@ -280,6 +274,29 @@ canvas.shader-ready {
   align-items: flex-end;
   gap: 8px;
   opacity: 1;
+}
+
+.top-nav.has-overlap-backdrop {
+  z-index: 260;
+}
+
+.top-nav.has-overlap-backdrop::before {
+  content: "";
+  position: absolute;
+  inset: -10px -20px -12px;
+  border: 1px solid rgba(95, 95, 95, 0.75);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(175, 175, 175, 0.2) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 72% 24%, rgba(165, 165, 165, 0.18) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 40% 66%, rgba(185, 185, 185, 0.16) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 86% 78%, rgba(170, 170, 170, 0.2) 0 1px, transparent 1.8px),
+    linear-gradient(rgba(58, 58, 58, 0.98), rgba(58, 58, 58, 0.98)),
+    url('/static/paper-dark.png') center/220px 220px;
+  background-size: 220px 220px, 220px 220px, 220px 220px, 220px 220px, auto, 220px 220px;
+  background-repeat: repeat;
 }
 
 .menu-trigger {
@@ -346,37 +363,6 @@ canvas.shader-ready {
 
 .menu-links[hidden] {
   display: none;
-}
-
-.has-overlay .top-nav.is-open {
-  z-index: 260;
-}
-
-.has-overlay .top-nav.is-open .menu-links {
-  margin-top: 8px;
-  padding: 14px 24px 22px;
-  border: 1px solid rgba(95, 95, 95, 0.75);
-  border-radius: 4px;
-  background:
-    radial-gradient(circle at 14% 18%, rgba(175, 175, 175, 0.2) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 72% 24%, rgba(165, 165, 165, 0.18) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 40% 66%, rgba(185, 185, 185, 0.16) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 86% 78%, rgba(170, 170, 170, 0.2) 0 1px, transparent 1.8px),
-    linear-gradient(rgba(58, 58, 58, 0.98), rgba(58, 58, 58, 0.98)),
-    url('/static/paper-dark.png') center/220px 220px;
-  background-size: 220px 220px, 220px 220px, 220px 220px, 220px 220px, auto, 220px 220px;
-  background-repeat: repeat;
-}
-
-.has-overlay .top-nav.is-open .nav-link,
-.has-overlay .top-nav.is-open .menu-chevron {
-  color: rgba(205, 205, 205, 0.96);
-  animation: none;
-}
-
-.has-overlay .top-nav.is-open .nav-link:hover,
-.has-overlay .top-nav.is-open .menu-trigger-toggle:hover .menu-chevron {
-  color: #fff;
 }
 
 @keyframes chevronPulse {
@@ -1165,7 +1151,9 @@ canvas.shader-ready {
   .updates-overlay[data-page="/join/"] .updates-letter,
   .updates-overlay[data-page="/posts/"] .updates-letter,
   .updates-overlay[data-page^="/posts/"] .updates-letter {
-    padding: 16px 12px 12px;
+    --letter-inline-padding: 12px;
+    --letter-scroll-padding-inline-end: 10px;
+    padding: 16px var(--letter-inline-padding) 12px;
   }
 
   .updates-overlay[data-page="/purpose/"] .updates-dismiss,
