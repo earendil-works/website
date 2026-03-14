@@ -1,21 +1,23 @@
 {% extends "layout.html" %}
 
 {% block body %}
-  <div class="updates-overlay" aria-hidden="true">
+  <div class="updates-overlay" aria-hidden="true" data-page="{{ slug }}">
     <div class="updates-letter" role="dialog" aria-label="{{ page.aria_label }}">
-      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}" data-i18n="common.action.back">[back]</a>
-      <div class="email-meta">
-        <p><span data-i18n="posts.email.date">Date:</span> <span data-i18n="posts.email.date.{{ page.i18n_key }}">{{ page.date_day or page.date }}</span></p>
-        <p><span data-i18n="posts.email.from">From:</span> {{ page.from_html if page.from_html else page.from }}</p>
-        <p><span data-i18n="posts.email.to">To:</span> <span data-i18n="posts.email.to.value">You</span></p>
-        <p><span data-i18n="posts.email.subject">Subject:</span> <span data-i18n="content.{{ page.i18n_key }}.title" data-i18n-fallback="{{ page.title }}">{{ page.title }}</span></p>
-      </div>
-      <div class="letter-body">
-        {{ content }}
-      </div>
-      <div class="letter-footer">
-        <div class="signature-delimiter">--</div>
-        <div class="signature-detail"><a href="https://earendil.com" target="_blank" rel="noopener noreferrer">earendil.com</a></div>
+      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">&lt;</a>
+      <div class="updates-scroll-content">
+        <div class="email-meta">
+          <p><span data-i18n="posts.email.date">Date:</span> <span data-i18n="posts.email.date.{{ page.i18n_key }}">{{ page.date_day or page.date }}</span></p>
+          <p><span data-i18n="posts.email.from">From:</span> {{ page.from_html if page.from_html else page.from }}</p>
+          <p><span data-i18n="posts.email.to">To:</span> <span data-i18n="posts.email.to.value">You</span></p>
+          <p><span data-i18n="posts.email.subject">Subject:</span> <span data-i18n="content.{{ page.i18n_key }}.title" data-i18n-fallback="{{ page.title }}">{{ page.title }}</span></p>
+        </div>
+        <div class="letter-body">
+          {{ content }}
+        </div>
+        <div class="letter-footer">
+          <div class="signature-delimiter">--</div>
+          <div class="signature-detail"><a href="https://earendil.com" target="_blank" rel="noopener noreferrer">earendil.com</a></div>
+        </div>
       </div>
     </div>
   </div>

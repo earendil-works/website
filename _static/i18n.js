@@ -297,7 +297,7 @@
       btn.type = 'button';
       btn.setAttribute('role', 'option');
       btn.setAttribute('data-lang', code);
-      btn.innerHTML = '<span class="lang-name">' + LANGUAGE_NAMES[code] + '</span><span class="lang-code">' + LANGUAGE_SHORT[code] + '</span>';
+      btn.innerHTML = '<span class="lang-name">' + LANGUAGE_NAMES[code] + '</span><span class="lang-check" aria-hidden="true">✓</span><span class="lang-code">' + LANGUAGE_SHORT[code] + '</span>';
       btn.addEventListener('click', function() {
         changeLanguage(code);
         closeMenu();
