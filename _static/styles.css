@@ -56,7 +56,7 @@ html:has(body.has-overlay) {
 canvas {
   display: block;
   width: 100vw;
-  height: var(--viewport-height);
+  height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
@@ -64,6 +64,12 @@ canvas {
   image-rendering: auto;
   opacity: 0;
   transition: opacity 1000ms ease;
+}
+
+@supports (height: 100dvh) {
+  canvas {
+    height: 100dvh;
+  }
 }
 
 canvas.shader-ready { 

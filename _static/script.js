@@ -1322,10 +1322,15 @@ function buildFragmentShader(quality) {
     float dist = raymarchwater(origin, highHitPos, lowHitPos, WATER_DEPTH);
     vec3 waterHitPos = origin + ray * dist;
 
-    vec3 N = normal(waterHitPos.xz, 0.01, WATER_DEPTH);
+    float eps = max(0.01, dist * 0.004);
+    vec3 N = normal(waterHitPos.xz, eps, WATER_DEPTH);
     N = mix(N, vec3(0.0, 1.0, 0.0), 0.8 * min(1.0, sqrt(dist*0.01) * 1.1));
 
-    float fresnel = (0.04 + (1.0-0.04)*(pow(1.0 - max(0.0, dot(-N, ray)), 5.0)));
+    float fresnelSharp = 0.04 + 0.96 * pow(1.0 - max(0.0, dot(-N, ray)), 5.0);
+    // At distance, converge Fresnel to the smooth flat-normal value to kill speckle
+    float fresnelFlat = 0.04 + 0.96 * pow(1.0 - max(0.0, dot(vec3(0.0, 1.0, 0.0), -ray)), 5.0);
+    float fresnelBlend = min(1.0, sqrt(dist * 0.01) * 1.1);
+    float fresnel = mix(fresnelSharp, fresnelFlat, fresnelBlend);
 
     vec3 R = normalize(reflect(ray, N));
     R.y = abs(R.y);
@@ -1620,6 +1625,7 @@ function setupLogoTexture() {
     gl.bindTexture(gl.TEXTURE_2D, logoTexture);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, logoCanvas);
+    updateLogoPlacement();
   };
 
   img.onerror = () => {
@@ -1629,30 +1635,19 @@ function setupLogoTexture() {
   img.src = LOGO_SVG_URL;
 }
 
-function getViewportSize() {
-  if (window.visualViewport) {
-    return {
-      width: window.visualViewport.width,
-      height: window.visualViewport.height
-    };
-  }
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight
-  };
-}
-
 function resize() {
-  const { width, height } = getViewportSize();
+  // Use the canvas's CSS layout size (set by 100vw × 100dvh in CSS)
+  // This is immune to pinch/browser zoom unlike visualViewport dimensions
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  if (!width || !height) return;
   // Render at reduced resolution based on quality setting
   // Use higher scale on low DPI screens for sharper rendering
   const isLowDpi = window.devicePixelRatio < LOW_DPI_THRESHOLD;
   const settings = QUALITY_SETTINGS[currentQuality];
   const scale = isLowDpi ? settings.lowDpiScale : settings.scale;
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
-  canvas.width = width * window.devicePixelRatio * scale;
-  canvas.height = height * window.devicePixelRatio * scale;
+  canvas.width = Math.round(width * window.devicePixelRatio * scale);
+  canvas.height = Math.round(height * window.devicePixelRatio * scale);
   setupFramebuffer(canvas.width, canvas.height);
   setupLightFramebuffers(canvas.width, canvas.height);
   updateLogoPlacement();
@@ -1664,7 +1659,12 @@ if (window.visualViewport) {
 }
 resize();
 setupLogoTexture();
-updateLogoPlacement();
+// Recalculate logo reflection placement once the logo image has its intrinsic dimensions
+if (logo.complete) {
+  updateLogoPlacement();
+} else {
+  logo.addEventListener('load', updateLogoPlacement);
+}
 
 // FPS tracking
 let frameCount = 0;
@@ -1827,6 +1827,8 @@ function updateLogoPlacement() {
   const canvasRect = canvas.getBoundingClientRect();
   const logoRect = logo.getBoundingClientRect();
   if (!canvasRect.width || !canvasRect.height) return;
+  // Skip if logo hasn't loaded yet (height unknown)
+  if (!logoRect.height) return;
 
   const centerX = (logoRect.left + logoRect.width / 2 - canvasRect.left) / canvasRect.width;
   const centerY = 1 - (logoRect.top + logoRect.height / 2 - canvasRect.top) / canvasRect.height;
