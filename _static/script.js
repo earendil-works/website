@@ -536,10 +536,13 @@
         }
       }, 250);
 
-      fetch('https://earendil-subscribe-api.earendil-subscribe.workers.dev/api/subscribe', {
+      fetch('https://lefos.com/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
+        body: JSON.stringify({
+          email: email,
+          segmentSlug: 'earendil-newsletter'
+        })
       })
       .then(function(response) {
         if (!response.ok) {
