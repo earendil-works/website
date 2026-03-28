@@ -606,7 +606,12 @@ if (new URLSearchParams(window.location.search).has('fps')) {
 const canvas = document.getElementById('canvas');
 const logo = document.getElementById('logo');
 const themeToggle = document.getElementById('theme-toggle');
+if (!canvas) return;
 const gl = canvas.getContext('webgl');
+if (!gl) {
+  document.body.classList.add('loaded');
+  return;
+}
 
 const LOGO_SVG_URL = '/static/earendil-logo.svg';
 
