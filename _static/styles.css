@@ -148,6 +148,8 @@ canvas.shader-ready {
   max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-border-gap));
   overflow: hidden;
   padding: 78px 70px 72px;
+  --overlay-card-padding-inline: 70px;
+  --overlay-scrollbar-inset: 18px;
   box-sizing: border-box;
   pointer-events: auto;
   background: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), url('/static/paper.png') center/256px 256px;
@@ -214,14 +216,13 @@ canvas.shader-ready {
 }
 
 .updates-letter .letter-body {
+  --overlay-scrollbar-shift: max(0px, calc(var(--overlay-card-padding-inline) - var(--overlay-scrollbar-inset)));
   max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
+  margin-inline-end: calc(-1 * var(--overlay-scrollbar-shift));
+  padding-inline-end: var(--overlay-scrollbar-shift);
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.updates-letter .letter-body::-webkit-scrollbar {
-  display: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.95) transparent;
 }
 
 /* Individual post pages: keep [back] fixed, scroll meta+body+footer together */
@@ -233,15 +234,73 @@ canvas.shader-ready {
 }
 
 .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content {
+  --overlay-scrollbar-shift: max(0px, calc(var(--overlay-card-padding-inline) - var(--overlay-scrollbar-inset)));
   margin-top: var(--overlay-close-clearance);
+  margin-inline-end: calc(-1 * var(--overlay-scrollbar-shift));
+  padding-inline-end: var(--overlay-scrollbar-shift);
   max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.95) transparent;
 }
 
+.updates-letter .letter-body::-webkit-scrollbar,
 .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+  -webkit-appearance: none;
+}
+
+.updates-letter .letter-body::-webkit-scrollbar-track,
+.updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content::-webkit-scrollbar-track,
+.updates-letter .letter-body::-webkit-scrollbar-track-piece,
+.updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content::-webkit-scrollbar-track-piece,
+.updates-letter .letter-body::-webkit-scrollbar-corner,
+.updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content::-webkit-scrollbar-corner {
+  background: transparent;
+  box-shadow: none;
+}
+
+.updates-letter .letter-body::-webkit-scrollbar-button,
+.updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
   display: none;
+}
+
+.updates-letter .letter-body::-webkit-scrollbar-thumb,
+.updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-scroll-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.95);
+  background-image: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.98) 0 2px, rgba(255, 255, 255, 0.72) 2px 4px);
+  border-radius: 0;
+  border: 0;
+}
+
+.is-safari .updates-letter.has-custom-scrollbar .letter-body,
+.is-safari .updates-letter.has-custom-scrollbar .updates-scroll-content {
+  scrollbar-width: none;
+}
+
+.is-safari .updates-letter.has-custom-scrollbar .letter-body::-webkit-scrollbar,
+.is-safari .updates-letter.has-custom-scrollbar .updates-scroll-content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.updates-scrollbar-indicator {
+  position: absolute;
+  inset-inline-end: var(--overlay-scrollbar-inset);
+  width: 6px;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+}
+
+.updates-scrollbar-indicator-thumb {
+  width: 100%;
+  min-height: 24px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
 }
 
 .updates-overlay[data-page^="/posts/"]:not([data-page="/posts/"]) .updates-letter .letter-body {
@@ -1161,6 +1220,7 @@ canvas.shader-ready {
   .updates-overlay[data-page="/posts/"] .updates-letter,
   .updates-overlay[data-page^="/posts/"] .updates-letter {
     padding: 16px 12px 12px;
+    --overlay-card-padding-inline: 12px;
   }
 
   .updates-overlay[data-page="/purpose/"] .updates-dismiss,
