@@ -79,7 +79,7 @@
   "values.curious.title": { "message": "Originally Curious", "context": "Values section heading" },
   "values.curious.1": { "message": "We stay curious and hungry for new knowledge", "context": "Values bullet" },
   "values.curious.2": { "message": "We are humble enough to accept there is much we do not know, but confident enough to challenge received wisdom through our own reason", "context": "Values bullet" },
-  "values.curious.3": { "message": "We celebrate original thinking", "context": "Values bullet" },
+  "values.curious.3": { "message": "We take time to satisfy the curiosity of others and to teach what we know, across functions and bodies of knowledge", "context": "Values bullet" },
   "values.vulnerable.title": { "message": "Transparently Vulnerable", "context": "Values section heading" },
   "values.vulnerable.1": { "message": "Vulnerability breeds trust, concealment breeds distance", "context": "Values bullet" },
   "values.vulnerable.2": { "message": "Minimize assumptions and gossip. When in doubt, validate directly with the primary source", "context": "Values bullet" },
