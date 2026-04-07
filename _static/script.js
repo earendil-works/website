@@ -1,5 +1,105 @@
 // Overlay animation handling
 (function() {
+  var isSafari = /Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg\//.test(navigator.userAgent);
+  if (isSafari) {
+    document.documentElement.classList.add('is-safari');
+  }
+
+  function getOverlayScroller(overlay) {
+    return overlay.querySelector('.updates-scroll-content') || overlay.querySelector('.updates-letter .letter-body');
+  }
+
+  function teardownCustomScrollbar(overlay) {
+    var state = overlay.__customScrollbar;
+    if (!state) return;
+
+    state.scroller.removeEventListener('scroll', state.onScroll);
+    window.removeEventListener('resize', state.onResize);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', state.onResize);
+      window.visualViewport.removeEventListener('scroll', state.onResize);
+    }
+
+    if (state.indicator && state.indicator.parentNode) {
+      state.indicator.parentNode.removeChild(state.indicator);
+    }
+
+    if (state.letter) {
+      state.letter.classList.remove('has-custom-scrollbar');
+    }
+
+    overlay.__customScrollbar = null;
+  }
+
+  function syncCustomScrollbar(overlay) {
+    var state = overlay.__customScrollbar;
+    if (!state) return;
+
+    var letterRect = state.letter.getBoundingClientRect();
+    var scrollRect = state.scroller.getBoundingClientRect();
+    state.indicator.style.top = Math.max(0, scrollRect.top - letterRect.top) + 'px';
+    state.indicator.style.height = Math.max(0, scrollRect.height) + 'px';
+
+    var scrollHeight = state.scroller.scrollHeight;
+    var clientHeight = state.scroller.clientHeight;
+    if (scrollHeight <= clientHeight + 1) {
+      state.indicator.style.opacity = '0';
+      return;
+    }
+
+    state.indicator.style.opacity = '1';
+    var minThumb = 24;
+    var thumbHeight = Math.max(minThumb, (clientHeight / scrollHeight) * scrollRect.height);
+    var maxThumbTop = Math.max(0, scrollRect.height - thumbHeight);
+    var progress = state.scroller.scrollTop / (scrollHeight - clientHeight);
+
+    state.thumb.style.height = thumbHeight + 'px';
+    state.thumb.style.transform = 'translateY(' + (maxThumbTop * progress) + 'px)';
+  }
+
+  function setupCustomScrollbar(overlay) {
+    teardownCustomScrollbar(overlay);
+    if (!isSafari) return;
+
+    var letter = overlay.querySelector('.updates-letter');
+    var scroller = getOverlayScroller(overlay);
+    if (!letter || !scroller) return;
+
+    letter.classList.add('has-custom-scrollbar');
+
+    var indicator = document.createElement('div');
+    indicator.className = 'updates-scrollbar-indicator';
+    var thumb = document.createElement('div');
+    thumb.className = 'updates-scrollbar-indicator-thumb';
+    indicator.appendChild(thumb);
+    letter.appendChild(indicator);
+
+    var onResize = function() {
+      syncCustomScrollbar(overlay);
+    };
+    var onScroll = function() {
+      syncCustomScrollbar(overlay);
+    };
+
+    overlay.__customScrollbar = {
+      letter: letter,
+      scroller: scroller,
+      indicator: indicator,
+      thumb: thumb,
+      onResize: onResize,
+      onScroll: onScroll,
+    };
+
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', onResize);
+      window.visualViewport.addEventListener('scroll', onResize);
+    }
+
+    syncCustomScrollbar(overlay);
+  }
+
   function openOverlays() {
     var hasOverlay = document.querySelectorAll('.updates-overlay').length > 0;
     document.body.classList.toggle('has-overlay', hasOverlay);
@@ -7,6 +107,7 @@
       void overlay.offsetWidth;
       overlay.classList.add('is-open');
       overlay.setAttribute('aria-hidden', 'false');
+      setupCustomScrollbar(overlay);
     });
     if (hasOverlay) {
       window.scrollTo(0, 0);
@@ -21,6 +122,7 @@
   document.body.addEventListener('htmx:afterSettle', openOverlays);
 
   function closeOverlayWithAnimation(overlay, callback) {
+    teardownCustomScrollbar(overlay);
     overlay.classList.add('is-closing');
     overlay.classList.remove('is-open');
     overlay.setAttribute('aria-hidden', 'true');
