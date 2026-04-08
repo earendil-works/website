@@ -4,7 +4,7 @@ template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>
 to: You
-date: Wed, 8 Apr 2026 00:00:00 +0200
+date: Wed, 8 Apr 2026 01:00:00 +0200
 subject: A Reflection on our Announcement Today
 i18n_key: post.announcement-reflection
 ---
