@@ -1,13 +1,15 @@
 {
-  "posts.title": "পোস্ট",
-  "posts.hearFromUs": "[আমাদের কাছ থেকে শুনুন]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "তারিখ:",
-  "email.date.post.invitation": "রবি, ১৮ জানু ২০২৬",
+  "email.date.post.announcement-reflection": "বুধ, ০৮ এপ্রিল ২০২৬",
   "email.date.post.highground": "বৃহ, ১২ ফেব্রু ২০২৬",
+  "email.date.post.invitation": "রবি, ১৮ জানু ২০২৬",
+  "email.date.post.pressrelease-april-8": "বুধ, ০৮ এপ্রিল ২০২৬",
   "email.from": "প্রেরক:",
+  "email.subject": "বিষয়:",
   "email.to": "প্রাপক:",
   "email.to.value": "আপনি",
-  "email.subject": "বিষয়:"
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[আমাদের কাছ থেকে শুনুন]",
+  "posts.title": "পোস্ট"
 }

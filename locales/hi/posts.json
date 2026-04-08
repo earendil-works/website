@@ -1,13 +1,15 @@
 {
-  "posts.title": "पोस्ट",
-  "posts.hearFromUs": "[हमसे समाचार प्राप्त करें]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "दिनांक:",
-  "email.date.post.invitation": "रवि, 18 जन 2026",
+  "email.date.post.announcement-reflection": "बुध, 08 अप्रैल 2026",
   "email.date.post.highground": "गुरु, 12 फ़र 2026",
+  "email.date.post.invitation": "रवि, 18 जन 2026",
+  "email.date.post.pressrelease-april-8": "बुध, 08 अप्रैल 2026",
   "email.from": "प्रेषक:",
+  "email.subject": "विषय:",
   "email.to": "प्राप्तकर्ता:",
   "email.to.value": "आप",
-  "email.subject": "विषय:"
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[हमसे समाचार प्राप्त करें]",
+  "posts.title": "पोस्ट"
 }

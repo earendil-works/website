@@ -55,64 +55,248 @@
     "message": "An Invitation to Begin a Correspondence",
     "context": "Blog post title"
   },
+  "post.pressrelease-april-8.title": {
+    "message": "Press Release April 8th",
+    "context": "Blog post title - Press Release April 8th"
+  },
+  "post.announcement-reflection.title": {
+    "message": "A Reflection on our Announcement Today",
+    "context": "Blog post title - Announcement Reflection"
+  },
+  "post.announcement-reflection.body": {
+    "message": "Less than a year ago, in springtime Vienna, Armin and Colin met at <em>Vogel Kaffee</em> to write.\n\nWe had landed on a name, <em>Earendil</em>. We didn't yet have a company or an office. We were at the beginning, and felt the most natural place to begin was with a shared idea of what our Company should exist to do.\n\nAfter working and reworking the sentences, stressing and asking questions of each word, this is where we landed:\n\n<em>Earendil exists to strengthen the agency of humanity by crafting software and open protocols that bridge division and ignorance and cultivate lasting joy and understanding.</em>\n\nIt was a lofty set of goals, but we meant each specific clause. In a world that every day feels more divided and violent, these words ring both distinct and universal. In a world that every day feels more afraid, these words ring both strong and peaceful. This was intended.\n\nFast forward to today and we are proud to have three announcements to make.\n\nFirstly, <em>Earendil</em> has acquired <em><a href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a></em>, and Mario Zechner has joined <em>Earendil</em>. Secondly, we are announcing <em><a href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a></em>, a new kind of entity designed to be both capable and trustworthy. Thirdly, we wanted to acknowledge our early backers.\n\nPrior to founding Earendil, both of us had worked in our last jobs for almost a decade. We believe in <a href=\"https://lucumr.pocoo.org/2026/3/20/some-things-just-take-time/\" target=\"_blank\" rel=\"noopener noreferrer\">planting trees</a> and nurturing them over time. All three of these announcements reflect those principles, though in different ways.\n\nFirstly, there is Mario. Armin has known Mario since he was in college. Mario has honed his craft, writing software, over many years. Both the creation of Pi and the adoption of Pi by Earendil are a function of years of dedication on one hand to honing a craft and on the other hand of building trust between two human beings. Pi is at once both at the white hot center of AI but is also a stellar example of handcrafted software. It couldn't be a more fitting example of one of Earendil's core principles.\n\nSecondly, there is <em>Lefos</em>. <em>Lefos</em> really began with a question: <em>How can a machine entity earn the trust of a human? How should it be built so that over years and decades, that trust compounds rather than erodes?</em> The power of the machines being built today is undeniable, but to really serve humanity we think a core set of principles should be rethought. Firstly, these machines should be built in the open, and on open protocols. Secondly, people should be able to tune these entities to their own preferences and constraints. Finally, companies should not presume to take user trust for granted. For anyone lucky enough to have ever worked with an assistant, you probably did not give him or her all the passwords to your email account on their first day. That trust was earned over time. We operate on a similar principle. We want <em>Lefos</em> to prove to you over time that it is worthy of your trust. We hope it does and are looking forward to your feedback.\n\nFinally, our backers. Earendil was backed from the beginning by Accel (Daniel Levine), Balderton (Daniel Waterhouse) and the Founders of n8n (Jan Oberhauser), OpenClaw (Peter Steinberger), Revolut (Vlad Yatsenko), Sentry (David Cramer), and Slack (Cal Henderson) among many others. The individuals we are working with across the board are friends and mentors, colleagues and partners. They have all invested in deep, longitudinal relationships with the both of us, and many of them have invested years in the firms and companies they have built themselves. We are proud to be associated with them.\n\nArmin & Colin\n\n—\n\nRead more about our announcements today:\n\n<a href=\"https://mariozechner.at/posts/2026-04-08-ive-sold-out/\" target=\"_blank\" rel=\"noopener noreferrer\">Mario's blog on why he joined Earendil</a><br><a href=\"https://rfc.earendil.com/0015/\" target=\"_blank\" rel=\"noopener noreferrer\">Armin's RFC on our plan for Licensing Pi</a><br><a href=\"https://lucumr.pocoo.org/2026/4/8/mario-and-earendil/\" target=\"_blank\" rel=\"noopener noreferrer\">Armin's blog on Mario</a><br><a href=\"https://www.foggynotions.day/\" target=\"_blank\" rel=\"noopener noreferrer\">Colin's blog on Partnership</a><br><a href=\"/posts/press-release-april-8th/\">Earendil's Press Release</a>",
+    "context": "Blog post body - Announcement Reflection"
+  },
+  "post.pressrelease-april-8.body": {
+    "message": "<a href=\"https://www.earendil.com\" target=\"_blank\" rel=\"noopener noreferrer\">Earendil Inc</a>. is a Public Benefit Corporation founded by Armin Ronacher and Colin Daymond Hanna in 2025. The purpose of Earendil is to strengthen the agency of humanity by crafting software and open protocols that bridge division and ignorance and cultivate lasting joy and understanding.\n\nIn service of the goals above, Earendil is proud to make several announcements today:\n\n<ul><li>The acquisition of the <a href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a> Open Source project. Written by Mario Zechner, Pi is a stellar example of craft and taste in software today. Pi is the <a href=\"https://lucumr.pocoo.org/2026/1/31/pi/\" target=\"_blank\" rel=\"noopener noreferrer\">minimal agent within OpenClaw</a> and a widely-adopted Open Source coding agent and harness. Mario's commitment to openness and craft resonate strongly with the founding purpose of Earendil. Parallel to the acquisition, Mario Zechner becomes a major Earendil stakeholder and team member.</li><li><a href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a> becomes available via public alpha today. Lefos is our first step in a journey towards building a machine entity that proves both maximally capable and trustworthy. Lefos communicates with you and your co-creators over email, a stack that you control and where you can collaborate with others. Lefos helps your inbox become a command line for thoughtful work and communication. Users can join the waitlist now at <a href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos.com</a>.</li><li>Earendil is proud to announce our early backers: Accel (Daniel Levine), Balderton (Daniel Waterhouse) and the Founders of n8n (Jan Oberhauser), OpenClaw (Peter Steinberger), Revolut (Vlad Yatsenko), Sentry (David Cramer), and Slack (Cal Henderson) among many others. We are grateful for their trust and support.</li></ul>",
+    "context": "Blog post body - Announcing Earendil"
+  },
   "post.invitation.body": {
     "message": "Hello,\n\nWe believe in building in the open, sharing what we learn, what we craft, and where we're headed. If you're curious about software that strengthens human agency and bridges understanding, we'd love to have you along for the journey.\n\n<a href=\"/posts/subscribe/\">[Leave us your email]</a> to receive posts from us. Honest reflections on what we're building, why it matters, and what we're shaping together. Written by humans, not machines. We welcome your comments.\n\nWe work out of <span class=\"mono-bold\">Vienna, Austria</span>, a city of coffee, culture, and good conversation. If you're passing through and want to say hello, drop us a line at <a href=\"mailto:rfc@earendil.com\">rfc@earendil.com</a>. The door is open.\n\nWith care,\nArmin and Colin",
     "context": "Invitation blog post body"
   },
-  "values.heading.main": { "message": "Our Values", "context": "Values page main heading" },
-  "values.heading.ops": { "message": "Operating Principles", "context": "Values page second major heading" },
-  "values.compassionate.title": { "message": "Be Compassionate", "context": "Values section heading" },
-  "values.compassionate.1": { "message": "Be kind. We are people first and workers second. Remember that people have bad days", "context": "Values bullet" },
-  "values.compassionate.2": { "message": "Reach first for generosity. The world is not zero sum. We can create abundance collectively", "context": "Values bullet" },
-  "values.compassionate.3": { "message": "Assuming bad intentions is a self-fulfilling prophecy. Assuming grace leads to grace", "context": "Values bullet" },
-  "values.focused.title": { "message": "Focused Excellence", "context": "Values section heading" },
-  "values.focused.1": { "message": "We focus on what is under our control. We don’t let the rest distract us", "context": "Values bullet" },
-  "values.focused.2": { "message": "What is under our control we deliver with pride. We harness focus to deliver excellence", "context": "Values bullet" },
-  "values.focused.3": { "message": "We focus on excellent outcomes rather than excellent processes", "context": "Values bullet" },
-  "values.weNotI.title": { "message": "We not I", "context": "Values section heading" },
-  "values.weNotI.1": { "message": "We believe the best teams are greater than the sum of their parts", "context": "Values bullet" },
-  "values.weNotI.2": { "message": "We look to maximize team utility, but recognize one another’s strengths and weaknesses", "context": "Values bullet" },
-  "values.weNotI.3": { "message": "We carry ourselves individually with humility. As a team we project confidence", "context": "Values bullet" },
-  "values.family.title": { "message": "Family First", "context": "Values section heading" },
-  "values.family.1": { "message": "Our family could be our closest friends, our parents, siblings, our spouse and kids, or our dogs. These are the relationships that will define our lives. They come first", "context": "Values bullet" },
-  "values.family.2": { "message": "We pursue our work with intensity and high standards, but we refuse to sacrifice one for the other. In conflicts, family takes precedence.", "context": "Values bullet" },
-  "values.curious.title": { "message": "Originally Curious", "context": "Values section heading" },
-  "values.curious.1": { "message": "We stay curious and hungry for new knowledge", "context": "Values bullet" },
-  "values.curious.2": { "message": "We are humble enough to accept there is much we do not know, but confident enough to challenge received wisdom through our own reason", "context": "Values bullet" },
-  "values.curious.3": { "message": "We celebrate original thinking", "context": "Values bullet" },
-  "values.vulnerable.title": { "message": "Transparently Vulnerable", "context": "Values section heading" },
-  "values.vulnerable.1": { "message": "Vulnerability breeds trust, concealment breeds distance", "context": "Values bullet" },
-  "values.vulnerable.2": { "message": "Minimize assumptions and gossip. When in doubt, validate directly with the primary source", "context": "Values bullet" },
-  "values.vulnerable.3": { "message": "Pursuing truth means acknowledging mistakes. Revealing mistakes should be celebrated, not criticized", "context": "Values bullet" },
-  "values.positive.title": { "message": "Positive Intentions & Outcomes", "context": "Values section heading" },
-  "values.positive.1": { "message": "We care deeply about contributing to positive outcomes", "context": "Values bullet" },
-  "values.positive.2": { "message": "We can look into our parents, partners, friends, or kids’ eyes, share with them both the purpose and the reality of what we have built, including any negative externalities, and feel pride", "context": "Values bullet" },
-  "values.positive.3": { "message": "Keep the north star north. We do not compromise our clarity of purpose", "context": "Values bullet" },
-  "values.agents.title": { "message": "We are the Agents", "context": "Values section heading" },
-  "values.agents.1": { "message": "We believe in human agency. We as humans have explicit intent and use every tool available to fulfill that intent", "context": "Values bullet" },
-  "values.agents.2": { "message": "Our collective neural diversity is our strength and our moat", "context": "Values bullet" },
-  "values.agents.3": { "message": "Leverage technology maximally but do not be lazy. Remember that you are the axe. Keep your mind sharp and do not ignorantly become the facilitator of another’s intent", "context": "Values bullet" },
-  "values.beauty.title": { "message": "Craft Beauty", "context": "Values section heading" },
-  "values.beauty.1": { "message": "The world needs beauty and craft", "context": "Values bullet" },
-  "values.beauty.2": { "message": "Only you can bring your own version of beauty into the world", "context": "Values bullet" },
-  "values.beauty.3": { "message": "To craft something well requires effort and mastery. We celebrate both", "context": "Values bullet" },
-  "values.charming.title": { "message": "Be Charming", "context": "Values section heading" },
-  "values.charming.1": { "message": "Being polite and charming goes a long way, especially under stress", "context": "Values bullet" },
-  "values.charming.2": { "message": "We treat others in a way that brings lightness, maybe even a smile", "context": "Values bullet" },
-  "values.charming.3": { "message": "We tend to overestimate how well others understand our thoughts. Remember to overcommunicate.", "context": "Values bullet" },
-  "values.relentless.title": { "message": "Thoughtful but Relentless", "context": "Values section heading" },
-  "values.relentless.1": { "message": "As our strength and power increases, so should the consideration we give to our actions and decisions. As we grow and succeed, we become more thoughtful and less callous", "context": "Values bullet" },
-  "values.relentless.2": { "message": "We are considerate and thoughtful, but when we have determined the best course of action, we are relentless in the pursuit of those objectives", "context": "Values bullet" },
-  "values.techMeans.title": { "message": "Technology is the Means, not the End", "context": "Values section heading" },
-  "values.techMeans.1": { "message": "We use software, because that’s what we know", "context": "Values bullet" },
-  "values.techMeans.2": { "message": "But we are not here to sell cute code, fun algorithms or programming languages", "context": "Values bullet" },
-  "values.techMeans.3": { "message": "If we could run this business on a spreadsheet better than with code, we would", "context": "Values bullet" },
-  "values.ambitious.title": { "message": "Ambitious Goals, Credible Steps", "context": "Values section heading" },
-  "values.ambitious.1": { "message": "We are not afraid to be incredibly ambitious", "context": "Values bullet" },
-  "values.ambitious.2": { "message": "But we are meticulous about forming credible plans", "context": "Values bullet" },
-  "values.ambitious.3": { "message": "We need to convince ourselves of the path, and understand how we step into the sky", "context": "Values bullet" },
-  "values.responsibility.title": { "message": "Radical Responsibility, Generous Recognition", "context": "Values section heading" },
-  "values.responsibility.1": { "message": "Each individual should think like an owner of the Company", "context": "Values bullet" },
-  "values.responsibility.2": { "message": "Every task has a clear owner, that owner has clear responsibility", "context": "Values bullet" },
-  "values.responsibility.3": { "message": "We look to recognize the contributions of others before those of ourselves", "context": "Values bullet" }
+  "values.heading.main": {
+    "message": "Our Values",
+    "context": "Values page main heading"
+  },
+  "values.heading.ops": {
+    "message": "Operating Principles",
+    "context": "Values page second major heading"
+  },
+  "values.compassionate.title": {
+    "message": "Be Compassionate",
+    "context": "Values section heading"
+  },
+  "values.compassionate.1": {
+    "message": "Be kind. We are people first and workers second. Remember that people have bad days",
+    "context": "Values bullet"
+  },
+  "values.compassionate.2": {
+    "message": "Reach first for generosity. The world is not zero sum. We can create abundance collectively",
+    "context": "Values bullet"
+  },
+  "values.compassionate.3": {
+    "message": "Assuming bad intentions is a self-fulfilling prophecy. Assuming grace leads to grace",
+    "context": "Values bullet"
+  },
+  "values.focused.title": {
+    "message": "Focused Excellence",
+    "context": "Values section heading"
+  },
+  "values.focused.1": {
+    "message": "We focus on what is under our control. We don’t let the rest distract us",
+    "context": "Values bullet"
+  },
+  "values.focused.2": {
+    "message": "What is under our control we deliver with pride. We harness focus to deliver excellence",
+    "context": "Values bullet"
+  },
+  "values.focused.3": {
+    "message": "We focus on excellent outcomes rather than excellent processes",
+    "context": "Values bullet"
+  },
+  "values.weNotI.title": {
+    "message": "We not I",
+    "context": "Values section heading"
+  },
+  "values.weNotI.1": {
+    "message": "We believe the best teams are greater than the sum of their parts",
+    "context": "Values bullet"
+  },
+  "values.weNotI.2": {
+    "message": "We look to maximize team utility, but recognize one another’s strengths and weaknesses",
+    "context": "Values bullet"
+  },
+  "values.weNotI.3": {
+    "message": "We carry ourselves individually with humility. As a team we project confidence",
+    "context": "Values bullet"
+  },
+  "values.family.title": {
+    "message": "Family First",
+    "context": "Values section heading"
+  },
+  "values.family.1": {
+    "message": "Our family could be our closest friends, our parents, siblings, our spouse and kids, or our dogs. These are the relationships that will define our lives. They come first",
+    "context": "Values bullet"
+  },
+  "values.family.2": {
+    "message": "We pursue our work with intensity and high standards, but we refuse to sacrifice one for the other. In conflicts, family takes precedence.",
+    "context": "Values bullet"
+  },
+  "values.curious.title": {
+    "message": "Originally Curious",
+    "context": "Values section heading"
+  },
+  "values.curious.1": {
+    "message": "We stay curious and hungry for new knowledge",
+    "context": "Values bullet"
+  },
+  "values.curious.2": {
+    "message": "We are humble enough to accept there is much we do not know, but confident enough to challenge received wisdom through our own reason",
+    "context": "Values bullet"
+  },
+  "values.curious.3": {
+    "message": "We celebrate original thinking",
+    "context": "Values bullet"
+  },
+  "values.vulnerable.title": {
+    "message": "Transparently Vulnerable",
+    "context": "Values section heading"
+  },
+  "values.vulnerable.1": {
+    "message": "Vulnerability breeds trust, concealment breeds distance",
+    "context": "Values bullet"
+  },
+  "values.vulnerable.2": {
+    "message": "Minimize assumptions and gossip. When in doubt, validate directly with the primary source",
+    "context": "Values bullet"
+  },
+  "values.vulnerable.3": {
+    "message": "Pursuing truth means acknowledging mistakes. Revealing mistakes should be celebrated, not criticized",
+    "context": "Values bullet"
+  },
+  "values.positive.title": {
+    "message": "Positive Intentions & Outcomes",
+    "context": "Values section heading"
+  },
+  "values.positive.1": {
+    "message": "We care deeply about contributing to positive outcomes",
+    "context": "Values bullet"
+  },
+  "values.positive.2": {
+    "message": "We can look into our parents, partners, friends, or kids’ eyes, share with them both the purpose and the reality of what we have built, including any negative externalities, and feel pride",
+    "context": "Values bullet"
+  },
+  "values.positive.3": {
+    "message": "Keep the north star north. We do not compromise our clarity of purpose",
+    "context": "Values bullet"
+  },
+  "values.agents.title": {
+    "message": "We are the Agents",
+    "context": "Values section heading"
+  },
+  "values.agents.1": {
+    "message": "We believe in human agency. We as humans have explicit intent and use every tool available to fulfill that intent",
+    "context": "Values bullet"
+  },
+  "values.agents.2": {
+    "message": "Our collective neural diversity is our strength and our moat",
+    "context": "Values bullet"
+  },
+  "values.agents.3": {
+    "message": "Leverage technology maximally but do not be lazy. Remember that you are the axe. Keep your mind sharp and do not ignorantly become the facilitator of another’s intent",
+    "context": "Values bullet"
+  },
+  "values.beauty.title": {
+    "message": "Craft Beauty",
+    "context": "Values section heading"
+  },
+  "values.beauty.1": {
+    "message": "The world needs beauty and craft",
+    "context": "Values bullet"
+  },
+  "values.beauty.2": {
+    "message": "Only you can bring your own version of beauty into the world",
+    "context": "Values bullet"
+  },
+  "values.beauty.3": {
+    "message": "To craft something well requires effort and mastery. We celebrate both",
+    "context": "Values bullet"
+  },
+  "values.charming.title": {
+    "message": "Be Charming",
+    "context": "Values section heading"
+  },
+  "values.charming.1": {
+    "message": "Being polite and charming goes a long way, especially under stress",
+    "context": "Values bullet"
+  },
+  "values.charming.2": {
+    "message": "We treat others in a way that brings lightness, maybe even a smile",
+    "context": "Values bullet"
+  },
+  "values.charming.3": {
+    "message": "We tend to overestimate how well others understand our thoughts. Remember to overcommunicate.",
+    "context": "Values bullet"
+  },
+  "values.relentless.title": {
+    "message": "Thoughtful but Relentless",
+    "context": "Values section heading"
+  },
+  "values.relentless.1": {
+    "message": "As our strength and power increases, so should the consideration we give to our actions and decisions. As we grow and succeed, we become more thoughtful and less callous",
+    "context": "Values bullet"
+  },
+  "values.relentless.2": {
+    "message": "We are considerate and thoughtful, but when we have determined the best course of action, we are relentless in the pursuit of those objectives",
+    "context": "Values bullet"
+  },
+  "values.techMeans.title": {
+    "message": "Technology is the Means, not the End",
+    "context": "Values section heading"
+  },
+  "values.techMeans.1": {
+    "message": "We use software, because that’s what we know",
+    "context": "Values bullet"
+  },
+  "values.techMeans.2": {
+    "message": "But we are not here to sell cute code, fun algorithms or programming languages",
+    "context": "Values bullet"
+  },
+  "values.techMeans.3": {
+    "message": "If we could run this business on a spreadsheet better than with code, we would",
+    "context": "Values bullet"
+  },
+  "values.ambitious.title": {
+    "message": "Ambitious Goals, Credible Steps",
+    "context": "Values section heading"
+  },
+  "values.ambitious.1": {
+    "message": "We are not afraid to be incredibly ambitious",
+    "context": "Values bullet"
+  },
+  "values.ambitious.2": {
+    "message": "But we are meticulous about forming credible plans",
+    "context": "Values bullet"
+  },
+  "values.ambitious.3": {
+    "message": "We need to convince ourselves of the path, and understand how we step into the sky",
+    "context": "Values bullet"
+  },
+  "values.responsibility.title": {
+    "message": "Radical Responsibility, Generous Recognition",
+    "context": "Values section heading"
+  },
+  "values.responsibility.1": {
+    "message": "Each individual should think like an owner of the Company",
+    "context": "Values bullet"
+  },
+  "values.responsibility.2": {
+    "message": "Every task has a clear owner, that owner has clear responsibility",
+    "context": "Values bullet"
+  },
+  "values.responsibility.3": {
+    "message": "We look to recognize the contributions of others before those of ourselves",
+    "context": "Values bullet"
+  }
 }

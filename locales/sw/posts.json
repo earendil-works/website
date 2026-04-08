@@ -1,13 +1,15 @@
 {
-  "posts.title": "MACHAPISHO",
-  "posts.hearFromUs": "[Pata habari zetu]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "Tarehe:",
-  "email.date.post.invitation": "Jpi, 18 Jan 2026",
+  "email.date.post.announcement-reflection": "Jumatano, 08 Apr 2026",
   "email.date.post.highground": "Alh, 12 Feb 2026",
+  "email.date.post.invitation": "Jpi, 18 Jan 2026",
+  "email.date.post.pressrelease-april-8": "Jumatano, 08 Apr 2026",
   "email.from": "Kutoka:",
+  "email.subject": "Mada:",
   "email.to": "Kwa:",
   "email.to.value": "Wewe",
-  "email.subject": "Mada:"
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[Pata habari zetu]",
+  "posts.title": "MACHAPISHO"
 }

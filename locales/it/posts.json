@@ -1,13 +1,15 @@
 {
-  "posts.title": "ARTICOLI",
-  "posts.hearFromUs": "[Ricevi le nostre notizie]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "Data:",
-  "email.date.post.invitation": "Dom, 18 Gen 2026",
+  "email.date.post.announcement-reflection": "Mer, 08 Apr 2026",
   "email.date.post.highground": "Gio, 12 Feb 2026",
+  "email.date.post.invitation": "Dom, 18 Gen 2026",
+  "email.date.post.pressrelease-april-8": "Mer, 08 Apr 2026",
   "email.from": "Da:",
+  "email.subject": "Oggetto:",
   "email.to": "A:",
   "email.to.value": "Tu",
-  "email.subject": "Oggetto:"
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[Ricevi le nostre notizie]",
+  "posts.title": "ARTICOLI"
 }

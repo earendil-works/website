@@ -1,13 +1,15 @@
 {
-  "posts.title": "పోస్ట్‌లు",
-  "posts.hearFromUs": "[మా నుండి వినండి]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "తేదీ:",
-  "email.date.post.invitation": "ఆది, 18 జన 2026",
+  "email.date.post.announcement-reflection": "బుధ, 08 ఏప్రిల్ 2026",
   "email.date.post.highground": "గురు, 12 ఫిబ్ర 2026",
+  "email.date.post.invitation": "ఆది, 18 జన 2026",
+  "email.date.post.pressrelease-april-8": "బుధ, 08 ఏప్రిల్ 2026",
   "email.from": "నుండి:",
+  "email.subject": "విషయం:",
   "email.to": "కు:",
   "email.to.value": "మీరు",
-  "email.subject": "విషయం:"
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[మా నుండి వినండి]",
+  "posts.title": "పోస్ట్‌లు"
 }

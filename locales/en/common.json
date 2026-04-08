@@ -46,5 +46,9 @@
   "theme.light": {
     "message": "LIGHT",
     "context": "Theme toggle: light mode"
+  },
+  "announcement.banner": {
+    "message": "ANNOUNCING PI & LEFOS →",
+    "context": "Announcement banner linking to press release"
   }
 }
