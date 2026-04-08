@@ -1,13 +1,15 @@
 {
-  "posts.title": "文章",
-  "posts.hearFromUs": "[订阅更新]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "日期：",
-  "email.date.post.invitation": "2026年1月18日 周日",
+  "email.date.post.announcement-reflection": "2026年4月8日 周三",
   "email.date.post.highground": "2026年2月12日 周四",
+  "email.date.post.invitation": "2026年1月18日 周日",
+  "email.date.post.pressrelease-april-8": "2026年4月8日 周三",
   "email.from": "发件人：",
+  "email.subject": "主题：",
   "email.to": "收件人：",
   "email.to.value": "您",
-  "email.subject": "主题："
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[订阅更新]",
+  "posts.title": "文章"
 }

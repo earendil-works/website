@@ -1,13 +1,15 @@
 {
-  "posts.title": "게시물",
-  "posts.hearFromUs": "[소식 받기]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "날짜:",
-  "email.date.post.invitation": "2026년 1월 18일 (일)",
+  "email.date.post.announcement-reflection": "2026년 4월 8일 수요일",
   "email.date.post.highground": "2026년 2월 12일 (목)",
+  "email.date.post.invitation": "2026년 1월 18일 (일)",
+  "email.date.post.pressrelease-april-8": "2026년 4월 8일 수요일",
   "email.from": "보낸 사람:",
+  "email.subject": "제목:",
   "email.to": "받는 사람:",
   "email.to.value": "당신",
-  "email.subject": "제목:"
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[소식 받기]",
+  "posts.title": "게시물"
 }

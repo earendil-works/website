@@ -1,13 +1,15 @@
 {
-  "posts.title": "投稿",
-  "posts.hearFromUs": "[お知らせを受け取る]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "日付：",
-  "email.date.post.invitation": "2026年1月18日（日）",
+  "email.date.post.announcement-reflection": "2026年4月8日（水）",
   "email.date.post.highground": "2026年2月12日（木）",
+  "email.date.post.invitation": "2026年1月18日（日）",
+  "email.date.post.pressrelease-april-8": "2026年4月8日（水）",
   "email.from": "差出人：",
+  "email.subject": "件名：",
   "email.to": "宛先：",
   "email.to.value": "あなた",
-  "email.subject": "件名："
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[お知らせを受け取る]",
+  "posts.title": "投稿"
 }

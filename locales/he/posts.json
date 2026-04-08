@@ -1,13 +1,15 @@
 {
-  "posts.title": "פוסטים",
-  "posts.hearFromUs": "[שמעו מאיתנו]",
-  "posts.feedAtom": "אטום",
-  "posts.feedRss": "RSS",
   "email.date": "תאריך:",
-  "email.date.post.invitation": "יום א׳, 18 בינו׳ 2026",
+  "email.date.post.announcement-reflection": "רביעי, 08 באפריל 2026",
   "email.date.post.highground": "יום ה׳, 12 בפבר׳ 2026",
+  "email.date.post.invitation": "יום א׳, 18 בינו׳ 2026",
+  "email.date.post.pressrelease-april-8": "רביעי, 08 באפריל 2026",
   "email.from": "מאת:",
+  "email.subject": "נושא:",
   "email.to": "אל:",
   "email.to.value": "את/ה",
-  "email.subject": "נושא:"
+  "posts.feedAtom": "אטום",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[שמעו מאיתנו]",
+  "posts.title": "פוסטים"
 }
