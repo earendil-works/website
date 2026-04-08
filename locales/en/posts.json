@@ -27,6 +27,14 @@
     "message": "Thu, 12 Feb 2026",
     "context": "Date for high ground post"
   },
+  "email.date.post.pressrelease-april-8": {
+    "message": "Wed, 08 Apr 2026",
+    "context": "Date for press release April 8 post"
+  },
+  "email.date.post.announcement-reflection": {
+    "message": "Wed, 08 Apr 2026",
+    "context": "Date for announcement reflection post"
+  },
   "email.from": {
     "message": "From:",
     "context": "Email header label for sender"
