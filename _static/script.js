@@ -1,212 +1,236 @@
 // Overlay animation handling
+window.__earendilUiRuntime = window.__earendilUiRuntime || {};
+
 (function() {
+  // Invariant: each rendered page contains at most one .updates-overlay.
   function shouldUseCustomOverlayScrollbar() {
     return /Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg\//.test(navigator.userAgent);
   }
-
-  const shouldUseCustomOverlayIndicator = shouldUseCustomOverlayScrollbar();
-
-  document.documentElement.classList.toggle('overlay-scrollbar-mode-custom', shouldUseCustomOverlayIndicator);
-
-  const customScrollbarStateByOverlay = new WeakMap();
-  const customScrollbarOverlays = new Set();
 
   function getOverlayScroller(overlay) {
     return overlay.querySelector('.updates-scroll-content') || overlay.querySelector('.updates-letter .letter-body');
   }
 
-  function teardownCustomScrollbar(overlay) {
-    const state = customScrollbarStateByOverlay.get(overlay);
-    if (!state) return;
-
-    state.listenerController.abort();
-    state.scroller.removeEventListener('scroll', state.onScroll);
-    window.removeEventListener('resize', state.onResize);
-    if (window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', state.onResize);
-      window.visualViewport.removeEventListener('scroll', state.onResize);
-    }
-
-    if (state.syncRafId !== null && typeof window.cancelAnimationFrame === 'function') {
-      window.cancelAnimationFrame(state.syncRafId);
-    }
-    if (state.syncTimeoutId !== null) {
-      clearTimeout(state.syncTimeoutId);
-    }
-
-    if (state.indicator && state.indicator.parentNode) {
-      state.indicator.parentNode.removeChild(state.indicator);
-    }
-
-    if (state.letter) {
-      state.letter.classList.remove('has-custom-scrollbar');
-    }
-
-    customScrollbarStateByOverlay.delete(overlay);
-    customScrollbarOverlays.delete(overlay);
+  function getOverlay() {
+    return document.querySelector('.updates-overlay');
   }
 
-  function teardownAllCustomScrollbars() {
-    Array.from(customScrollbarOverlays).forEach(function(overlay) {
-      teardownCustomScrollbar(overlay);
-    });
+  function getActiveOverlay() {
+    return document.querySelector('.updates-overlay.is-open');
   }
 
-  function scheduleCustomScrollbarSync(overlay) {
-    const state = customScrollbarStateByOverlay.get(overlay);
-    if (!state) return;
+  const uiRuntime = window.__earendilUiRuntime;
+  const overlayRuntime = uiRuntime.overlay || (uiRuntime.overlay = {});
 
-    if (typeof window.requestAnimationFrame === 'function') {
-      if (state.syncRafId !== null) return;
-      state.syncRafId = window.requestAnimationFrame(function() {
-        const current = customScrollbarStateByOverlay.get(overlay);
-        if (!current) return;
-        current.syncRafId = null;
-        syncCustomScrollbar(overlay);
-      });
-      return;
-    }
+  const shouldUseCustomOverlayIndicator = shouldUseCustomOverlayScrollbar();
+  document.documentElement.classList.toggle('overlay-scrollbar-mode-custom', shouldUseCustomOverlayIndicator);
+  const customScrollbarController = (function() {
+    let state = null;
 
-    if (state.syncTimeoutId !== null) return;
-    state.syncTimeoutId = setTimeout(function() {
-      const current = customScrollbarStateByOverlay.get(overlay);
-      if (!current) return;
-      current.syncTimeoutId = null;
-      syncCustomScrollbar(overlay);
-    }, 0);
-  }
+    function detach() {
+      if (!state) return;
 
-  function syncAllCustomScrollbars() {
-    customScrollbarOverlays.forEach(function(overlay) {
-      scheduleCustomScrollbarSync(overlay);
-    });
-  }
+      state.listenerController.abort();
 
-  function syncCustomScrollbar(overlay) {
-    const state = customScrollbarStateByOverlay.get(overlay);
-    if (!state) return;
-
-    if (!overlay.isConnected || !state.letter.isConnected || !state.scroller.isConnected) {
-      teardownCustomScrollbar(overlay);
-      return;
-    }
-
-    const letterRect = state.letter.getBoundingClientRect();
-    const scrollRect = state.scroller.getBoundingClientRect();
-    state.indicator.style.top = Math.max(0, scrollRect.top - letterRect.top) + 'px';
-    state.indicator.style.height = Math.max(0, scrollRect.height) + 'px';
-
-    const scrollHeight = state.scroller.scrollHeight;
-    const clientHeight = state.scroller.clientHeight;
-    if (scrollHeight <= clientHeight + 1) {
-      state.indicator.style.opacity = '0';
-      return;
-    }
-
-    state.indicator.style.opacity = '1';
-    const minThumb = 24;
-    const thumbHeight = Math.max(minThumb, (clientHeight / scrollHeight) * scrollRect.height);
-    const maxThumbTop = Math.max(0, scrollRect.height - thumbHeight);
-    const maxScrollable = Math.max(1, scrollHeight - clientHeight);
-    let progress = state.scroller.scrollTop / maxScrollable;
-    progress = Math.max(0, Math.min(1, progress));
-
-    state.thumb.style.height = thumbHeight + 'px';
-    state.thumb.style.transform = 'translateY(' + (maxThumbTop * progress) + 'px)';
-  }
-
-  function setupCustomScrollbar(overlay) {
-    teardownCustomScrollbar(overlay);
-    if (!shouldUseCustomOverlayIndicator) return;
-
-    const letter = overlay.querySelector('.updates-letter');
-    const scroller = getOverlayScroller(overlay);
-    if (!letter || !scroller) return;
-
-    letter.classList.add('has-custom-scrollbar');
-
-    const indicator = document.createElement('div');
-    indicator.className = 'updates-scrollbar-indicator';
-    indicator.setAttribute('aria-hidden', 'true');
-    const thumb = document.createElement('div');
-    thumb.className = 'updates-scrollbar-indicator-thumb';
-    indicator.appendChild(thumb);
-    letter.appendChild(indicator);
-
-    const onResize = function() {
-      scheduleCustomScrollbarSync(overlay);
-    };
-    const onScroll = function() {
-      scheduleCustomScrollbarSync(overlay);
-    };
-    const listenerController = new AbortController();
-    const defaultListenerOptions = { signal: listenerController.signal };
-    const passiveListenerOptions = { passive: true, signal: listenerController.signal };
-
-    customScrollbarStateByOverlay.set(overlay, {
-      letter: letter,
-      scroller: scroller,
-      indicator: indicator,
-      thumb: thumb,
-      onResize: onResize,
-      onScroll: onScroll,
-      listenerController: listenerController,
-      syncRafId: null,
-      syncTimeoutId: null,
-    });
-    customScrollbarOverlays.add(overlay);
-
-    scroller.addEventListener('scroll', onScroll, passiveListenerOptions);
-    window.addEventListener('resize', onResize, defaultListenerOptions);
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', onResize, defaultListenerOptions);
-      window.visualViewport.addEventListener('scroll', onResize, passiveListenerOptions);
-    }
-
-    syncCustomScrollbar(overlay);
-    scheduleCustomScrollbarSync(overlay);
-  }
-
-  function openOverlays() {
-    const overlays = Array.from(document.querySelectorAll('.updates-overlay'));
-    const overlaySet = new Set(overlays);
-    Array.from(customScrollbarOverlays).forEach(function(activeOverlay) {
-      if (!overlaySet.has(activeOverlay)) {
-        teardownCustomScrollbar(activeOverlay);
+      if (state.syncRafId !== null && typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(state.syncRafId);
       }
-    });
+      if (state.syncTimeoutId !== null) {
+        clearTimeout(state.syncTimeoutId);
+      }
 
-    const hasOverlay = overlays.length > 0;
-    document.body.classList.toggle('has-overlay', hasOverlay);
-    overlays.forEach(function(overlay) {
-      void overlay.offsetWidth;
-      overlay.classList.add('is-open');
-      overlay.setAttribute('aria-hidden', 'false');
-      setupCustomScrollbar(overlay);
-    });
-    if (hasOverlay) {
-      window.scrollTo(0, 0);
-      syncAllCustomScrollbars();
+      if (state.indicator && state.indicator.parentNode) {
+        state.indicator.parentNode.removeChild(state.indicator);
+      }
+
+      if (state.letter) {
+        state.letter.classList.remove('has-custom-scrollbar');
+      }
+
+      state = null;
     }
+
+    function sync() {
+      if (!state) return;
+
+      const overlay = state.overlay;
+      if (!overlay.isConnected || !state.letter.isConnected || !state.scroller.isConnected) {
+        detach();
+        return;
+      }
+
+      const letterRect = state.letter.getBoundingClientRect();
+      const scrollRect = state.scroller.getBoundingClientRect();
+      state.indicator.style.top = Math.max(0, scrollRect.top - letterRect.top) + 'px';
+      state.indicator.style.height = Math.max(0, scrollRect.height) + 'px';
+
+      const scrollHeight = state.scroller.scrollHeight;
+      const clientHeight = state.scroller.clientHeight;
+      if (scrollHeight <= clientHeight + 1) {
+        state.indicator.style.opacity = '0';
+        return;
+      }
+
+      state.indicator.style.opacity = '1';
+      const minThumb = 24;
+      const thumbHeight = Math.max(minThumb, (clientHeight / scrollHeight) * scrollRect.height);
+      const maxThumbTop = Math.max(0, scrollRect.height - thumbHeight);
+      const maxScrollable = Math.max(1, scrollHeight - clientHeight);
+      let progress = state.scroller.scrollTop / maxScrollable;
+      progress = Math.max(0, Math.min(1, progress));
+
+      state.thumb.style.height = thumbHeight + 'px';
+      state.thumb.style.transform = 'translateY(' + (maxThumbTop * progress) + 'px)';
+    }
+
+    function scheduleSync() {
+      if (!state) return;
+
+      if (typeof window.requestAnimationFrame === 'function') {
+        if (state.syncRafId !== null) return;
+        const scheduledState = state;
+        scheduledState.syncRafId = window.requestAnimationFrame(function() {
+          if (!state || state !== scheduledState) return;
+          state.syncRafId = null;
+          sync();
+        });
+        return;
+      }
+
+      if (state.syncTimeoutId !== null) return;
+      const scheduledState = state;
+      scheduledState.syncTimeoutId = setTimeout(function() {
+        if (!state || state !== scheduledState) return;
+        state.syncTimeoutId = null;
+        sync();
+      }, 0);
+    }
+
+    function attach(overlay) {
+      detach();
+      if (!shouldUseCustomOverlayIndicator) return;
+
+      const letter = overlay.querySelector('.updates-letter');
+      const scroller = getOverlayScroller(overlay);
+      if (!letter || !scroller) return;
+
+      letter.classList.add('has-custom-scrollbar');
+
+      const indicator = document.createElement('div');
+      indicator.className = 'updates-scrollbar-indicator';
+      indicator.setAttribute('aria-hidden', 'true');
+      const thumb = document.createElement('div');
+      thumb.className = 'updates-scrollbar-indicator-thumb';
+      indicator.appendChild(thumb);
+      letter.appendChild(indicator);
+
+      const onResize = function() {
+        scheduleSync();
+      };
+      const onScroll = function() {
+        scheduleSync();
+      };
+      const listenerController = new AbortController();
+      const defaultListenerOptions = { signal: listenerController.signal };
+      const passiveListenerOptions = { passive: true, signal: listenerController.signal };
+
+      state = {
+        overlay: overlay,
+        letter: letter,
+        scroller: scroller,
+        indicator: indicator,
+        thumb: thumb,
+        onResize: onResize,
+        onScroll: onScroll,
+        listenerController: listenerController,
+        syncRafId: null,
+        syncTimeoutId: null,
+      };
+
+      scroller.addEventListener('scroll', onScroll, passiveListenerOptions);
+      window.addEventListener('resize', onResize, defaultListenerOptions);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', onResize, defaultListenerOptions);
+        window.visualViewport.addEventListener('scroll', onResize, passiveListenerOptions);
+      }
+
+      sync();
+      scheduleSync();
+    }
+
+    return {
+      attach: attach,
+      detach: detach,
+      scheduleSync: scheduleSync,
+    };
+  })();
+
+  function initOverlay() {
+    const overlay = getOverlay();
+    const hasOverlay = !!overlay;
+    document.body.classList.toggle('has-overlay', hasOverlay);
+
+    if (!overlay) {
+      customScrollbarController.detach();
+      return;
+    }
+
+    // Intentional reflow: reset transition state before re-applying the open class.
+    void overlay.offsetWidth;
+    overlay.classList.remove('is-closing');
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    customScrollbarController.attach(overlay);
+
+    window.scrollTo(0, 0);
   }
 
-  window.__syncOverlayCustomScrollbars = syncAllCustomScrollbars;
-  openOverlays();
+  function teardownOverlay() {
+    customScrollbarController.detach();
+  }
+
+  overlayRuntime.scheduleCustomScrollbarSync = function() {
+    customScrollbarController.scheduleSync();
+  };
+  initOverlay();
 
   // Only add listeners once
-  if (window.__overlayListenersAdded) return;
-  window.__overlayListenersAdded = true;
+  if (overlayRuntime.listenersAdded) return;
+  overlayRuntime.listenersAdded = true;
 
-  document.body.addEventListener('htmx:beforeSwap', teardownAllCustomScrollbars);
-  document.body.addEventListener('htmx:afterSettle', openOverlays);
+  document.body.addEventListener('htmx:beforeSwap', teardownOverlay);
+  document.body.addEventListener('htmx:afterSettle', initOverlay);
+
+  // Keep this slightly above the 350ms CSS transition to guarantee cleanup.
+  const OVERLAY_CLOSE_FALLBACK_MS = 450;
 
   function closeOverlayWithAnimation(overlay, callback) {
-    teardownCustomScrollbar(overlay);
+    let hasFinished = false;
+    let fallbackTimer = null;
+
+    function finish() {
+      if (hasFinished) return;
+      hasFinished = true;
+      if (fallbackTimer !== null) {
+        clearTimeout(fallbackTimer);
+      }
+      overlay.removeEventListener('transitionend', onTransitionEnd);
+      callback();
+    }
+
+    function onTransitionEnd(event) {
+      if (event.target !== overlay || event.propertyName !== 'opacity') return;
+      finish();
+    }
+
+    teardownOverlay();
+    overlay.addEventListener('transitionend', onTransitionEnd);
     overlay.classList.add('is-closing');
     overlay.classList.remove('is-open');
     overlay.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('has-overlay');
-    setTimeout(callback, 350); // Match CSS transition duration
+
+    fallbackTimer = setTimeout(finish, OVERLAY_CLOSE_FALLBACK_MS);
   }
 
   function navigateTo(url) {
@@ -217,13 +241,13 @@
 
   // Handle dismiss link clicks - animate then navigate
   document.body.addEventListener('click', function(event) {
-    var dismissLink = event.target.closest('.updates-dismiss');
+    const dismissLink = event.target.closest('.updates-dismiss');
     if (dismissLink) {
       event.preventDefault();
       event.stopPropagation();
-      var overlay = dismissLink.closest('.updates-overlay');
+      const overlay = getActiveOverlay() || dismissLink.closest('.updates-overlay');
       if (overlay) {
-        var dismissUrl = dismissLink.getAttribute('data-dismiss-url') || '/';
+        const dismissUrl = dismissLink.getAttribute('data-dismiss-url') || '/';
         closeOverlayWithAnimation(overlay, function() {
           navigateTo(dismissUrl);
         });
@@ -233,7 +257,7 @@
 
   // Handle background clicks while allowing underlying links
   document.body.addEventListener('click', function(event) {
-    var overlay = document.querySelector('.updates-overlay.is-open');
+    const overlay = getActiveOverlay();
     if (!overlay) return;
     if (event.target.closest('.updates-letter')) return;
     if (event.target.closest('.updates-dismiss')) return;
@@ -246,8 +270,8 @@
     if (event.target.closest('#site-footer')) return;
     if (event.target.closest('.lang-menu')) return;
     if (event.target.closest('.center-logo')) return;
-    var dismissLink = overlay.querySelector('.updates-dismiss');
-    var dismissUrl = (dismissLink && dismissLink.getAttribute('data-dismiss-url')) || '/';
+    const dismissLink = overlay.querySelector('.updates-dismiss');
+    const dismissUrl = (dismissLink && dismissLink.getAttribute('data-dismiss-url')) || '/';
     closeOverlayWithAnimation(overlay, function() {
       navigateTo(dismissUrl);
     });
@@ -256,11 +280,11 @@
   // Handle Escape key to close overlay
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
-      var overlay = document.querySelector('.updates-overlay.is-open');
+      const overlay = getActiveOverlay();
       if (!overlay) return;
       event.preventDefault();
-      var dismissLink = overlay.querySelector('.updates-dismiss');
-      var dismissUrl = (dismissLink && dismissLink.getAttribute('data-dismiss-url')) || '/';
+      const dismissLink = overlay.querySelector('.updates-dismiss');
+      const dismissUrl = (dismissLink && dismissLink.getAttribute('data-dismiss-url')) || '/';
       closeOverlayWithAnimation(overlay, function() {
         navigateTo(dismissUrl);
       });
@@ -270,6 +294,10 @@
 
 // Dynamic overlay vertical band: 2% below ABOUT row and 2% above footer/control row
 (function() {
+  var uiRuntime = window.__earendilUiRuntime;
+  var overlayRuntime = uiRuntime.overlay || (uiRuntime.overlay = {});
+  var layoutRuntime = uiRuntime.layout || (uiRuntime.layout = {});
+
   function getViewportHeight() {
     return window.visualViewport ? window.visualViewport.height : (window.innerHeight || document.documentElement.clientHeight);
   }
@@ -316,12 +344,12 @@
       guide.style.bottom = bottomSafe + 'px';
     }
 
-    if (typeof window.__syncOverlayCustomScrollbars === 'function') {
-      window.__syncOverlayCustomScrollbars();
+    if (typeof overlayRuntime.scheduleCustomScrollbarSync === 'function') {
+      overlayRuntime.scheduleCustomScrollbarSync();
     }
   }
 
-  window.__updateOverlayVerticalBand = updateOverlayVerticalBand;
+  layoutRuntime.updateOverlayVerticalBand = updateOverlayVerticalBand;
   updateOverlayVerticalBand();
   window.addEventListener('resize', updateOverlayVerticalBand);
   if (window.visualViewport) {
@@ -333,6 +361,10 @@
 
 // Chevron menu toggle (top-right navigation)
 (function() {
+  var uiRuntime = window.__earendilUiRuntime;
+  var layoutRuntime = uiRuntime.layout || (uiRuntime.layout = {});
+  var menuRuntime = uiRuntime.menu || (uiRuntime.menu = {});
+
   function rectanglesOverlap(a, b, epsilon) {
     if (!a || !b) return false;
     var overlapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
@@ -385,8 +417,8 @@
       triggerButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       triggerButton.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
     }
-    if (window.__updateOverlayVerticalBand) {
-      window.__updateOverlayVerticalBand();
+    if (layoutRuntime.updateOverlayVerticalBand) {
+      layoutRuntime.updateOverlayVerticalBand();
     }
     updateMenuOverlapBackdrop(menu);
     scheduleMenuOverlapBackdropUpdate(menu);
@@ -427,8 +459,8 @@
         link.addEventListener('click', closeMenuOnMobile);
       });
 
-      if (!window.__mobileMenuCollapseBound) {
-        window.__mobileMenuCollapseBound = true;
+      if (!menuRuntime.mobileMenuCollapseBound) {
+        menuRuntime.mobileMenuCollapseBound = true;
         document.body.addEventListener('pointerdown', function(event) {
           if (!window.matchMedia('(max-width: 800px)').matches) return;
           var navMenu = document.querySelector('[data-chevron-menu]');
@@ -443,8 +475,8 @@
         }, true);
       }
 
-      if (!window.__menuOverlapBackdropBound) {
-        window.__menuOverlapBackdropBound = true;
+      if (!menuRuntime.overlapBackdropBound) {
+        menuRuntime.overlapBackdropBound = true;
 
         function refreshMenuOverlapBackdrop() {
           var navMenu = document.querySelector('[data-chevron-menu]');
