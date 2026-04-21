@@ -1,26 +1,25 @@
 // Overlay animation handling
 (function() {
-  function detectOverlayScrollbarMode() {
-    var isSafari = /Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg\//.test(navigator.userAgent);
-    return isSafari ? 'custom-indicator' : 'native';
+  function shouldUseCustomOverlayScrollbar() {
+    return /Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg\//.test(navigator.userAgent);
   }
 
-  var overlayScrollbarMode = detectOverlayScrollbarMode();
-  var usesCustomOverlayScrollbar = overlayScrollbarMode === 'custom-indicator';
+  const shouldUseCustomOverlayIndicator = shouldUseCustomOverlayScrollbar();
 
-  document.documentElement.classList.toggle('overlay-scrollbar-mode-custom', usesCustomOverlayScrollbar);
+  document.documentElement.classList.toggle('overlay-scrollbar-mode-custom', shouldUseCustomOverlayIndicator);
 
-  var customScrollbarStateByOverlay = new WeakMap();
-  var customScrollbarOverlays = new Set();
+  const customScrollbarStateByOverlay = new WeakMap();
+  const customScrollbarOverlays = new Set();
 
   function getOverlayScroller(overlay) {
     return overlay.querySelector('.updates-scroll-content') || overlay.querySelector('.updates-letter .letter-body');
   }
 
   function teardownCustomScrollbar(overlay) {
-    var state = customScrollbarStateByOverlay.get(overlay);
+    const state = customScrollbarStateByOverlay.get(overlay);
     if (!state) return;
 
+    state.listenerController.abort();
     state.scroller.removeEventListener('scroll', state.onScroll);
     window.removeEventListener('resize', state.onResize);
     if (window.visualViewport) {
@@ -54,13 +53,13 @@
   }
 
   function scheduleCustomScrollbarSync(overlay) {
-    var state = customScrollbarStateByOverlay.get(overlay);
+    const state = customScrollbarStateByOverlay.get(overlay);
     if (!state) return;
 
     if (typeof window.requestAnimationFrame === 'function') {
       if (state.syncRafId !== null) return;
       state.syncRafId = window.requestAnimationFrame(function() {
-        var current = customScrollbarStateByOverlay.get(overlay);
+        const current = customScrollbarStateByOverlay.get(overlay);
         if (!current) return;
         current.syncRafId = null;
         syncCustomScrollbar(overlay);
@@ -70,7 +69,7 @@
 
     if (state.syncTimeoutId !== null) return;
     state.syncTimeoutId = setTimeout(function() {
-      var current = customScrollbarStateByOverlay.get(overlay);
+      const current = customScrollbarStateByOverlay.get(overlay);
       if (!current) return;
       current.syncTimeoutId = null;
       syncCustomScrollbar(overlay);
@@ -84,7 +83,7 @@
   }
 
   function syncCustomScrollbar(overlay) {
-    var state = customScrollbarStateByOverlay.get(overlay);
+    const state = customScrollbarStateByOverlay.get(overlay);
     if (!state) return;
 
     if (!overlay.isConnected || !state.letter.isConnected || !state.scroller.isConnected) {
@@ -92,24 +91,24 @@
       return;
     }
 
-    var letterRect = state.letter.getBoundingClientRect();
-    var scrollRect = state.scroller.getBoundingClientRect();
+    const letterRect = state.letter.getBoundingClientRect();
+    const scrollRect = state.scroller.getBoundingClientRect();
     state.indicator.style.top = Math.max(0, scrollRect.top - letterRect.top) + 'px';
     state.indicator.style.height = Math.max(0, scrollRect.height) + 'px';
 
-    var scrollHeight = state.scroller.scrollHeight;
-    var clientHeight = state.scroller.clientHeight;
+    const scrollHeight = state.scroller.scrollHeight;
+    const clientHeight = state.scroller.clientHeight;
     if (scrollHeight <= clientHeight + 1) {
       state.indicator.style.opacity = '0';
       return;
     }
 
     state.indicator.style.opacity = '1';
-    var minThumb = 24;
-    var thumbHeight = Math.max(minThumb, (clientHeight / scrollHeight) * scrollRect.height);
-    var maxThumbTop = Math.max(0, scrollRect.height - thumbHeight);
-    var maxScrollable = Math.max(1, scrollHeight - clientHeight);
-    var progress = state.scroller.scrollTop / maxScrollable;
+    const minThumb = 24;
+    const thumbHeight = Math.max(minThumb, (clientHeight / scrollHeight) * scrollRect.height);
+    const maxThumbTop = Math.max(0, scrollRect.height - thumbHeight);
+    const maxScrollable = Math.max(1, scrollHeight - clientHeight);
+    let progress = state.scroller.scrollTop / maxScrollable;
     progress = Math.max(0, Math.min(1, progress));
 
     state.thumb.style.height = thumbHeight + 'px';
@@ -118,28 +117,31 @@
 
   function setupCustomScrollbar(overlay) {
     teardownCustomScrollbar(overlay);
-    if (!usesCustomOverlayScrollbar) return;
+    if (!shouldUseCustomOverlayIndicator) return;
 
-    var letter = overlay.querySelector('.updates-letter');
-    var scroller = getOverlayScroller(overlay);
+    const letter = overlay.querySelector('.updates-letter');
+    const scroller = getOverlayScroller(overlay);
     if (!letter || !scroller) return;
 
     letter.classList.add('has-custom-scrollbar');
 
-    var indicator = document.createElement('div');
+    const indicator = document.createElement('div');
     indicator.className = 'updates-scrollbar-indicator';
     indicator.setAttribute('aria-hidden', 'true');
-    var thumb = document.createElement('div');
+    const thumb = document.createElement('div');
     thumb.className = 'updates-scrollbar-indicator-thumb';
     indicator.appendChild(thumb);
     letter.appendChild(indicator);
 
-    var onResize = function() {
+    const onResize = function() {
       scheduleCustomScrollbarSync(overlay);
     };
-    var onScroll = function() {
+    const onScroll = function() {
       scheduleCustomScrollbarSync(overlay);
     };
+    const listenerController = new AbortController();
+    const defaultListenerOptions = { signal: listenerController.signal };
+    const passiveListenerOptions = { passive: true, signal: listenerController.signal };
 
     customScrollbarStateByOverlay.set(overlay, {
       letter: letter,
@@ -148,16 +150,17 @@
       thumb: thumb,
       onResize: onResize,
       onScroll: onScroll,
+      listenerController: listenerController,
       syncRafId: null,
       syncTimeoutId: null,
     });
     customScrollbarOverlays.add(overlay);
 
-    scroller.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
+    scroller.addEventListener('scroll', onScroll, passiveListenerOptions);
+    window.addEventListener('resize', onResize, defaultListenerOptions);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', onResize);
-      window.visualViewport.addEventListener('scroll', onResize);
+      window.visualViewport.addEventListener('resize', onResize, defaultListenerOptions);
+      window.visualViewport.addEventListener('scroll', onResize, passiveListenerOptions);
     }
 
     syncCustomScrollbar(overlay);
@@ -165,15 +168,15 @@
   }
 
   function openOverlays() {
-    var overlays = Array.prototype.slice.call(document.querySelectorAll('.updates-overlay'));
-    var overlaySet = new Set(overlays);
+    const overlays = Array.from(document.querySelectorAll('.updates-overlay'));
+    const overlaySet = new Set(overlays);
     Array.from(customScrollbarOverlays).forEach(function(activeOverlay) {
       if (!overlaySet.has(activeOverlay)) {
         teardownCustomScrollbar(activeOverlay);
       }
     });
 
-    var hasOverlay = overlays.length > 0;
+    const hasOverlay = overlays.length > 0;
     document.body.classList.toggle('has-overlay', hasOverlay);
     overlays.forEach(function(overlay) {
       void overlay.offsetWidth;
@@ -323,7 +326,7 @@
   window.addEventListener('resize', updateOverlayVerticalBand);
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', updateOverlayVerticalBand);
-    window.visualViewport.addEventListener('scroll', updateOverlayVerticalBand);
+    window.visualViewport.addEventListener('scroll', updateOverlayVerticalBand, { passive: true });
   }
   document.body.addEventListener('htmx:afterSettle', updateOverlayVerticalBand);
 })();
@@ -453,7 +456,7 @@
         window.addEventListener('resize', refreshMenuOverlapBackdrop);
         if (window.visualViewport) {
           window.visualViewport.addEventListener('resize', refreshMenuOverlapBackdrop);
-          window.visualViewport.addEventListener('scroll', refreshMenuOverlapBackdrop);
+          window.visualViewport.addEventListener('scroll', refreshMenuOverlapBackdrop, { passive: true });
         }
         document.body.addEventListener('htmx:afterSettle', refreshMenuOverlapBackdrop);
       }
