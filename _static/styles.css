@@ -149,7 +149,6 @@ canvas.shader-ready {
 
 .updates-letter {
   --letter-inline-padding: 70px;
-  --letter-scroll-padding-inline-end: 70px;
   --overlay-scrollbar-inset: 18px;
   position: relative;
   width: min(1000px, 92vw);
@@ -222,7 +221,7 @@ canvas.shader-ready {
   color: #fff;
 }
 
-.updates-letter .letter-body {
+.updates-letter :is(.letter-body, .updates-scroll-content) {
   --overlay-scrollbar-shift: max(0px, calc(var(--letter-inline-padding) - var(--overlay-scrollbar-inset)));
   margin-inline-end: calc(-1 * var(--overlay-scrollbar-shift));
   padding-inline-end: var(--overlay-scrollbar-shift);
@@ -242,56 +241,40 @@ canvas.shader-ready {
 }
 
 .updates-overlay.overlay--post-detail .updates-scroll-content {
-  --overlay-scrollbar-shift: max(0px, calc(var(--letter-inline-padding) - var(--overlay-scrollbar-inset)));
   margin-top: var(--overlay-close-clearance);
-  margin-inline-end: calc(-1 * var(--overlay-scrollbar-shift));
-  padding-inline-end: var(--overlay-scrollbar-shift);
-  max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.95) transparent;
 }
 
-.updates-letter .letter-body::-webkit-scrollbar,
-.updates-overlay.overlay--post-detail .updates-scroll-content::-webkit-scrollbar {
+.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar {
   width: 8px;
   background: transparent;
   -webkit-appearance: none;
 }
 
-.updates-letter .letter-body::-webkit-scrollbar-track,
-.updates-overlay.overlay--post-detail .updates-scroll-content::-webkit-scrollbar-track,
-.updates-letter .letter-body::-webkit-scrollbar-track-piece,
-.updates-overlay.overlay--post-detail .updates-scroll-content::-webkit-scrollbar-track-piece,
-.updates-letter .letter-body::-webkit-scrollbar-corner,
-.updates-overlay.overlay--post-detail .updates-scroll-content::-webkit-scrollbar-corner {
+.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-track,
+.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-track-piece,
+.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-corner {
   background: transparent;
   box-shadow: none;
 }
 
-.updates-letter .letter-body::-webkit-scrollbar-button,
-.updates-overlay.overlay--post-detail .updates-scroll-content::-webkit-scrollbar-button {
+.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-button {
   width: 0;
   height: 0;
   display: none;
 }
 
-.updates-letter .letter-body::-webkit-scrollbar-thumb,
-.updates-overlay.overlay--post-detail .updates-scroll-content::-webkit-scrollbar-thumb {
+.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.95);
   background-image: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.98) 0 2px, rgba(255, 255, 255, 0.72) 2px 4px);
   border-radius: 0;
   border: 0;
 }
 
-.is-safari .updates-letter.has-custom-scrollbar .letter-body,
-.is-safari .updates-letter.has-custom-scrollbar .updates-scroll-content {
+.overlay-scrollbar-mode-custom .updates-letter.has-custom-scrollbar :is(.letter-body, .updates-scroll-content) {
   scrollbar-width: none;
 }
 
-.is-safari .updates-letter.has-custom-scrollbar .letter-body::-webkit-scrollbar,
-.is-safari .updates-letter.has-custom-scrollbar .updates-scroll-content::-webkit-scrollbar {
+.overlay-scrollbar-mode-custom .updates-letter.has-custom-scrollbar :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
@@ -1184,7 +1167,6 @@ canvas.shader-ready {
 
   .updates-overlay .updates-letter {
     --letter-inline-padding: 12px;
-    --letter-scroll-padding-inline-end: 12px;
     --overlay-scrollbar-inset: 12px;
     padding: 16px var(--letter-inline-padding) 12px;
   }
@@ -1196,12 +1178,11 @@ canvas.shader-ready {
 
   .updates-overlay .updates-letter .letter-body {
     margin-top: var(--overlay-close-clearance);
-    max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
-    transition: max-height 0.22s ease;
   }
 
-  .updates-overlay.overlay--post-detail .updates-scroll-content {
+  .updates-overlay .updates-letter :is(.letter-body, .updates-scroll-content) {
     max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
+    transition: max-height 0.22s ease;
   }
 
   .updates-overlay.overlay--prose .letter-body,

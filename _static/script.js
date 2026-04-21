@@ -1,16 +1,24 @@
 // Overlay animation handling
 (function() {
-  var isSafari = /Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg\//.test(navigator.userAgent);
-  if (isSafari) {
-    document.documentElement.classList.add('is-safari');
+  function detectOverlayScrollbarMode() {
+    var isSafari = /Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg\//.test(navigator.userAgent);
+    return isSafari ? 'custom-indicator' : 'native';
   }
+
+  var overlayScrollbarMode = detectOverlayScrollbarMode();
+  var usesCustomOverlayScrollbar = overlayScrollbarMode === 'custom-indicator';
+
+  document.documentElement.classList.toggle('overlay-scrollbar-mode-custom', usesCustomOverlayScrollbar);
+
+  var customScrollbarStateByOverlay = new WeakMap();
+  var customScrollbarOverlays = new Set();
 
   function getOverlayScroller(overlay) {
     return overlay.querySelector('.updates-scroll-content') || overlay.querySelector('.updates-letter .letter-body');
   }
 
   function teardownCustomScrollbar(overlay) {
-    var state = overlay.__customScrollbar;
+    var state = customScrollbarStateByOverlay.get(overlay);
     if (!state) return;
 
     state.scroller.removeEventListener('scroll', state.onScroll);
@@ -18,6 +26,13 @@
     if (window.visualViewport) {
       window.visualViewport.removeEventListener('resize', state.onResize);
       window.visualViewport.removeEventListener('scroll', state.onResize);
+    }
+
+    if (state.syncRafId !== null && typeof window.cancelAnimationFrame === 'function') {
+      window.cancelAnimationFrame(state.syncRafId);
+    }
+    if (state.syncTimeoutId !== null) {
+      clearTimeout(state.syncTimeoutId);
     }
 
     if (state.indicator && state.indicator.parentNode) {
@@ -28,12 +43,54 @@
       state.letter.classList.remove('has-custom-scrollbar');
     }
 
-    overlay.__customScrollbar = null;
+    customScrollbarStateByOverlay.delete(overlay);
+    customScrollbarOverlays.delete(overlay);
+  }
+
+  function teardownAllCustomScrollbars() {
+    Array.from(customScrollbarOverlays).forEach(function(overlay) {
+      teardownCustomScrollbar(overlay);
+    });
+  }
+
+  function scheduleCustomScrollbarSync(overlay) {
+    var state = customScrollbarStateByOverlay.get(overlay);
+    if (!state) return;
+
+    if (typeof window.requestAnimationFrame === 'function') {
+      if (state.syncRafId !== null) return;
+      state.syncRafId = window.requestAnimationFrame(function() {
+        var current = customScrollbarStateByOverlay.get(overlay);
+        if (!current) return;
+        current.syncRafId = null;
+        syncCustomScrollbar(overlay);
+      });
+      return;
+    }
+
+    if (state.syncTimeoutId !== null) return;
+    state.syncTimeoutId = setTimeout(function() {
+      var current = customScrollbarStateByOverlay.get(overlay);
+      if (!current) return;
+      current.syncTimeoutId = null;
+      syncCustomScrollbar(overlay);
+    }, 0);
+  }
+
+  function syncAllCustomScrollbars() {
+    customScrollbarOverlays.forEach(function(overlay) {
+      scheduleCustomScrollbarSync(overlay);
+    });
   }
 
   function syncCustomScrollbar(overlay) {
-    var state = overlay.__customScrollbar;
+    var state = customScrollbarStateByOverlay.get(overlay);
     if (!state) return;
+
+    if (!overlay.isConnected || !state.letter.isConnected || !state.scroller.isConnected) {
+      teardownCustomScrollbar(overlay);
+      return;
+    }
 
     var letterRect = state.letter.getBoundingClientRect();
     var scrollRect = state.scroller.getBoundingClientRect();
@@ -51,7 +108,9 @@
     var minThumb = 24;
     var thumbHeight = Math.max(minThumb, (clientHeight / scrollHeight) * scrollRect.height);
     var maxThumbTop = Math.max(0, scrollRect.height - thumbHeight);
-    var progress = state.scroller.scrollTop / (scrollHeight - clientHeight);
+    var maxScrollable = Math.max(1, scrollHeight - clientHeight);
+    var progress = state.scroller.scrollTop / maxScrollable;
+    progress = Math.max(0, Math.min(1, progress));
 
     state.thumb.style.height = thumbHeight + 'px';
     state.thumb.style.transform = 'translateY(' + (maxThumbTop * progress) + 'px)';
@@ -59,7 +118,7 @@
 
   function setupCustomScrollbar(overlay) {
     teardownCustomScrollbar(overlay);
-    if (!isSafari) return;
+    if (!usesCustomOverlayScrollbar) return;
 
     var letter = overlay.querySelector('.updates-letter');
     var scroller = getOverlayScroller(overlay);
@@ -69,26 +128,30 @@
 
     var indicator = document.createElement('div');
     indicator.className = 'updates-scrollbar-indicator';
+    indicator.setAttribute('aria-hidden', 'true');
     var thumb = document.createElement('div');
     thumb.className = 'updates-scrollbar-indicator-thumb';
     indicator.appendChild(thumb);
     letter.appendChild(indicator);
 
     var onResize = function() {
-      syncCustomScrollbar(overlay);
+      scheduleCustomScrollbarSync(overlay);
     };
     var onScroll = function() {
-      syncCustomScrollbar(overlay);
+      scheduleCustomScrollbarSync(overlay);
     };
 
-    overlay.__customScrollbar = {
+    customScrollbarStateByOverlay.set(overlay, {
       letter: letter,
       scroller: scroller,
       indicator: indicator,
       thumb: thumb,
       onResize: onResize,
       onScroll: onScroll,
-    };
+      syncRafId: null,
+      syncTimeoutId: null,
+    });
+    customScrollbarOverlays.add(overlay);
 
     scroller.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
@@ -98,12 +161,21 @@
     }
 
     syncCustomScrollbar(overlay);
+    scheduleCustomScrollbarSync(overlay);
   }
 
   function openOverlays() {
-    var hasOverlay = document.querySelectorAll('.updates-overlay').length > 0;
+    var overlays = Array.prototype.slice.call(document.querySelectorAll('.updates-overlay'));
+    var overlaySet = new Set(overlays);
+    Array.from(customScrollbarOverlays).forEach(function(activeOverlay) {
+      if (!overlaySet.has(activeOverlay)) {
+        teardownCustomScrollbar(activeOverlay);
+      }
+    });
+
+    var hasOverlay = overlays.length > 0;
     document.body.classList.toggle('has-overlay', hasOverlay);
-    document.querySelectorAll('.updates-overlay').forEach(function(overlay) {
+    overlays.forEach(function(overlay) {
       void overlay.offsetWidth;
       overlay.classList.add('is-open');
       overlay.setAttribute('aria-hidden', 'false');
@@ -111,14 +183,18 @@
     });
     if (hasOverlay) {
       window.scrollTo(0, 0);
+      syncAllCustomScrollbars();
     }
   }
+
+  window.__syncOverlayCustomScrollbars = syncAllCustomScrollbars;
   openOverlays();
 
   // Only add listeners once
   if (window.__overlayListenersAdded) return;
   window.__overlayListenersAdded = true;
 
+  document.body.addEventListener('htmx:beforeSwap', teardownAllCustomScrollbars);
   document.body.addEventListener('htmx:afterSettle', openOverlays);
 
   function closeOverlayWithAnimation(overlay, callback) {
@@ -235,6 +311,10 @@
       guide.style.display = 'block';
       guide.style.top = topEdge + 'px';
       guide.style.bottom = bottomSafe + 'px';
+    }
+
+    if (typeof window.__syncOverlayCustomScrollbars === 'function') {
+      window.__syncOverlayCustomScrollbars();
     }
   }
 
