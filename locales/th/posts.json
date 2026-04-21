@@ -1,13 +1,15 @@
 {
-  "posts.title": "โพสต์",
-  "posts.hearFromUs": "[รับข่าวสารจากเรา]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "วันที่:",
-  "email.date.post.invitation": "อา. 18 ม.ค. 2026",
+  "email.date.post.announcement-reflection": "พุธ 8 เม.ย. 2569",
   "email.date.post.highground": "พฤ. 12 ก.พ. 2026",
+  "email.date.post.invitation": "อา. 18 ม.ค. 2026",
+  "email.date.post.pressrelease-april-8": "พุธ 8 เม.ย. 2569",
   "email.from": "จาก:",
+  "email.subject": "หัวข้อ:",
   "email.to": "ถึง:",
   "email.to.value": "คุณ",
-  "email.subject": "หัวข้อ:"
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[รับข่าวสารจากเรา]",
+  "posts.title": "โพสต์"
 }

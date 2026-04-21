@@ -1,13 +1,15 @@
 {
-  "posts.title": "BÀI VIẾT",
-  "posts.hearFromUs": "[Nhận tin từ chúng tôi]",
-  "posts.feedAtom": "Atom",
-  "posts.feedRss": "RSS",
   "email.date": "Ngày:",
-  "email.date.post.invitation": "CN, 18 Th1 2026",
+  "email.date.post.announcement-reflection": "Thứ Tư, 08 Tháng 4 2026",
   "email.date.post.highground": "Th5, 12 Th2 2026",
+  "email.date.post.invitation": "CN, 18 Th1 2026",
+  "email.date.post.pressrelease-april-8": "Thứ Tư, 08 Tháng 4 2026",
   "email.from": "Từ:",
+  "email.subject": "Chủ đề:",
   "email.to": "Đến:",
   "email.to.value": "Bạn",
-  "email.subject": "Chủ đề:"
+  "posts.feedAtom": "Atom",
+  "posts.feedRss": "RSS",
+  "posts.hearFromUs": "[Nhận tin từ chúng tôi]",
+  "posts.title": "BÀI VIẾT"
 }

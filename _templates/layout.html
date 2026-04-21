@@ -46,6 +46,11 @@
   <link href="/posts/feed.rss" rel="alternate" title="Earendil Posts" type="application/rss+xml">
 </head>
 <body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML" class="{% if slug != "/" %}skip-intro{% endif %}">
+  <!-- Announcement banner -->
+  <div class="announcement-banner" role="banner">
+    <a href="/posts/press-release-april-8th/" data-i18n-html="common.announcement.banner">ANNOUNCING PI & LEFOS →</a>
+  </div>
+
   <!-- Background layer -->
   <canvas id="canvas"></canvas>
   <div id="overlay-guide-line" aria-hidden="true"></div>
