@@ -47,7 +47,7 @@ aria_label: Earendil values
   <ul class="icon-list icon-list--star">
     <li data-i18n="content.values.curious.1">We stay curious and hungry for new knowledge</li>
     <li data-i18n="content.values.curious.2">We are humble enough to accept there is much we do not know, but confident enough to challenge received wisdom through our own reason</li>
-    <li data-i18n="content.values.curious.3">We celebrate original thinking</li>
+    <li data-i18n="content.values.curious.3">We take time to satisfy the curiosity of others and to teach what we know, across functions and bodies of knowledge</li>
   </ul>
 </details>
 
