@@ -57,7 +57,7 @@
   
   <!-- Center logo (behind overlays) -->
   <a href="/" class="center-logo" dir="ltr">
-    <img class="main-logo" id="logo" src="/static/earendil-logo.svg" alt="Earendil">
+    <img class="main-logo" id="logo" src="{% if slug == "/" %}/static/earendil-emblem.svg{% else %}/static/earendil-logo.svg{% endif %}" alt="Earendil">
   </a>
 
   <!-- Page content layer -->

@@ -1,3 +1,9 @@
 {% extends "layout.html" %}
 
-{% block body %}{% endblock %}
+{% block page_attrs %} data-page-type="home"{% endblock %}
+
+{% block body %}
+  <section class="home-hero" aria-label="Earendil hero">
+    <p class="home-hero-text">Earendil crafts better ways to wield AI with <a class="home-hero-link" href="https://pi.dev" target="_blank" rel="noopener noreferrer">Pi</a> and <a class="home-hero-link home-hero-link--alt" href="https://lefos.com" target="_blank" rel="noopener noreferrer">Lefos</a>.<br>Built in the open, shaped by the humans who use them.</p>
+  </section>
+{% endblock %}

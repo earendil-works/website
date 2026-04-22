@@ -825,7 +825,7 @@ const logo = document.getElementById('logo');
 const themeToggle = document.getElementById('theme-toggle');
 const gl = canvas.getContext('webgl');
 
-const LOGO_SVG_URL = '/static/earendil-logo.svg';
+const LOGO_SVG_URL = (logo && logo.getAttribute('src')) || '/static/earendil-logo.svg';
 
 const THEME_STORAGE_KEY = 'earendil-theme-mode';
 const THEME_MODES = ['auto', 'night', 'day'];
