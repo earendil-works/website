@@ -1,5 +1,7 @@
 {% extends "layout.html" %}
 
+{% block page_attrs %}{% if slug in ["/values/", "/purpose/", "/join/"] or slug[:7] == "/posts/" %} data-page-type="corner-logo"{% endif %}{% endblock %}
+
 {% block body %}
   <div class="updates-overlay{% if overlay_classes %} {{ overlay_classes }}{% endif %}" aria-hidden="true">
     <div class="updates-letter" role="dialog" aria-label="{{ page.aria_label }}">

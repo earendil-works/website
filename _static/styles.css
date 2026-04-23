@@ -179,13 +179,15 @@ canvas.shader-ready {
   opacity: 0.85;
 }
 
-body:has(.page[data-page-type="home"]) .center-logo {
+body:has(.page[data-page-type="home"]) .center-logo,
+body:has(.page[data-page-type="corner-logo"]) .center-logo {
   left: calc(75px + 10px);
   top: calc(75px + var(--banner-height));
   transform: none;
 }
 
-body:has(.page[data-page-type="home"]) .main-logo {
+body:has(.page[data-page-type="home"]) .main-logo,
+body:has(.page[data-page-type="corner-logo"]) .main-logo {
   width: 122px;
   max-width: calc(65vw * 0.41);
 }
@@ -213,11 +215,21 @@ body:has(.page[data-page-type="home"]) .main-logo {
 .home-hero-text {
   margin: 0;
   font-family: var(--serif-font);
-  font-size: clamp(22.4px, 2.4vw, 41.6px);
+  font-size: clamp(20.16px, 2.16vw, 37.44px);
   line-height: 1.12;
   font-style: italic;
   font-weight: 400;
   text-wrap: balance;
+}
+
+.home-hero-open-clause {
+  white-space: nowrap;
+}
+
+.home-hero-tail-clause {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
 }
 
 .home-hero-link,
@@ -1437,12 +1449,14 @@ body:has(.page[data-page-type="home"]) .main-logo {
     max-width: calc(65vw * 0.7);
   }
 
-  body:has(.page[data-page-type="home"]) .center-logo {
+  body:has(.page[data-page-type="home"]) .center-logo,
+  body:has(.page[data-page-type="corner-logo"]) .center-logo {
     left: calc(40px + 10px);
     top: calc(40px + var(--banner-height));
   }
 
-  body:has(.page[data-page-type="home"]) .main-logo {
+  body:has(.page[data-page-type="home"]) .main-logo,
+  body:has(.page[data-page-type="corner-logo"]) .main-logo {
     width: 85px;
     max-width: calc(65vw * 0.29);
   }
@@ -1452,7 +1466,7 @@ body:has(.page[data-page-type="home"]) .main-logo {
   }
 
   .home-hero-text {
-    font-size: clamp(17.6px, 3.84vw, 28px);
+    font-size: clamp(15.84px, 3.456vw, 25.2px);
   }
 
 }
@@ -1500,13 +1514,14 @@ body:has(.page[data-page-type="home"]) .main-logo {
     margin-inline-start: 0;
   }
 
-  body:has(.page[data-page-type="home"]) .center-logo {
+  body:has(.page[data-page-type="home"]) .center-logo,
+  body:has(.page[data-page-type="corner-logo"]) .center-logo {
     left: calc(28px + 10px);
     top: calc(28px + var(--banner-height));
   }
 
   .home-hero-text {
-    font-size: clamp(14.4px, 5.44vw, 22.4px);
+    font-size: clamp(12.96px, 4.896vw, 20.16px);
     line-height: 1.18;
   }
 
