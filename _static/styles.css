@@ -13,7 +13,7 @@
   --cursor-light: url('/static/cursor-light.svg') 12 12;
   --cursor-dark: url('/static/cursor-dark.svg') 12 12;
   --mono-font: 'Departure Mono', 'SFMono-Regular', ui-monospace, monospace;
-  --serif-font: 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
+  --serif-font: 'PlantinNow', 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
   --viewport-height: 100vh;
   --overlay-top-safe-zone: 30px;
   --overlay-bottom-safe-zone: 170px;
