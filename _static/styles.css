@@ -13,7 +13,7 @@
   --cursor-light: url('/static/cursor-light.svg') 12 12;
   --cursor-dark: url('/static/cursor-dark.svg') 12 12;
   --mono-font: 'Departure Mono', 'SFMono-Regular', ui-monospace, monospace;
-  --serif-font: 'PlantinNow', 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
+  --serif-font: 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
   --viewport-height: 100vh;
   --overlay-top-safe-zone: 30px;
   --overlay-bottom-safe-zone: 170px;
@@ -231,36 +231,6 @@ body:has(.page[data-page-type="home"]) .main-logo {
   }
 }
 
-
-.home-hero-links {
-  margin-top: 101px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 160px;
-  font: 14px/1 var(--mono-font);
-  color: inherit;
-}
-
-.home-hero-links a {
-  color: inherit;
-  text-decoration: none;
-  cursor: var(--cursor-light), pointer;
-}
-
-.home-hero-links a:hover {
-  color: inherit;
-  text-decoration: none;
-  cursor: var(--cursor-dark), pointer;
-}
-
-.theme-night .home-hero-links a {
-  cursor: var(--cursor-dark), pointer;
-}
-
-.theme-night .home-hero-links a:hover {
-  cursor: var(--cursor-light), pointer;
-}
 
 .updates-overlay {
   position: relative;
@@ -1377,9 +1347,6 @@ body:has(.page[data-page-type="home"]) .main-logo {
     font-size: clamp(17.6px, 3.84vw, 28px);
   }
 
-  .home-hero-links {
-    margin-top: 79px;
-  }
 }
 
 /* ==========================================================================
@@ -1435,8 +1402,4 @@ body:has(.page[data-page-type="home"]) .main-logo {
     line-height: 1.18;
   }
 
-  .home-hero-links {
-    margin-top: 65px;
-    gap: 96px;
-  }
 }
