@@ -1,5 +1,7 @@
 {% extends "layout.html" %}
 
+{% block page_attrs %} data-page-type="corner-logo"{% endblock %}
+
 {% block body %}
   <div class="updates-overlay{% if overlay_classes %} {{ overlay_classes }}{% endif %}" aria-hidden="true">
     <div class="updates-letter" role="dialog" aria-label="Earendil posts">
