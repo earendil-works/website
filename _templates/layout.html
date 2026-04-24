@@ -102,6 +102,43 @@
   <script>
     htmx.config.scrollIntoViewOnBoost = false;
 
+    // iPad Safari/Chrome can restore stale HTMX snapshots for "/" on session/history restore.
+    // Remove any cached home snapshot so restores use fresh server content.
+    (function purgeHomeSnapshotFromHtmxHistoryCache() {
+      if (window.location.pathname !== '/') return;
+
+      function normalizeHistoryPath(path) {
+        try {
+          var parsed = new URL(path, window.location.origin);
+          path = parsed.pathname + parsed.search;
+        } catch (_error) {
+          // keep original path string
+        }
+        if (path !== '/') {
+          path = path.replace(/\/+$/, '');
+        }
+        return path;
+      }
+
+      try {
+        var raw = sessionStorage.getItem('htmx-history-cache');
+        if (!raw) return;
+        var cache = JSON.parse(raw);
+        if (!Array.isArray(cache)) return;
+
+        var filtered = cache.filter(function(entry) {
+          if (!entry || typeof entry.url !== 'string') return true;
+          return normalizeHistoryPath(entry.url) !== '/';
+        });
+
+        if (filtered.length !== cache.length) {
+          sessionStorage.setItem('htmx-history-cache', JSON.stringify(filtered));
+        }
+      } catch (_error) {
+        // Ignore malformed cache/session storage errors.
+      }
+    })();
+
     function htmxFallbackToNative(evt) {
       var path = evt.detail?.pathInfo?.requestPath || evt.detail?.requestConfig?.path;
       if (path) {
