@@ -202,12 +202,12 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 }
 
 .home-hero {
-  position: fixed;
-  left: 50%;
-  top: 52%;
-  transform: translate(-50%, -50%);
-  z-index: 100;
-  width: min(900px, 72vw);
+  position: relative;
+  min-height: var(--viewport-height);
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding-top: 4vh;
   text-align: center;
   color: rgba(255, 255, 255, 0.95);
 }
@@ -1461,10 +1461,6 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
     max-width: calc(65vw * 0.29);
   }
 
-  .home-hero {
-    width: min(92vw, 680px);
-  }
-
   .home-hero-text {
     font-size: clamp(15.84px, 3.456vw, 25.2px);
   }
@@ -1523,6 +1519,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   .home-hero-text {
     font-size: clamp(12.96px, 4.896vw, 20.16px);
     line-height: 1.18;
+    width: min(92vw, 680px);
   }
 
 }
