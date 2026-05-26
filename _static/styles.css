@@ -66,56 +66,6 @@ a:hover {
 }
 
 /* ==========================================================================
-   ANNOUNCEMENT BANNER
-   ========================================================================== */
-
-:root {
-  --banner-height: 34px;
-}
-
-.announcement-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 210;
-  height: var(--banner-height);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0 20px;
-}
-
-.announcement-banner a {
-  font: 14px/1 var(--mono-font);
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.95);
-  text-decoration: none;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0);
-  transition: text-shadow 0.3s ease;
-  cursor: var(--cursor-light), pointer;
-}
-
-.announcement-banner a:hover {
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
-  cursor: var(--cursor-dark), pointer;
-}
-
-.theme-night .announcement-banner a {
-  cursor: var(--cursor-dark), pointer;
-}
-
-.theme-night .announcement-banner a:hover {
-  cursor: var(--cursor-light), pointer;
-}
-
-.theme-night .announcement-banner {
-  border-bottom-color: rgba(255, 255, 255, 0.15);
-}
-
-/* ==========================================================================
    LAYER 0: Canvas Background
    ========================================================================== */
 
@@ -182,7 +132,7 @@ canvas.shader-ready {
 body:has(.page[data-page-type="home"]) .center-logo,
 body:has(.page[data-page-type="corner-logo"]) .center-logo {
   left: calc(75px + 10px);
-  top: calc(75px + var(--banner-height));
+  top: 75px;
   transform: none;
 }
 
@@ -517,7 +467,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 /* Top Navigation */
 .top-nav {
   position: fixed;
-  top: calc(75px + var(--banner-height));
+  top: 75px;
   right: 75px;
   z-index: 200;
   display: flex;
@@ -1378,7 +1328,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   }
 
   .top-nav {
-    top: calc(40px + var(--banner-height));
+    top: 40px;
     right: 40px;
   }
 
@@ -1452,7 +1402,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   body:has(.page[data-page-type="home"]) .center-logo,
   body:has(.page[data-page-type="corner-logo"]) .center-logo {
     left: calc(40px + 10px);
-    top: calc(40px + var(--banner-height));
+    top: 40px;
   }
 
   body:has(.page[data-page-type="home"]) .main-logo,
@@ -1481,7 +1431,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   }
 
   .top-nav {
-    top: calc(28px + var(--banner-height));
+    top: 28px;
     right: 28px;
   }
 
@@ -1513,7 +1463,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   body:has(.page[data-page-type="home"]) .center-logo,
   body:has(.page[data-page-type="corner-logo"]) .center-logo {
     left: calc(28px + 10px);
-    top: calc(28px + var(--banner-height));
+    top: 28px;
   }
 
   .home-hero-text {
