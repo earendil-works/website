@@ -39,6 +39,6 @@ Armin &amp; Colin
 
 Read more about our announcements today:
 
-<a href="https://mariozechner.at/posts/2026-04-08-ive-sold-out/" target="_blank" rel="noopener noreferrer">Mario's blog on why he joined Earendil</a><br><a href="https://rfc.earendil.com/0015/" target="_blank" rel="noopener noreferrer">Armin's RFC on our plan for Licensing Pi</a><br><a href="https://lucumr.pocoo.org/2026/4/8/mario-and-earendil/" target="_blank" rel="noopener noreferrer">Armin's blog on Mario</a><br><a href="https://www.foggynotions.day/" target="_blank" rel="noopener noreferrer">Colin's blog on Partnership</a><br><a href="/posts/press-release-april-8th/">Earendil's Press Release</a>
+<a href="https://mariozechner.at/posts/2026-04-08-ive-sold-out/" target="_blank" rel="noopener noreferrer">Mario's blog on why he joined Earendil</a><br><a href="https://rfc.earendil.com/0015/" target="_blank" rel="noopener noreferrer">Armin's RFC on our plan for Licensing Pi</a><br><a href="https://lucumr.pocoo.org/2026/4/8/mario-and-earendil/" target="_blank" rel="noopener noreferrer">Armin's blog on Mario</a><br><a href="https://www.foggynotions.day/" target="_blank" rel="noopener noreferrer">Colin's blog on Partnership</a><br><a href="/posts/announcing-pi-and-lefos/">Earendil's Press Release</a>
 
 </div>

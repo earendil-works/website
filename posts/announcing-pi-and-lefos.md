@@ -1,11 +1,11 @@
 ---
-title: Press Release April 8th
+title: Announcing Pi & Lefos
 template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>
 to: You
 date: Wed, 8 Apr 2026 00:00:00 +0200
-subject: Press Release April 8th
+subject: Announcing Pi & Lefos
 i18n_key: post.pressrelease-april-8
 ---
 
