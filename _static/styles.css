@@ -47,8 +47,6 @@
   --overlay-card-chrome: 150px;
   --overlay-close-clearance: 0px;
   --overlay-border-gap: 2px;
-  --scene-vertical-shift: 7vh;
-  --hero-vertical-shift: 7vh;
   --theme-transition-duration: 900ms;
   /* Exactly matches the shader's smoothstep easing. */
   --theme-transition-easing: cubic-bezier(0.333333, 0, 0.666667, 1);
@@ -61,6 +59,7 @@
   --frame-content-bottom: calc(var(--frame-block) + 100px);
   --frame-chrome-fade: 40px;
   --chrome-surface: 250, 249, 246;
+  --color-text-day: #353431;
 }
 
 @property --page-veil-r {
@@ -84,8 +83,6 @@
 @supports (height: 100dvh) {
   :root {
     --viewport-height: 100dvh;
-    --scene-vertical-shift: 7dvh;
-    --hero-vertical-shift: 7dvh;
   }
 }
 
@@ -333,7 +330,7 @@ body.content-page-swap .page.htmx-settling .content-surface {
   min-height: var(--viewport-height);
   box-sizing: border-box;
   padding: var(--frame-content-top) var(--frame-inline) var(--frame-content-bottom);
-  color: #000;
+  color: var(--color-text-day);
   text-shadow: none;
 }
 
@@ -381,7 +378,7 @@ body.theme-transition-ready .content-page {
 }
 
 .page--prose .content-surface {
-  width: min(100%, 720px);
+  width: min(100%, 760px);
 }
 
 .page--post-detail .content-surface {
@@ -419,7 +416,7 @@ body:has(.content-page) .center-logo {
 }
 
 body:not(.theme-night):has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
-  color: #000;
+  color: var(--color-text-day);
   text-shadow: none;
 }
 
@@ -450,21 +447,21 @@ body.theme-night:has(.content-page) :is(a, button, summary) {
 }
 
 body:not(.theme-night) .main-logo {
-  filter: invert(1);
+  filter: url('#logo-day-color');
 }
 
 body:not(.theme-night) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
-  color: #000;
+  color: var(--color-text-day);
   text-shadow: none;
 }
 
 body:not(.theme-night) .menu-trigger-toggle,
 body:not(.theme-night) :is(.nav-link, .menu-trigger-toggle, #theme-toggle, #lang-toggle):hover {
-  color: #000;
+  color: var(--color-text-day);
 }
 
 body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-link {
-  color: #000;
+  color: var(--color-text-day);
   text-shadow: none;
 }
 
@@ -488,9 +485,6 @@ body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-lin
   font-style: italic;
   font-weight: 400;
   text-wrap: balance;
-  /* Anchor the lower edge at the hero's focal line so larger type expands
-     upward instead of growing equally in both directions. */
-  transform: translateY(calc(-50% - var(--hero-vertical-shift)));
 }
 
 .home-hero-open-clause {
@@ -531,7 +525,7 @@ body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-lin
 }
 
 body:not(.theme-night) .home-hero {
-  color: #000;
+  color: var(--color-text-day);
   text-shadow: none;
 }
 
@@ -638,7 +632,7 @@ body:not(.theme-night) .home-hero-open::after {
   font-family: var(--mono-font);
   font-size: var(--text-body);
   line-height: 1.5;
-  color: #1c1b1a;
+  color: var(--color-text-day);
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.35s ease, transform 0.35s ease;
@@ -850,7 +844,7 @@ body:not(.theme-night) .home-hero-open::after {
 
 body:not(.theme-night) .menu-trigger-toggle:hover,
 body:not(.theme-night) .top-nav.is-open .menu-trigger-toggle {
-  color: #000;
+  color: var(--color-text-day);
   text-shadow: none;
 }
 
@@ -874,14 +868,6 @@ body:not(.theme-night) .top-nav.is-open .menu-trigger-toggle {
 
 .menu-link-group--external {
   margin-top: 12px;
-}
-
-.external-link-arrow {
-  align-self: flex-start;
-  margin-left: -2px;
-  font-size: var(--font-size-xs);
-  line-height: 1;
-  opacity: 0.72;
 }
 
 .nav-link {
@@ -1452,7 +1438,7 @@ body:not(.theme-night) .posts-list .post-name::after {
 }
 
 .updates-enter:hover {
-  color: rgba(25, 24, 22, 1);
+  color: var(--color-text-day);
 }
 
 .updates-message {
@@ -1534,6 +1520,17 @@ body:not(.theme-night) .posts-list .post-name::after {
    Page + Content Variants
    ========================================================================== */
 
+.letter-body {
+  text-wrap: pretty;
+  orphans: 3;
+  widows: 3;
+}
+
+.letter-body :is(h1, h2, h3, h4, h5, h6) {
+  text-wrap: balance;
+  break-after: avoid;
+}
+
 .page--prose .letter-body {
   font-family: var(--serif-font);
   font-weight: 400;
@@ -1583,7 +1580,7 @@ body:not(.theme-night) .posts-list .post-name::after {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  color: rgba(28, 27, 26, 0.9);
+  color: var(--color-text-day);
   cursor: var(--cursor-light), pointer;
   transition: color 0.2s ease;
 }
@@ -1660,7 +1657,7 @@ body:not(.theme-night) .posts-list .post-name::after {
   position: absolute;
   inset-inline-start: 0;
   top: 0;
-  color: #000;
+  color: var(--color-text-day);
 }
 
 .theme-night .disclosure-summary {
@@ -1702,7 +1699,7 @@ body:not(.theme-night) .posts-list .post-name::after {
 .theme-night .content-page .letter-body a:hover,
 .theme-night .content-page .email-meta a:hover,
 .theme-night .content-page .letter-footer a:hover {
-  color: #000;
+  color: var(--color-text-day);
   text-decoration-style: solid;
 }
 
@@ -1822,7 +1819,7 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 .content-page .disclosure[open] .disclosure-summary:hover,
 .content-page .disclosure-summary:hover::before,
 .content-page .disclosure[open] .disclosure-summary:hover::before {
-  color: #000;
+  color: var(--color-text-day);
 }
 
 .theme-night .content-page .disclosure-summary {
@@ -1838,15 +1835,11 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 }
 
 @media (min-width: 801px) {
-  .top-nav .menu-trigger {
-    display: none;
+  /* Navigation links reserve room for their hover star. Match that inset so
+     the MENU label and link text share the same right-hand alignment. */
+  .menu-trigger-toggle {
+    padding-inline-end: 21px;
   }
-
-  .top-nav .menu-links,
-  .top-nav .menu-links[hidden] {
-    display: flex;
-  }
-
 }
 
 @media (min-width: 801px) and (max-width: 1100px) {
@@ -1885,7 +1878,6 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 @media (max-width: 800px) {
   :root {
     --text-hero: var(--font-size-xl);
-    --hero-vertical-shift: 3vh;
     --overlay-top-safe-zone: 58px;
     --overlay-bottom-safe-zone: 140px;
     --overlay-card-chrome: 56px;
@@ -1897,12 +1889,6 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     --frame-chrome-clearance: 20px;
     --frame-content-top: calc(var(--frame-block) + 88px);
     --frame-content-bottom: calc(var(--frame-block) + 92px);
-  }
-
-  @supports (height: 100dvh) {
-    :root {
-      --hero-vertical-shift: 3dvh;
-    }
   }
 
   body.mobile-menu-open {
@@ -1942,7 +1928,7 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     padding: calc(var(--frame-block) + 44px) var(--frame-inline) var(--frame-block);
     align-items: flex-end;
     gap: 8px;
-    color: #000;
+    color: var(--color-text-day);
     animation: mobileMenuPanelIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
@@ -2016,11 +2002,6 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     position: absolute;
     inset-inline-end: calc(100% + 6px);
     pointer-events: none;
-  }
-
-  .top-nav .external-link-arrow {
-    align-self: center;
-    transform: translateY(1px);
   }
 
   .menu-trigger-toggle:focus-visible,

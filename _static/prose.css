@@ -1,18 +1,18 @@
 .prose {
-  --prose-body: #1c1b1a;
-  --prose-headings: #000;
+  --prose-body: var(--color-text-day);
+  --prose-headings: var(--color-text-day);
   --prose-lead: rgba(25, 24, 22, 0.7);
-  --prose-links: #000;
-  --prose-bold: #000;
+  --prose-links: var(--color-text-day);
+  --prose-bold: var(--color-text-day);
   --prose-counters: rgba(25, 24, 22, 0.5);
   --prose-bullets: rgba(25, 24, 22, 0.35);
   --prose-hr: rgba(39, 37, 34, 0.18);
-  --prose-quotes: #1c1b1a;
+  --prose-quotes: var(--color-text-day);
   --prose-quote-borders: rgba(39, 37, 34, 0.18);
   --prose-captions: rgba(25, 24, 22, 0.6);
-  --prose-kbd: #1c1b1a;
+  --prose-kbd: var(--color-text-day);
   --prose-kbd-shadows: rgb(28 27 26 / 10%);
-  --prose-code: #000;
+  --prose-code: var(--color-text-day);
   --prose-pre-code: rgba(244, 242, 238, 0.9);
   --prose-pre-bg: #1c1b1a;
   --prose-th-borders: rgba(39, 37, 34, 0.3);

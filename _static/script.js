@@ -1125,7 +1125,6 @@ const lightPointVertexShaderSource = `
 
 const LIGHT_INTENSITY = 1.0;
 const PAINT_INTENSITY = LIGHT_INTENSITY / 3;
-const SCENE_VERTICAL_SHIFT = 0.07;
 const LOGO_FADE_DELAY = 150;
 const LOGO_FADE_DURATION = 900;
 const LOGO_FADE_TARGET = 0.85;
@@ -1194,7 +1193,6 @@ function buildFragmentShader(quality) {
   #define FBM_OCTAVES ${settings.fbmOctaves}
   #define LOGO_INTENSITY 3.5
   #define NIGHT_EPS 0.001
-  #define SCENE_VERTICAL_SHIFT ${SCENE_VERTICAL_SHIFT}
 
   float hash21(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -1230,7 +1228,7 @@ function buildFragmentShader(quality) {
     if (unrotated.z <= 0.0) return vec2(-1.0);
     vec2 uv = (unrotated.xy / unrotated.z) * 1.5;
     vec2 ndc = uv / vec2(iResolution.x / iResolution.y, 1.0);
-    return ndc * 0.5 + 0.5 + vec2(0.0, SCENE_VERTICAL_SHIFT);
+    return ndc * 0.5 + 0.5;
   }
 
   float star(vec2 screenUv, vec2 cellId, vec2 grid) {
@@ -1362,8 +1360,7 @@ function buildFragmentShader(quality) {
   }
 
   vec3 getRay(vec2 fragCoord) {
-    vec2 shiftedFragCoord = fragCoord - vec2(0.0, iResolution.y * SCENE_VERTICAL_SHIFT);
-    vec2 uv = ((shiftedFragCoord / iResolution.xy) * 2.0 - 1.0) * vec2(iResolution.x / iResolution.y, 1.0);
+    vec2 uv = ((fragCoord.xy / iResolution.xy) * 2.0 - 1.0) * vec2(iResolution.x / iResolution.y, 1.0);
     vec3 proj = normalize(vec3(uv.x, uv.y, 1.5));
     // Fixed camera angle (no mouse movement) - tilted up to show more sky
     // u_cameraTiltOffset adds additional tilt (negative = look down more)
@@ -1860,7 +1857,7 @@ const ripples = []; // Array of {x, z, time, amplitude}
 function screenToWaterHit(clientX, clientY, time) {
   const rect = canvas.getBoundingClientRect();
   const ndcX = (clientX - rect.left) / rect.width * 2 - 1;
-  const ndcY = -((clientY - rect.top) / rect.height * 2 - 1) - SCENE_VERTICAL_SHIFT * 2;
+  const ndcY = -((clientY - rect.top) / rect.height * 2 - 1);
   
   const aspect = canvas.width / canvas.height;
   let rayX = ndcX * aspect;
@@ -1921,7 +1918,7 @@ function wrapUVDelta(a, b) {
 
 function screenPosToSkyUV(screenX, screenY, aspect) {
   const uvX = screenX * 2 - 1;
-  const uvY = (screenY - SCENE_VERTICAL_SHIFT) * 2 - 1;
+  const uvY = screenY * 2 - 1;
   const projX = uvX * aspect;
   const projY = uvY;
   const projZ = 1.5;

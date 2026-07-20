@@ -46,6 +46,16 @@
   <link href="/posts/feed.rss" rel="alternate" title="Earendil Posts" type="application/rss+xml">
 </head>
 <body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML swap:220ms" class="{% if slug != "/" %}skip-intro{% endif %}">
+  <!-- Paint the white source logo with the shared light-theme text color. -->
+  <svg width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="logo-day-color" color-interpolation-filters="sRGB">
+        <feFlood flood-color="var(--color-text-day)" result="day-color"></feFlood>
+        <feComposite in="day-color" in2="SourceAlpha" operator="in"></feComposite>
+      </filter>
+    </defs>
+  </svg>
+
   <!-- Background layer -->
   <canvas id="canvas"></canvas>
   <div id="overlay-guide-line" aria-hidden="true"></div>
@@ -71,9 +81,9 @@
             <a class="nav-link" href="/posts/">Posts</a>
           </div>
           <div class="menu-link-group menu-link-group--external" role="group" aria-label="External links">
-            <a class="nav-link" href="https://pi.dev" target="_blank" rel="noopener noreferrer">Pi<span class="external-link-arrow" aria-hidden="true">↗</span></a>
-            <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer">Lefos<span class="external-link-arrow" aria-hidden="true">↗</span></a>
-            <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">Works<span class="external-link-arrow" aria-hidden="true">↗</span></a>
+            <a class="nav-link" href="https://pi.dev" target="_blank" rel="noopener noreferrer">Pi</a>
+            <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer">Lefos</a>
+            <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">Works</a>
           </div>
         </div>
       </nav>
