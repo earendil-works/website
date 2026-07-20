@@ -382,14 +382,14 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
       return;
     }
 
-    var overlayCard = document.querySelector('.updates-overlay.is-open .updates-letter');
-    if (!overlayCard) {
+    var pageSurface = document.querySelector('.content-page .content-surface');
+    if (!pageSurface) {
       menu.classList.remove('has-overlap-backdrop');
       return;
     }
 
     var menuRect = menu.getBoundingClientRect();
-    var overlayRect = overlayCard.getBoundingClientRect();
+    var overlayRect = pageSurface.getBoundingClientRect();
     var shouldShowBackdrop = rectanglesOverlap(menuRect, overlayRect, 1);
     menu.classList.toggle('has-overlap-backdrop', shouldShowBackdrop);
   }
@@ -501,111 +501,6 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
   initChevronMenu();
   document.body.addEventListener('htmx:afterSettle', initChevronMenu);
-})();
-
-// Values chevron pulse synchronization (global phase + per-item offset)
-(function() {
-  var VALUES_CHEVRON_CYCLE_MS = 1100;
-  var VALUES_CHEVRON_INDEX_PHASE_OFFSET = 0.07;
-  var chevronSummaries = [];
-  var animationFrameId = null;
-  var reduceMotionQuery = null;
-
-  function getValuesChevronSummaries() {
-    return Array.prototype.slice.call(
-      document.querySelectorAll('.updates-overlay.overlay--values .disclosure-summary')
-    );
-  }
-
-  function setChevronIndices() {
-    chevronSummaries = getValuesChevronSummaries();
-    chevronSummaries.forEach(function(summary, index) {
-      summary.style.setProperty('--values-chevron-index', String(index));
-    });
-  }
-
-  function isReducedMotionEnabled() {
-    return !!(reduceMotionQuery && reduceMotionQuery.matches);
-  }
-
-  function shouldAnimate() {
-    return chevronSummaries.length > 0 && !isReducedMotionEnabled();
-  }
-
-  function normalizedPulse(phase) {
-    return 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
-  }
-
-  function stopAnimation() {
-    if (animationFrameId === null) return;
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
-  }
-
-  function resetChevronGlow() {
-    chevronSummaries.forEach(function(summary) {
-      if (!summary || !summary.isConnected) return;
-      summary.style.setProperty('--values-chevron-glow', '0');
-    });
-  }
-
-  function renderChevrons(now) {
-    if (animationFrameId === null) return;
-
-    var globalPhase = (now % VALUES_CHEVRON_CYCLE_MS) / VALUES_CHEVRON_CYCLE_MS;
-
-    chevronSummaries.forEach(function(summary, index) {
-      if (!summary || !summary.isConnected) return;
-
-      var indexValue = Number(summary.style.getPropertyValue('--values-chevron-index'));
-      if (!Number.isFinite(indexValue)) {
-        indexValue = index;
-      }
-
-      var phase = globalPhase + indexValue * VALUES_CHEVRON_INDEX_PHASE_OFFSET;
-      phase = phase - Math.floor(phase);
-
-      var glow = normalizedPulse(phase);
-      summary.style.setProperty('--values-chevron-glow', glow.toFixed(4));
-    });
-
-    animationFrameId = requestAnimationFrame(renderChevrons);
-  }
-
-  function startAnimation() {
-    if (animationFrameId !== null || !shouldAnimate()) return;
-    animationFrameId = requestAnimationFrame(renderChevrons);
-  }
-
-  function refreshValuesChevronSync() {
-    setChevronIndices();
-    if (shouldAnimate()) {
-      startAnimation();
-      return;
-    }
-    stopAnimation();
-    resetChevronGlow();
-  }
-
-  if (window.matchMedia) {
-    reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (typeof reduceMotionQuery.addEventListener === 'function') {
-      reduceMotionQuery.addEventListener('change', refreshValuesChevronSync);
-    } else if (typeof reduceMotionQuery.addListener === 'function') {
-      reduceMotionQuery.addListener(refreshValuesChevronSync);
-    }
-  }
-
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-      stopAnimation();
-      return;
-    }
-    refreshValuesChevronSync();
-  });
-
-  refreshValuesChevronSync();
-  document.body.addEventListener('htmx:afterSettle', refreshValuesChevronSync);
 })();
 
 // Subscribe form handling (updates page email flow)
@@ -953,6 +848,12 @@ window.addEventListener('languagechange', updateThemeToggle);
 // Initial update (with fallback labels)
 updateThemeToggle();
 
+// Enable CSS theme interpolation only after the initial preference is applied,
+// so a stored dark preference does not animate on first paint.
+requestAnimationFrame(() => {
+  document.body.classList.add('theme-transition-ready');
+});
+
 // Update again once i18n is ready (with translated labels)
 if (window.i18n) {
   window.i18n.onReady(updateThemeToggle);
@@ -960,6 +861,7 @@ if (window.i18n) {
 
 
 
+// Keep in sync with --theme-transition-duration in styles.css.
 const THEME_FADE_DURATION = 900;
 let nightBlend = getNightPreference() ? 1.0 : 0.0;
 let nightFadeStart = null;
@@ -1118,8 +1020,8 @@ const ditherFragmentShaderSource = `
     gray = clamp(gray, 0.0, 1.0);
     
     // Map to color palette
-    vec3 dark = mix(vec3(0.235), vec3(0.02), u_night);   // #3c3c3c -> #050505
-    vec3 light = mix(vec3(0.836), vec3(1.0), u_night);   // #d5d5d5 -> #ffffff
+    vec3 dark = mix(vec3(0.62), vec3(0.05), u_night);    // #9e9e9e -> #0d0d0d
+    vec3 light = mix(vec3(0.97), vec3(1.0), u_night);    // #f7f7f7 -> #ffffff
     gl_FragColor = vec4(mix(dark, light, gray), 1.0);
   }
 `;
@@ -1168,6 +1070,7 @@ const lightPointVertexShaderSource = `
 
 const LIGHT_INTENSITY = 1.0;
 const PAINT_INTENSITY = LIGHT_INTENSITY / 3;
+const SCENE_VERTICAL_SHIFT = 0.07;
 const LOGO_FADE_DELAY = 150;
 const LOGO_FADE_DURATION = 900;
 const LOGO_FADE_TARGET = 0.85;
@@ -1236,6 +1139,7 @@ function buildFragmentShader(quality) {
   #define FBM_OCTAVES ${settings.fbmOctaves}
   #define LOGO_INTENSITY 3.5
   #define NIGHT_EPS 0.001
+  #define SCENE_VERTICAL_SHIFT ${SCENE_VERTICAL_SHIFT}
 
   float hash21(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -1271,7 +1175,7 @@ function buildFragmentShader(quality) {
     if (unrotated.z <= 0.0) return vec2(-1.0);
     vec2 uv = (unrotated.xy / unrotated.z) * 1.5;
     vec2 ndc = uv / vec2(iResolution.x / iResolution.y, 1.0);
-    return ndc * 0.5 + 0.5;
+    return ndc * 0.5 + 0.5 + vec2(0.0, SCENE_VERTICAL_SHIFT);
   }
 
   float star(vec2 screenUv, vec2 cellId, vec2 grid) {
@@ -1403,7 +1307,8 @@ function buildFragmentShader(quality) {
   }
 
   vec3 getRay(vec2 fragCoord) {
-    vec2 uv = ((fragCoord.xy / iResolution.xy) * 2.0 - 1.0) * vec2(iResolution.x / iResolution.y, 1.0);
+    vec2 shiftedFragCoord = fragCoord - vec2(0.0, iResolution.y * SCENE_VERTICAL_SHIFT);
+    vec2 uv = ((shiftedFragCoord / iResolution.xy) * 2.0 - 1.0) * vec2(iResolution.x / iResolution.y, 1.0);
     vec3 proj = normalize(vec3(uv.x, uv.y, 1.5));
     // Fixed camera angle (no mouse movement) - tilted up to show more sky
     // u_cameraTiltOffset adds additional tilt (negative = look down more)
@@ -1900,7 +1805,7 @@ const ripples = []; // Array of {x, z, time, amplitude}
 function screenToWaterHit(clientX, clientY, time) {
   const rect = canvas.getBoundingClientRect();
   const ndcX = (clientX - rect.left) / rect.width * 2 - 1;
-  const ndcY = -((clientY - rect.top) / rect.height * 2 - 1);
+  const ndcY = -((clientY - rect.top) / rect.height * 2 - 1) - SCENE_VERTICAL_SHIFT * 2;
   
   const aspect = canvas.width / canvas.height;
   let rayX = ndcX * aspect;
@@ -1961,7 +1866,7 @@ function wrapUVDelta(a, b) {
 
 function screenPosToSkyUV(screenX, screenY, aspect) {
   const uvX = screenX * 2 - 1;
-  const uvY = screenY * 2 - 1;
+  const uvY = (screenY - SCENE_VERTICAL_SHIFT) * 2 - 1;
   const projX = uvX * aspect;
   const projY = uvY;
   const projZ = 1.5;

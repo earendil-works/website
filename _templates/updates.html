@@ -3,9 +3,12 @@
 {% block page_attrs %} data-page-type="corner-logo"{% endblock %}
 
 {% block body %}
-  <div class="updates-overlay{% if overlay_classes %} {{ overlay_classes }}{% endif %}" aria-hidden="true">
-    <div class="updates-letter" role="dialog" aria-label="{{ page.aria_label }}">
-      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">&lt;</a>
+  <main class="content-page{% if page_classes %} {{ page_classes }}{% endif %}">
+    <article class="content-surface" aria-label="{{ page.aria_label }}">
+      <nav class="page-back-nav" aria-label="Post navigation">
+        <a class="page-back" href="{{ dismiss_url }}" data-i18n="common.action.back">[back]</a>
+      </nav>
+      <h1 class="visually-hidden">{{ title }}</h1>
       <div class="updates-scroll-content">
         <div class="email-meta">
           <p><span data-i18n="posts.email.date">Date:</span> <span data-i18n="posts.email.date.{{ page.i18n_key }}">{{ page.date_day or page.date }}</span></p>
@@ -21,6 +24,6 @@
           <div class="signature-detail"><a href="https://earendil.com" target="_blank" rel="noopener noreferrer">earendil.com</a></div>
         </div>
       </div>
-    </div>
-  </div>
+    </article>
+  </main>
 {% endblock %}

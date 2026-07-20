@@ -1,7 +1,7 @@
 ---
 title: Purpose
 template: page
-overlay_class: overlay--prose overlay--purpose
+page_class: page--prose page--purpose
 aria_label: Earendil purpose
 description: "Earendil crafts software and open protocols, strengthens human agency in the age of AI, bridges division and ignorance, and cultivates lasting joy and understanding."
 ---

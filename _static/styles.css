@@ -20,26 +20,60 @@
   --overlay-card-chrome: 150px;
   --overlay-close-clearance: 0px;
   --overlay-border-gap: 2px;
+  --scene-vertical-shift: 7vh;
+  --theme-transition-duration: 900ms;
+  /* Exactly matches the shader's smoothstep easing. */
+  --theme-transition-easing: cubic-bezier(0.333333, 0, 0.666667, 1);
+}
+
+@property --page-veil-r {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 250;
+}
+
+@property --page-veil-g {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 249;
+}
+
+@property --page-veil-b {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 246;
 }
 
 @supports (height: 100dvh) {
   :root {
     --viewport-height: 100dvh;
+    --scene-vertical-shift: 7dvh;
   }
+}
+
+html:has(body:not(.theme-night)),
+body:not(.theme-night) {
+  --cursor-light: url('/static/cursor-dark.svg') 12 12;
+  --cursor-dark: url('/static/cursor-dark.svg') 12 12;
 }
 
 html, body {
   cursor: var(--cursor-light), auto;
   background: #b8b8b8;
-  overflow: hidden;
 }
 
-body.has-overlay {
-  overflow: hidden;
+html {
+  overflow-x: hidden;
+}
+
+body {
+  min-height: var(--viewport-height);
+  overflow-x: hidden;
+}
+
+body:has(.page[data-page-type="home"]),
+body:has(.page[data-page-type="404"]) {
   height: var(--viewport-height);
-}
-
-html:has(body.has-overlay) {
   overflow: hidden;
 }
 
@@ -121,7 +155,7 @@ canvas.shader-ready {
   width: 300px;
   max-width: 65vw;
   opacity: 0;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.35s ease, filter 0.48s ease;
 }
 
 .loaded .main-logo,
@@ -132,7 +166,7 @@ canvas.shader-ready {
 body:has(.page[data-page-type="home"]) .center-logo,
 body:has(.page[data-page-type="corner-logo"]) .center-logo {
   left: calc(75px + 10px);
-  top: 75px;
+  top: 70px;
   transform: none;
 }
 
@@ -149,6 +183,227 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .page {
   position: relative;
   z-index: 100;
+  opacity: 1;
+  transition: opacity 0.52s ease;
+}
+
+.page.is-leaving {
+  opacity: 0;
+  transition-duration: 0.22s;
+  transition-timing-function: ease-out;
+}
+
+.page.htmx-settling {
+  opacity: 0;
+  transition: none;
+}
+
+.page.is-entering {
+  transition: none;
+  animation: pageEnter 0.52s ease both;
+}
+
+/* Between content pages, keep the page veil fully present and transition only
+   the readable content. This prevents the background from flashing away. */
+body.content-page-swap .page,
+body.content-page-swap .page.is-leaving,
+body.content-page-swap .page.htmx-settling {
+  opacity: 1;
+  transition: none;
+  animation: none;
+}
+
+body.content-page-swap .page.is-leaving .content-surface {
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+body.content-page-swap .page.htmx-settling .content-surface {
+  opacity: 0;
+  transition: none;
+}
+
+.page.is-content-entering .content-surface {
+  animation: contentPageEnter 0.3s ease both;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes contentPageEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Full document pages. The fixed veil belongs to the page rather than a
+   floating card, so content uses the browser's normal scroll flow. */
+.content-page {
+  --page-veil-r: 250;
+  --page-veil-g: 249;
+  --page-veil-b: 246;
+  --page-veil: var(--page-veil-r), var(--page-veil-g), var(--page-veil-b);
+  position: relative;
+  isolation: isolate;
+  min-height: var(--viewport-height);
+  box-sizing: border-box;
+  padding: 150px clamp(36px, 8vw, 150px) 175px;
+  color: #000;
+  text-shadow: none;
+}
+
+.content-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 72% 115% at 50% 48%,
+    rgba(var(--page-veil), 0.985) 0%,
+    rgba(var(--page-veil), 0.985) 45%,
+    rgba(var(--page-veil), 0.96) 54%,
+    rgba(var(--page-veil), 0.68) 67%,
+    rgba(var(--page-veil), 0.28) 80%,
+    rgba(var(--page-veil), 0) 96%
+  );
+}
+
+.theme-night .content-page {
+  --page-veil-r: 46;
+  --page-veil-g: 45;
+  --page-veil-b: 43;
+  color: #fff;
+}
+
+/* Theme changes use the same 900ms smoothstep as the WebGL background. The
+   registered RGB channels let the radial veil interpolate without changing
+   its opacity or shape midway through the transition. */
+body.theme-transition-ready .content-page {
+  transition:
+    color var(--theme-transition-duration) var(--theme-transition-easing),
+    --page-veil-r var(--theme-transition-duration) var(--theme-transition-easing),
+    --page-veil-g var(--theme-transition-duration) var(--theme-transition-easing),
+    --page-veil-b var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+.content-surface {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  font: 15px/1.6 var(--mono-font);
+}
+
+.page--prose .content-surface {
+  width: min(100%, 720px);
+}
+
+.page--post-detail .content-surface {
+  width: min(100%, 760px);
+}
+
+.page-back-nav {
+  margin-bottom: 42px;
+  font: 13px/1 var(--mono-font);
+}
+
+.page-back {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.62;
+  transition: opacity 0.2s ease;
+}
+
+.page-back:hover {
+  color: inherit;
+  opacity: 1;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .page.is-leaving,
+  body.content-page-swap .page.is-leaving .content-surface,
+  body.theme-transition-ready .content-page {
+    transition-duration: 0.01ms;
+  }
+
+  .page.is-entering,
+  .page.is-content-entering .content-surface {
+    animation-duration: 0.01ms;
+  }
+}
+
+body:has(.content-page) .center-logo {
+  z-index: 200;
+}
+
+body:not(.theme-night):has(.content-page) :is(.nav-link, .menu-about, .menu-chevron, #site-footer, #theme-toggle, #lang-toggle) {
+  color: #000;
+  text-shadow: none;
+}
+
+body.theme-night:has(.content-page) :is(.nav-link, .menu-about, .menu-chevron, #site-footer, #theme-toggle, #lang-toggle) {
+  color: #fff;
+  text-shadow: none;
+}
+
+body:has(.content-page) .menu-chevron {
+  animation: none;
+}
+
+html :is(.nav-link, .menu-about, .menu-chevron, #site-footer, #theme-toggle, #lang-toggle) {
+  transition-duration: 0.52s;
+  transition-timing-function: ease;
+}
+
+body:not(.theme-night):has(.content-page) {
+  cursor: var(--cursor-dark), auto;
+}
+
+body:not(.theme-night):has(.content-page) :is(a, button, summary) {
+  cursor: var(--cursor-dark), pointer;
+}
+
+body.theme-night:has(.content-page) {
+  cursor: var(--cursor-light), auto;
+}
+
+body.theme-night:has(.content-page) :is(a, button, summary) {
+  cursor: var(--cursor-light), pointer;
+}
+
+body:not(.theme-night) .main-logo {
+  filter: invert(1);
+}
+
+body:not(.theme-night) :is(.nav-link, .menu-about, .menu-chevron, #site-footer, #theme-toggle, #lang-toggle) {
+  color: #000;
+  text-shadow: none;
+}
+
+body:not(.theme-night) .menu-chevron {
+  animation: none;
+}
+
+body:not(.theme-night) :is(.nav-link, .menu-trigger-toggle, #theme-toggle, #lang-toggle):hover {
+  color: #000;
+}
+
+body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop :is(.nav-link, .menu-chevron) {
+  color: #000;
+  text-shadow: none;
 }
 
 .home-hero {
@@ -170,6 +425,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   font-style: italic;
   font-weight: 400;
   text-wrap: balance;
+  transform: translateY(calc(-1 * var(--scene-vertical-shift)));
 }
 
 .home-hero-open-clause {
@@ -197,8 +453,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .home-hero-link,
 .home-hero-open {
   color: inherit;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0);
-  transition: text-shadow 0.3s ease;
+  text-shadow: none;
   cursor: var(--cursor-light), pointer;
 }
 
@@ -206,8 +461,13 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .home-hero-open:hover {
   color: inherit;
   text-decoration: none;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+  text-shadow: none;
   cursor: var(--cursor-dark), pointer;
+}
+
+body:not(.theme-night) .home-hero {
+  color: #000;
+  text-shadow: none;
 }
 
 .theme-night .home-hero-link,
@@ -233,6 +493,11 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease;
+}
+
+body:not(.theme-night) .home-hero-link::before,
+body:not(.theme-night) .home-hero-open::after {
+  background-image: url('/static/cursor-dark.svg');
 }
 
 .home-hero-link::before {
@@ -540,7 +805,6 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   color: rgba(255, 255, 255, 0.45);
   transform-origin: center;
   transition: transform 0.25s ease, color 0.25s ease;
-  animation: chevronPulse 1.1s ease-in-out infinite alternate;
 }
 
 .menu-trigger-toggle:hover .menu-about,
@@ -555,6 +819,12 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   color: rgba(255, 255, 255, 0.95);
 }
 
+body:not(.theme-night) .menu-trigger-toggle:hover :is(.menu-about, .menu-chevron),
+body:not(.theme-night) .top-nav.is-open .menu-chevron {
+  color: #000;
+  text-shadow: none;
+}
+
 .menu-links {
   display: flex;
   flex-direction: column;
@@ -566,13 +836,23 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   display: none;
 }
 
-@keyframes chevronPulse {
-  from {
-    color: rgba(160, 160, 160, 0.6);
-  }
-  to {
-    color: rgba(255, 255, 255, 0.95);
-  }
+.menu-link-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.menu-link-group--external {
+  margin-top: 12px;
+}
+
+.external-link-arrow {
+  align-self: flex-start;
+  margin-left: -2px;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.72;
 }
 
 .nav-link {
@@ -581,8 +861,8 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   letter-spacing: 0;
   color: rgba(255, 255, 255, 0.95);
   text-decoration: none;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0);
-  transition: color 0.2s ease, text-shadow 0.3s ease;
+  text-shadow: none;
+  transition: color 0.2s ease;
   cursor: var(--cursor-light), pointer;
   display: inline-flex;
   align-items: center;
@@ -602,14 +882,21 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 .nav-link:hover {
   color: #fff;
-  text-decoration: none;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+  text-shadow: none;
   cursor: var(--cursor-dark), pointer;
+}
+
+body:not(.theme-night) .nav-link::after {
+  background-image: url('/static/cursor-dark.svg');
 }
 
 .nav-link:hover::after {
   opacity: 1;
-  animation: navLinkStarSpin 0.85s linear infinite;
+  animation: navLinkStarSpin 1.15s linear infinite;
 }
 
 @keyframes navLinkStarSpin {
@@ -1148,32 +1435,36 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
    Page + Content Variants
    ========================================================================== */
 
-.updates-overlay.overlay--prose .letter-body {
+.page--prose .letter-body {
   font-family: var(--serif-font);
   font-weight: 400;
-  font-size: 18px;
-  line-height: 1.5;
+  font-size: 20px;
+  line-height: 1.6;
 }
 
-.updates-overlay.overlay--prose .letter-body strong,
-.updates-overlay.overlay--prose .letter-body b,
-.updates-overlay.overlay--prose .letter-body a {
+.page--prose .letter-body strong,
+.page--prose .letter-body b,
+.page--prose .letter-body a {
   font-weight: 700;
 }
 
-.updates-overlay.overlay--purpose .prose-subheading {
-  font-weight: 500;
+.page--purpose .letter-body {
+  font-size: 18px;
 }
 
-.updates-overlay.overlay--values .letter-body {
-  font-size: 16px;
+.page--purpose .prose-subheading {
+  font-weight: 600;
+}
+
+.page--values .letter-body {
+  font-size: 17px;
 }
 
 .section-heading {
   margin: 0 0 10px;
 }
 
-.updates-overlay.overlay--values .letter-body .section-heading {
+.page--values .letter-body .section-heading {
   margin-bottom: 10px;
 }
 
@@ -1194,8 +1485,6 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  --values-chevron-index: 0;
-  --values-chevron-glow: 0;
   color: rgba(28, 27, 26, 0.9);
   cursor: var(--cursor-light), pointer;
   transition: color 0.2s ease;
@@ -1208,13 +1497,8 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .disclosure-summary::before {
   content: ">";
   font: 11px/1 var(--mono-font);
-  color: rgba(
-    calc(28 + (255 - 28) * var(--values-chevron-glow)),
-    calc(27 + (255 - 27) * var(--values-chevron-glow)),
-    calc(26 + (255 - 26) * var(--values-chevron-glow)),
-    calc(0.9 + 0.05 * var(--values-chevron-glow))
-  );
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+  color: currentColor;
+  text-shadow: none;
   transform-origin: center;
   transition: transform 0.2s ease, color 0.2s ease;
   margin-top: 3px;
@@ -1236,13 +1520,30 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 }
 
 .disclosure-title {
-  font-size: 16px;
+  display: block;
+  font-size: 18px;
+  line-height: 1;
+  font-style: italic;
   font-weight: 400;
   color: inherit;
   transition: color 0.2s ease;
 }
 
-.updates-overlay.overlay--values .letter-body .icon-list {
+/* Cross-browser cap-height trimming for Plantin Now Italic. Its ascent is
+   0.75em, descent 0.25em, and cap height 0.682em. */
+.disclosure-title::before {
+  content: "";
+  display: table;
+  margin-bottom: -0.068em;
+}
+
+.disclosure-title::after {
+  content: "";
+  display: table;
+  margin-top: -0.25em;
+}
+
+.page--values .letter-body .icon-list {
   margin: 6px 0 14px 20px;
   padding: 0;
   list-style: none;
@@ -1259,20 +1560,11 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   position: absolute;
   inset-inline-start: 0;
   top: 0;
-  color: rgba(0, 0, 0, 0.95);
+  color: #000;
 }
 
 .theme-night .disclosure-summary {
   color: rgba(240, 240, 240, 0.8);
-}
-
-.theme-night .disclosure-summary::before {
-  color: rgba(
-    calc(200 + (255 - 200) * var(--values-chevron-glow)),
-    calc(200 + (255 - 200) * var(--values-chevron-glow)),
-    calc(200 + (255 - 200) * var(--values-chevron-glow)),
-    calc(0.65 + 0.3 * var(--values-chevron-glow))
-  );
 }
 
 .theme-night .disclosure[open] .disclosure-summary::before {
@@ -1291,6 +1583,147 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 .theme-night .icon-list--star > li::before {
   color: rgba(240, 240, 240, 0.8);
+}
+
+/* Readable page treatment */
+.content-page .letter-body a,
+.content-page .email-meta a,
+.content-page .letter-footer a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+
+.content-page .letter-body a:hover,
+.content-page .email-meta a:hover,
+.content-page .letter-footer a:hover,
+.theme-night .content-page .letter-body a:hover,
+.theme-night .content-page .email-meta a:hover,
+.theme-night .content-page .letter-footer a:hover {
+  color: #000;
+  text-decoration-style: solid;
+}
+
+.theme-night .content-page .letter-body a:hover,
+.theme-night .content-page .email-meta a:hover,
+.theme-night .content-page .letter-footer a:hover {
+  color: #fff;
+}
+
+.content-page .email-meta {
+  padding-bottom: 24px;
+  margin-bottom: 36px;
+  border-bottom: 1px solid rgba(39, 37, 34, 0.18);
+}
+
+.theme-night .content-page .email-meta {
+  border-bottom-color: rgba(244, 242, 238, 0.18);
+}
+
+.page--post-detail .letter-footer {
+  padding-top: 28px;
+  margin-top: 48px;
+  border-top: 1px solid rgba(39, 37, 34, 0.14);
+}
+
+.theme-night .page--post-detail .letter-footer {
+  border-top-color: rgba(244, 242, 238, 0.14);
+}
+
+.page--posts:not(.page--post-detail) .posts-list {
+  margin: 20px 0;
+}
+
+.page--posts:not(.page--post-detail) .posts-list li {
+  margin: 6px 0;
+}
+
+.page--posts:not(.page--post-detail) .posts-list li > a {
+  text-decoration: none;
+}
+
+.content-page .disclosure-summary {
+  color: inherit;
+  cursor: var(--cursor-dark), pointer;
+}
+
+.page--values .disclosure-summary {
+  align-items: center;
+  padding-block: 7px;
+  /* Follow the page's interpolated theme color directly. A second color
+     transition here repeatedly restarted and made the control flash. */
+  transition: none;
+}
+
+.page--values .disclosure-summary > em {
+  display: contents;
+}
+
+.page--values .disclosure-summary::before {
+  content: "";
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  margin-top: 0;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+.page--values .disclosure-title {
+  transition: none;
+}
+
+.content-page.page--values .disclosure[open] .disclosure-summary::before {
+  color: currentColor;
+  transform: rotate(45deg);
+}
+
+.content-page .disclosure-summary::before {
+  color: currentColor;
+  text-shadow: none;
+}
+
+.content-page .disclosure-summary:hover,
+.content-page .disclosure[open] .disclosure-summary:hover,
+.content-page .disclosure-summary:hover::before,
+.content-page .disclosure[open] .disclosure-summary:hover::before {
+  color: #000;
+}
+
+.theme-night .content-page .disclosure-summary {
+  color: inherit;
+  cursor: var(--cursor-light), pointer;
+}
+
+.theme-night .content-page .disclosure-summary:hover,
+.theme-night .content-page .disclosure[open] .disclosure-summary:hover,
+.theme-night .content-page .disclosure-summary:hover::before,
+.theme-night .content-page .disclosure[open] .disclosure-summary:hover::before {
+  color: #fff;
+}
+
+@media (min-width: 801px) {
+  .top-nav .menu-trigger {
+    display: none;
+  }
+
+  .top-nav .menu-links,
+  .top-nav .menu-links[hidden] {
+    display: flex;
+  }
+}
+
+@media (min-width: 801px) and (max-width: 1100px) {
+  .content-surface,
+  .page--prose .content-surface,
+  .page--post-detail .content-surface {
+    width: min(680px, calc(100vw - 360px));
+  }
 }
 
 /* ==========================================================================
@@ -1332,6 +1765,32 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
     right: 40px;
   }
 
+  .content-page {
+    padding: 125px 40px 145px;
+  }
+
+  .content-page::before {
+    background: radial-gradient(
+      ellipse 88% 120% at 50% 48%,
+      rgba(var(--page-veil), 0.985) 0%,
+      rgba(var(--page-veil), 0.985) 42%,
+      rgba(var(--page-veil), 0.96) 52%,
+      rgba(var(--page-veil), 0.72) 64%,
+      rgba(var(--page-veil), 0.34) 76%,
+      rgba(var(--page-veil), 0) 92%
+    );
+  }
+
+  .content-surface,
+  .page--prose .content-surface,
+  .page--post-detail .content-surface {
+    width: min(100%, 680px);
+  }
+
+  .page-back-nav {
+    margin-bottom: 32px;
+  }
+
   .updates-overlay {
     align-items: flex-start;
     padding-inline: 8px;
@@ -1365,22 +1824,22 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
     transition: max-height 0.22s ease;
   }
 
-  .updates-overlay.overlay--prose .letter-body,
-  .updates-overlay.overlay--posts .letter-body {
-    font-size: 16px;
-  }
-
-  .updates-overlay.overlay--post-detail .email-meta {
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .updates-overlay.overlay--values .section-heading em strong {
+  .page--prose .letter-body,
+  .page--posts .letter-body {
     font-size: 17px;
   }
 
-  .updates-overlay.overlay--posts .posts-list .post-name,
-  .updates-overlay.overlay--posts .post-date {
+  .page--post-detail .email-meta {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .page--values .section-heading em strong {
+    font-size: 18px;
+  }
+
+  .page--posts .posts-list .post-name,
+  .page--posts .post-date {
     font-size: 16px;
   }
 
@@ -1402,7 +1861,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   body:has(.page[data-page-type="home"]) .center-logo,
   body:has(.page[data-page-type="corner-logo"]) .center-logo {
     left: calc(40px + 10px);
-    top: 40px;
+    top: 35px;
   }
 
   body:has(.page[data-page-type="home"]) .main-logo,
@@ -1435,6 +1894,28 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
     right: 28px;
   }
 
+  .content-page {
+    padding: 104px 26px 120px;
+  }
+
+  .content-page::before {
+    background: radial-gradient(
+      ellipse 88% 120% at 50% 48%,
+      rgba(var(--page-veil), 0.985) 0%,
+      rgba(var(--page-veil), 0.985) 42%,
+      rgba(var(--page-veil), 0.96) 52%,
+      rgba(var(--page-veil), 0.72) 64%,
+      rgba(var(--page-veil), 0.34) 76%,
+      rgba(var(--page-veil), 0) 92%
+    );
+  }
+
+  .page--prose .letter-body,
+  .page--posts .letter-body {
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
   #site-footer {
     bottom: 28px;
     left: 28px;
@@ -1463,7 +1944,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   body:has(.page[data-page-type="home"]) .center-logo,
   body:has(.page[data-page-type="corner-logo"]) .center-logo {
     left: calc(28px + 10px);
-    top: 28px;
+    top: 23px;
   }
 
   .home-hero-text {

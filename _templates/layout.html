@@ -45,12 +45,12 @@
   <link href="/posts/feed.atom" rel="alternate" title="Earendil Posts" type="application/atom+xml">
   <link href="/posts/feed.rss" rel="alternate" title="Earendil Posts" type="application/rss+xml">
 </head>
-<body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML" class="{% if slug != "/" %}skip-intro{% endif %}">
+<body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML swap:220ms" class="{% if slug != "/" %}skip-intro{% endif %}">
   <!-- Background layer -->
   <canvas id="canvas"></canvas>
   <div id="overlay-guide-line" aria-hidden="true"></div>
   
-  <!-- Center logo (behind overlays) -->
+  <!-- Site mark -->
   <a href="/" class="center-logo" dir="ltr">
     <img class="main-logo" id="logo" src="{% if slug == "/" or slug in ["/values/", "/purpose/", "/join/", "/posts/"] or slug[:7] == "/posts/" %}/static/earendil-emblem.svg{% else %}/static/earendil-logo.svg{% endif %}" alt="Earendil">
   </a>
@@ -71,13 +71,17 @@
       </button>
     </div>
     <div class="menu-links" id="site-menu-links" hidden>
-      <a class="nav-link" href="/purpose/">Purpose</a>
-      <a class="nav-link" href="/values/">Values</a>
-      <a class="nav-link" href="/join/">Join</a>
-      <a class="nav-link" href="https://pi.dev" target="_blank" rel="noopener noreferrer">Pi</a>
-      <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer">Lefos</a>
-      <a class="nav-link" href="/posts/">Posts</a>
-      <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">Works</a>
+      <div class="menu-link-group">
+        <a class="nav-link" href="/purpose/">Purpose</a>
+        <a class="nav-link" href="/values/">Values</a>
+        <a class="nav-link" href="/join/">Join</a>
+        <a class="nav-link" href="/posts/">Posts</a>
+      </div>
+      <div class="menu-link-group menu-link-group--external" role="group" aria-label="External links">
+        <a class="nav-link" href="https://pi.dev" target="_blank" rel="noopener noreferrer">Pi<span class="external-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer">Lefos<span class="external-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">Works<span class="external-link-arrow" aria-hidden="true">↗</span></a>
+      </div>
     </div>
   </nav>
 
@@ -108,11 +112,76 @@
     htmx.on('htmx:swapError', htmxFallbackToNative);
     htmx.on('htmx:responseError', htmxFallbackToNative);
 
-    htmx.on('htmx:beforeSwap', function() {
+    var isContentPageSwap = false;
+
+    function responseHasContentPage(response) {
+      if (typeof response !== 'string') return false;
+      var responseDocument = new DOMParser().parseFromString(response, 'text/html');
+      return !!responseDocument.querySelector('.content-page');
+    }
+
+    function configurePageSwap(response, swapDetail) {
+      var currentPage = document.querySelector('.page');
+      isContentPageSwap = !!(
+        currentPage &&
+        currentPage.querySelector('.content-page') &&
+        responseHasContentPage(response)
+      );
+
+      // During content-to-content navigation, only the content surface fades.
+      // The page itself stays opaque so its background veil never flashes out.
+      document.body.classList.toggle('content-page-swap', isContentPageSwap);
+
+      if (isContentPageSwap && swapDetail) {
+        swapDetail.swapOverride = 'outerHTML swap:150ms';
+      }
+
+      if (currentPage) {
+        currentPage.classList.add('is-leaving');
+      }
+    }
+
+    htmx.on('htmx:beforeSwap', function(event) {
       document.body.classList.add('skip-intro');
+      configurePageSwap(event.detail.serverResponse, event.detail);
+    });
+
+    // History restores bypass beforeSwap, so apply the same content-page check.
+    htmx.on('htmx:historyCacheHit', function(event) {
+      configurePageSwap(event.detail.item && event.detail.item.content);
+    });
+
+    htmx.on('htmx:historyCacheMissLoad', function(event) {
+      configurePageSwap(event.detail.response);
+    });
+
+    htmx.on('htmx:afterSwap', function() {
+      window.scrollTo(0, 0);
     });
 
     htmx.on('htmx:afterSettle', function() {
+      var nextPage = document.querySelector('.page');
+      if (nextPage) {
+        nextPage.classList.remove('is-leaving');
+        if (isContentPageSwap) {
+          nextPage.classList.remove('is-entering');
+          nextPage.classList.add('is-content-entering');
+          nextPage.addEventListener('animationend', function(event) {
+            if (event.target.closest('.content-surface') && event.animationName === 'contentPageEnter') {
+              nextPage.classList.remove('is-content-entering');
+            }
+          });
+        } else {
+          nextPage.classList.remove('is-content-entering');
+          nextPage.classList.add('is-entering');
+          nextPage.addEventListener('animationend', function(event) {
+            if (event.target === nextPage && event.animationName === 'pageEnter') {
+              nextPage.classList.remove('is-entering');
+            }
+          });
+        }
+      }
+      document.body.classList.remove('content-page-swap');
       if (window.i18n) {
         window.i18n.updateDOM();
       }

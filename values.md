@@ -1,7 +1,7 @@
 ---
 title: Values
 template: page
-overlay_class: overlay--prose overlay--values
+page_class: page--prose page--values
 aria_label: Earendil values
 ---
 

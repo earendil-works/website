@@ -3,10 +3,10 @@
 {% block page_attrs %} data-page-type="corner-logo"{% endblock %}
 
 {% block body %}
-  <div class="updates-overlay{% if overlay_classes %} {{ overlay_classes }}{% endif %}" aria-hidden="true">
-    <div class="updates-letter" role="dialog" aria-label="Earendil posts">
-      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">×</a>
+  <main class="content-page{% if page_classes %} {{ page_classes }}{% endif %}">
+    <article class="content-surface" aria-label="Earendil posts">
       <div class="letter-body">
+        <h1 class="visually-hidden" data-i18n="posts.posts.title">Posts</h1>
         {% if posts %}
         <ul class="posts-list">
           {% for post in posts %}
@@ -23,6 +23,6 @@
         {% endif %}
         <p><a href="/posts/subscribe/" data-i18n="posts.posts.hearFromUs">[Hear from us]</a></p>
       </div>
-    </div>
-  </div>
+    </article>
+  </main>
 {% endblock %}
