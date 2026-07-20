@@ -1,3 +1,6 @@
+/* Prose typography for rendered markdown (Tailwind Typography port). */
+@import url('/static/prose.css');
+
 /* ==========================================================================
    Z-INDEX LAYERS
    0   - Canvas background
@@ -14,6 +17,30 @@
   --cursor-dark: url('/static/cursor-dark.svg') 12 12;
   --mono-font: 'Departure Mono', 'SFMono-Regular', ui-monospace, monospace;
   --serif-font: 'PlantinNow', 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
+
+  /* Primitive type scale. Components consume these shared steps instead of
+     introducing page-specific pixel sizes. */
+  --font-size-xs: 0.8125rem;
+  --font-size-sm: 0.9375rem;
+  --font-size-md: 1.0625rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: 1.625rem;
+  --font-size-3xl: 2.25rem;
+
+  /* Semantic roles. Reading and display text scale continuously; interface
+     and form text stay stable across viewport breakpoints. */
+  --text-ui: var(--font-size-sm);
+  --text-meta: var(--font-size-sm);
+  --text-form: var(--font-size-md);
+  --text-body: var(--font-size-md);
+  --text-reading: clamp(1.125rem, 1.05rem + 0.375vw, 1.25rem);
+  --text-title: var(--font-size-lg);
+  --text-hero: clamp(1.25rem, 0.875rem + 1.5vw, 2.5rem);
+  --leading-ui: 1.25;
+  --leading-body: 1.6;
+  --leading-tight: 1.15;
+
   --viewport-height: 100vh;
   --overlay-top-safe-zone: 30px;
   --overlay-bottom-safe-zone: 170px;
@@ -21,9 +48,19 @@
   --overlay-close-clearance: 0px;
   --overlay-border-gap: 2px;
   --scene-vertical-shift: 7vh;
+  --hero-vertical-shift: 7vh;
   --theme-transition-duration: 900ms;
   /* Exactly matches the shader's smoothstep easing. */
   --theme-transition-easing: cubic-bezier(0.333333, 0, 0.666667, 1);
+
+  /* One responsive frame controls every outer alignment. Components should
+     consume these tokens rather than introducing their own viewport offsets. */
+  --frame-inline: 75px;
+  --frame-block: 75px;
+  --frame-content-top: calc(var(--frame-block) + 76px);
+  --frame-content-bottom: calc(var(--frame-block) + 100px);
+  --frame-chrome-fade: 40px;
+  --chrome-surface: 250, 249, 246;
 }
 
 @property --page-veil-r {
@@ -48,6 +85,7 @@
   :root {
     --viewport-height: 100dvh;
     --scene-vertical-shift: 7dvh;
+    --hero-vertical-shift: 7dvh;
   }
 }
 
@@ -63,12 +101,16 @@ html, body {
 }
 
 html {
+  font-size: 100%;
   overflow-x: hidden;
 }
 
 body {
   min-height: var(--viewport-height);
   overflow-x: hidden;
+  font-family: var(--mono-font);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
 }
 
 body:has(.page[data-page-type="home"]),
@@ -138,6 +180,44 @@ canvas.shader-ready {
 }
 
 /* ==========================================================================
+   SHARED SITE FRAME
+   The page and both chrome rows share one parent and one set of gutters.
+   ========================================================================== */
+
+.site-frame {
+  position: relative;
+  min-height: var(--viewport-height);
+}
+
+.site-header,
+.site-footer-bar {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 200;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.site-header {
+  top: 0;
+  align-items: flex-start;
+  padding: var(--frame-block) var(--frame-inline) 0;
+}
+
+.site-footer-bar {
+  bottom: 0;
+  align-items: center;
+  padding: 0 var(--frame-inline) var(--frame-block);
+}
+
+.site-header > *,
+.site-footer-bar > * {
+  pointer-events: auto;
+}
+
+/* ==========================================================================
    LAYER 10: Center Logo
    ========================================================================== */
 
@@ -152,6 +232,7 @@ canvas.shader-ready {
 }
 
 .main-logo {
+  display: block;
   width: 300px;
   max-width: 65vw;
   opacity: 0;
@@ -165,15 +246,18 @@ canvas.shader-ready {
 
 body:has(.page[data-page-type="home"]) .center-logo,
 body:has(.page[data-page-type="corner-logo"]) .center-logo {
-  left: calc(75px + 10px);
-  top: 70px;
+  position: static;
   transform: none;
+  flex: 0 0 auto;
+  /* Optical exception: center the tall emblem on the first navigation row. */
+  margin-block-start: -35px;
 }
 
 body:has(.page[data-page-type="home"]) .main-logo,
 body:has(.page[data-page-type="corner-logo"]) .main-logo {
-  width: 122px;
-  max-width: calc(65vw * 0.41);
+  /* The emblem SVG has a tight viewBox, so its visible edge is the frame edge. */
+  width: 32px;
+  max-width: none;
 }
 
 /* ==========================================================================
@@ -248,7 +332,7 @@ body.content-page-swap .page.htmx-settling .content-surface {
   isolation: isolate;
   min-height: var(--viewport-height);
   box-sizing: border-box;
-  padding: 150px clamp(36px, 8vw, 150px) 175px;
+  padding: var(--frame-content-top) var(--frame-inline) var(--frame-content-bottom);
   color: #000;
   text-shadow: none;
 }
@@ -291,7 +375,9 @@ body.theme-transition-ready .content-page {
 .content-surface {
   width: min(100%, 760px);
   margin: 0 auto;
-  font: 15px/1.6 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
 }
 
 .page--prose .content-surface {
@@ -300,23 +386,6 @@ body.theme-transition-ready .content-page {
 
 .page--post-detail .content-surface {
   width: min(100%, 760px);
-}
-
-.page-back-nav {
-  margin-bottom: 42px;
-  font: 13px/1 var(--mono-font);
-}
-
-.page-back {
-  color: inherit;
-  text-decoration: none;
-  opacity: 0.62;
-  transition: opacity 0.2s ease;
-}
-
-.page-back:hover {
-  color: inherit;
-  opacity: 1;
 }
 
 .visually-hidden {
@@ -349,21 +418,17 @@ body:has(.content-page) .center-logo {
   z-index: 200;
 }
 
-body:not(.theme-night):has(.content-page) :is(.nav-link, .menu-about, .menu-chevron, #site-footer, #theme-toggle, #lang-toggle) {
+body:not(.theme-night):has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
   color: #000;
   text-shadow: none;
 }
 
-body.theme-night:has(.content-page) :is(.nav-link, .menu-about, .menu-chevron, #site-footer, #theme-toggle, #lang-toggle) {
+body.theme-night:has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
   color: #fff;
   text-shadow: none;
 }
 
-body:has(.content-page) .menu-chevron {
-  animation: none;
-}
-
-html :is(.nav-link, .menu-about, .menu-chevron, #site-footer, #theme-toggle, #lang-toggle) {
+html :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
   transition-duration: 0.52s;
   transition-timing-function: ease;
 }
@@ -388,20 +453,17 @@ body:not(.theme-night) .main-logo {
   filter: invert(1);
 }
 
-body:not(.theme-night) :is(.nav-link, .menu-about, .menu-chevron, #site-footer, #theme-toggle, #lang-toggle) {
+body:not(.theme-night) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
   color: #000;
   text-shadow: none;
 }
 
-body:not(.theme-night) .menu-chevron {
-  animation: none;
-}
-
+body:not(.theme-night) .menu-trigger-toggle,
 body:not(.theme-night) :is(.nav-link, .menu-trigger-toggle, #theme-toggle, #lang-toggle):hover {
   color: #000;
 }
 
-body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop :is(.nav-link, .menu-chevron) {
+body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-link {
   color: #000;
   text-shadow: none;
 }
@@ -413,6 +475,7 @@ body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop :is(.nav
   place-items: center;
   box-sizing: border-box;
   padding-top: 4vh;
+  padding-inline: var(--frame-inline);
   text-align: center;
   color: rgba(255, 255, 255, 0.95);
 }
@@ -420,12 +483,14 @@ body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop :is(.nav
 .home-hero-text {
   margin: 0;
   font-family: var(--serif-font);
-  font-size: clamp(20.16px, 2.16vw, 37.44px);
-  line-height: 1.12;
+  font-size: var(--text-hero);
+  line-height: var(--leading-tight);
   font-style: italic;
   font-weight: 400;
   text-wrap: balance;
-  transform: translateY(calc(-1 * var(--scene-vertical-shift)));
+  /* Anchor the lower edge at the hero's focal line so larger type expands
+     upward instead of growing equally in both directions. */
+  transform: translateY(calc(-50% - var(--hero-vertical-shift)));
 }
 
 .home-hero-open-clause {
@@ -570,7 +635,9 @@ body:not(.theme-night) .home-hero-open::after {
   background: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), url('/static/paper.png') center/256px 256px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(25, 20, 12, 0.2);
-  font: 15px/1.5 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-body);
+  line-height: 1.5;
   color: #1c1b1a;
   opacity: 0;
   transform: translateY(12px);
@@ -713,27 +780,9 @@ body:not(.theme-night) .home-hero-open::after {
    LAYER 200: Chrome (Nav, Footer, Controls)
    ========================================================================== */
 
-#fps { 
-  position: fixed; 
-  top: 10px; 
-  left: 10px; 
-  color: white; 
-  font: 16px var(--mono-font); 
-  background: rgba(0,0,0,0.5); 
-  padding: 5px 10px; 
-  z-index: 200; 
-  display: none; 
-}
-
-#fps.visible { 
-  display: block; 
-}
-
 /* Top Navigation */
 .top-nav {
-  position: fixed;
-  top: 75px;
-  right: 75px;
+  position: relative;
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -766,6 +815,8 @@ body:not(.theme-night) .home-hero-open::after {
 }
 
 .menu-trigger {
+  position: relative;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
 }
@@ -777,50 +828,28 @@ body:not(.theme-night) .home-hero-open::after {
   padding: 0;
   margin: 0;
   display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.95);
   cursor: var(--cursor-light), pointer;
 }
 
-.menu-about {
+.menu-label {
   display: inline-block;
-  font: 14px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
   letter-spacing: 0;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.95);
-  transition: opacity 0.2s ease, color 0.2s ease;
+  color: inherit;
+  transition: color 0.2s ease;
 }
 
-.top-nav.is-open .menu-about {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.menu-chevron {
-  display: inline-block;
-  position: relative;
-  top: 1px;
-  font: 20px/1 var(--mono-font);
-  letter-spacing: 0;
-  color: rgba(255, 255, 255, 0.45);
-  transform-origin: center;
-  transition: transform 0.25s ease, color 0.25s ease;
-}
-
-.menu-trigger-toggle:hover .menu-about,
-.menu-trigger-toggle:hover .menu-chevron {
+.menu-trigger-toggle:hover {
   color: #fff;
-  animation: none;
 }
 
-.top-nav.is-open .menu-chevron {
-  animation: none;
-  transform: rotate(90deg);
-  color: rgba(255, 255, 255, 0.95);
-}
-
-body:not(.theme-night) .menu-trigger-toggle:hover :is(.menu-about, .menu-chevron),
-body:not(.theme-night) .top-nav.is-open .menu-chevron {
+body:not(.theme-night) .menu-trigger-toggle:hover,
+body:not(.theme-night) .top-nav.is-open .menu-trigger-toggle {
   color: #000;
   text-shadow: none;
 }
@@ -850,13 +879,15 @@ body:not(.theme-night) .top-nav.is-open .menu-chevron {
 .external-link-arrow {
   align-self: flex-start;
   margin-left: -2px;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   line-height: 1;
   opacity: 0.72;
 }
 
 .nav-link {
-  font: 14px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
   text-transform: uppercase;
   letter-spacing: 0;
   color: rgba(255, 255, 255, 0.95);
@@ -909,7 +940,9 @@ body:not(.theme-night) .nav-link::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-link:hover::after {
+  .nav-link:hover::after,
+  .page--values .disclosure-summary:is(:hover, :focus-visible)::after,
+  .posts-list a:is(:hover, :focus-visible) .post-name::after {
     animation: none;
   }
 }
@@ -926,20 +959,17 @@ body:not(.theme-night) .nav-link::after {
 
 /* Footer */
 #site-footer {
-  position: fixed;
-  bottom: 75px;
-  left: 75px;
+  position: relative;
   z-index: 200;
   color: rgba(255, 255, 255, 0.95);
-  font: 14px/1 var(--mono-font);
-  padding: 6px 10px;
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
 }
 
 /* Bottom Controls */
 .bottom-controls {
-  position: fixed;
-  bottom: 75px;
-  right: 75px;
+  position: relative;
   z-index: 200;
   display: flex;
   align-items: center;
@@ -950,7 +980,9 @@ body:not(.theme-night) .nav-link::after {
   border: 0;
   background: none;
   color: rgba(255, 255, 255, 0.95);
-  font: 14px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
   padding: 6px 10px;
   cursor: var(--cursor-light), pointer;
   transition: color 0.2s ease;
@@ -984,7 +1016,9 @@ body:not(.theme-night) .nav-link::after {
   border: 0;
   background: none;
   color: rgba(255, 255, 255, 0.95);
-  font: 14px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
   padding: 6px 10px;
   cursor: var(--cursor-light), pointer;
   transition: color 0.2s ease;
@@ -1061,7 +1095,9 @@ body:not(.theme-night) .nav-link::after {
   border: 0;
   background: none;
   color: rgba(255, 255, 255, 0.8);
-  font: 13px/1.4 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: 1.4;
   padding: 8px 16px;
   text-align: start;
   cursor: var(--cursor-dark), pointer;
@@ -1084,7 +1120,7 @@ body:not(.theme-night) .nav-link::after {
 .lang-menu .lang-check {
   width: 1.2em;
   text-align: center;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   opacity: 0;
 }
 
@@ -1094,7 +1130,7 @@ body:not(.theme-night) .nav-link::after {
 
 .lang-menu .lang-code {
   opacity: 0.5;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
 }
 
@@ -1103,13 +1139,31 @@ body:not(.theme-night) .nav-link::after {
    ========================================================================== */
 
 .email-meta {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 1ch;
+  align-items: baseline;
   margin-bottom: 24px;
-  opacity: 0.85;
+  font-size: var(--text-meta);
+  line-height: 1.5;
 }
 
 .email-meta p {
-  margin-bottom: 0;
+  display: contents;
+}
+
+.email-meta-key,
+.email-meta-value {
+  min-width: 0;
   line-height: 1.5;
+}
+
+.email-meta-key {
+  opacity: 0.6;
+}
+
+.email-meta-value {
+  overflow-wrap: anywhere;
 }
 
 .email-meta a {
@@ -1129,7 +1183,8 @@ body:not(.theme-night) .nav-link::after {
 
 .email-meta + .letter-body {
   font-family: var(--serif-font);
-  font-size: 18px;
+  font-size: var(--text-reading);
+  line-height: var(--leading-body);
   font-weight: 400;
 }
 
@@ -1145,24 +1200,26 @@ body:not(.theme-night) .nav-link::after {
   font-weight: 700;
 }
 
-.letter-body p {
+/* These letter defaults live in :where() so they carry zero specificity and
+   .prose (imported above) can override them on markdown-rendered bodies. */
+:where(.letter-body) p {
   margin-bottom: 20px;
 }
 
-.letter-body ul,
-.letter-body ol {
+:where(.letter-body) ul,
+:where(.letter-body) ol {
   list-style: none;
   padding-inline-start: 0;
   margin: 20px 0;
 }
 
-.letter-body li {
+:where(.letter-body) li {
   position: relative;
   padding-inline-start: 1.4em;
   margin: 6px 0;
 }
 
-.letter-body li::before {
+:where(.letter-body) li::before {
   content: "•";
   position: absolute;
   inset-inline-start: 0;
@@ -1182,16 +1239,55 @@ body:not(.theme-night) .nav-link::after {
 }
 
 .post-date {
+  font-size: var(--text-meta);
   font-weight: 400;
+  color: rgba(25, 24, 22, 0.6);
+}
+
+.theme-night .post-date {
+  color: rgba(240, 240, 240, 0.6);
 }
 
 .posts-list .post-name {
   margin-inline-start: 0.6em;
   font-family: var(--serif-font);
-  font-size: 18px;
-  line-height: 1.1;
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
   font-style: italic;
   font-weight: 400;
+}
+
+/* Hover treatment matching the values disclosures: dotted underline on the
+   title plus the spinning star. The star lives on the name's ::after so it
+   follows the title text, including when it wraps below the date on mobile.
+   Being an inline-block, it is not painted by the propagated underline. */
+.posts-list a:is(:hover, :focus-visible) .post-name {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+
+.posts-list .post-name::after {
+  content: "";
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-inline-start: 8px;
+  background: url('/static/cursor-light.svg') center/contain no-repeat;
+  transform-origin: center;
+  vertical-align: -2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body:not(.theme-night) .posts-list .post-name::after {
+  background-image: url('/static/cursor-dark.svg');
+}
+
+.posts-list a:is(:hover, :focus-visible) .post-name::after {
+  opacity: 1;
+  animation: navLinkStarSpin 1.15s linear infinite;
 }
 
 .letter-body a {
@@ -1212,6 +1308,7 @@ body:not(.theme-night) .nav-link::after {
 
 .letter-footer {
   margin-top: 28px;
+  font-size: var(--text-meta);
   font-weight: 400;
   line-height: 1.5;
   color: rgba(25, 24, 22, 0.6);
@@ -1271,8 +1368,8 @@ body:not(.theme-night) .nav-link::after {
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: inherit;
-  line-height: 1.6;
+  font-size: var(--text-form);
+  line-height: var(--leading-body);
   color: inherit;
   caret-color: rgba(25, 24, 22, 0.8);
   cursor: inherit;
@@ -1360,9 +1457,9 @@ body:not(.theme-night) .nav-link::after {
 
 .updates-message {
   display: none;
-  font-size: inherit;
+  font-size: var(--text-form);
   font-family: inherit;
-  line-height: 1.6;
+  line-height: var(--leading-body);
   color: inherit;
   margin: 0;
   white-space: nowrap;
@@ -1416,7 +1513,9 @@ body:not(.theme-night) .nav-link::after {
   left: 50%;
   transform: translate(-50%, -50%) translateY(20px);
   text-align: center;
-  font: 15px/1.5 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-body);
+  line-height: 1.5;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.02em;
@@ -1438,8 +1537,8 @@ body:not(.theme-night) .nav-link::after {
 .page--prose .letter-body {
   font-family: var(--serif-font);
   font-weight: 400;
-  font-size: 20px;
-  line-height: 1.6;
+  font-size: var(--text-reading);
+  line-height: var(--leading-body);
 }
 
 .page--prose .letter-body strong,
@@ -1448,16 +1547,15 @@ body:not(.theme-night) .nav-link::after {
   font-weight: 700;
 }
 
-.page--purpose .letter-body {
-  font-size: 18px;
-}
-
 .page--purpose .prose-subheading {
   font-weight: 600;
 }
 
-.page--values .letter-body {
-  font-size: 17px;
+/* Indexes and forms use the stable body role. Individual post bodies receive
+   the reading role from .email-meta + .letter-body above. */
+.page--posts:not(.page--post-detail) .letter-body {
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
 }
 
 .section-heading {
@@ -1469,7 +1567,7 @@ body:not(.theme-night) .nav-link::after {
 }
 
 .section-heading em strong {
-  font-size: 18px;
+  font-size: var(--text-title);
 }
 
 .section-heading--spaced {
@@ -1496,7 +1594,9 @@ body:not(.theme-night) .nav-link::after {
 
 .disclosure-summary::before {
   content: ">";
-  font: 11px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--font-size-xs);
+  line-height: 1;
   color: currentColor;
   text-shadow: none;
   transform-origin: center;
@@ -1521,8 +1621,8 @@ body:not(.theme-night) .nav-link::after {
 
 .disclosure-title {
   display: block;
-  font-size: 18px;
-  line-height: 1;
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
   font-style: italic;
   font-weight: 400;
   color: inherit;
@@ -1678,6 +1778,36 @@ body:not(.theme-night) .nav-link::after {
   transition: none;
 }
 
+.page--values .disclosure-summary:is(:hover, :focus-visible) .disclosure-title {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+
+/* Spinning star on hover, matching .nav-link. The summary's ::before is the
+   chevron and the title's pseudo-elements trim cap height, so the star lives
+   on the summary's ::after. */
+.page--values .disclosure-summary::after {
+  content: "";
+  width: 15px;
+  height: 15px;
+  background: url('/static/cursor-light.svg') center/contain no-repeat;
+  transform-origin: center;
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body:not(.theme-night) .page--values .disclosure-summary::after {
+  background-image: url('/static/cursor-dark.svg');
+}
+
+.page--values .disclosure-summary:is(:hover, :focus-visible)::after {
+  opacity: 1;
+  animation: navLinkStarSpin 1.15s linear infinite;
+}
+
 .content-page.page--values .disclosure[open] .disclosure-summary::before {
   color: currentColor;
   transform: rotate(45deg);
@@ -1716,6 +1846,7 @@ body:not(.theme-night) .nav-link::after {
   .top-nav .menu-links[hidden] {
     display: flex;
   }
+
 }
 
 @media (min-width: 801px) and (max-width: 1100px) {
@@ -1753,20 +1884,176 @@ body:not(.theme-night) .nav-link::after {
 
 @media (max-width: 800px) {
   :root {
+    --text-hero: var(--font-size-xl);
+    --hero-vertical-shift: 3vh;
     --overlay-top-safe-zone: 58px;
     --overlay-bottom-safe-zone: 140px;
     --overlay-card-chrome: 56px;
     --overlay-close-clearance: 26px;
     --overlay-mobile-top-gap: 58px;
+    --frame-inline: 40px;
+    --frame-block: 40px;
+    --frame-chrome-fade: 64px;
+    --frame-chrome-clearance: 20px;
+    --frame-content-top: calc(var(--frame-block) + 88px);
+    --frame-content-bottom: calc(var(--frame-block) + 92px);
+  }
+
+  @supports (height: 100dvh) {
+    :root {
+      --hero-vertical-shift: 3dvh;
+    }
+  }
+
+  body.mobile-menu-open {
+    overflow: hidden;
+  }
+
+  .site-header {
+    z-index: 220;
   }
 
   .top-nav {
-    top: 40px;
-    right: 40px;
+    z-index: 300;
   }
 
-  .content-page {
-    padding: 125px 40px 145px;
+  .top-nav.has-overlap-backdrop::before {
+    display: none;
+  }
+
+  .menu-trigger {
+    justify-content: flex-end;
+  }
+
+  .menu-trigger-toggle {
+    min-height: 44px;
+    margin: -15px -10px;
+    padding: 15px 10px;
+  }
+
+  .top-nav .menu-links {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: calc(var(--frame-block) + 44px) var(--frame-inline) var(--frame-block);
+    align-items: flex-end;
+    gap: 8px;
+    color: #000;
+    animation: mobileMenuPanelIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .top-nav .menu-links::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: #faf9f6;
+    background-image:
+      linear-gradient(rgba(250, 249, 246, 0.97), rgba(250, 249, 246, 0.97)),
+      url('/static/paper.png');
+    background-size: auto, 260px 260px;
+    /* The menu surface fades across the left half, then remains fully opaque
+       behind the right-aligned navigation. */
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 50%, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 50%, #000 100%);
+  }
+
+  .top-nav.is-closing .menu-links {
+    pointer-events: none;
+    animation: mobileMenuPanelOut 0.18s ease-in both;
+  }
+
+  .theme-night .top-nav .menu-links {
+    color: #fff;
+  }
+
+  .theme-night .top-nav .menu-links::before {
+    background-color: #2e2d2b;
+    background-image:
+      linear-gradient(rgba(46, 45, 43, 0.97), rgba(46, 45, 43, 0.97)),
+      url('/static/paper-dark.png');
+  }
+
+  .top-nav .menu-links[hidden] {
+    display: none;
+  }
+
+  .top-nav .menu-link-group {
+    position: relative;
+    z-index: 1;
+    width: auto;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .top-nav .menu-link-group--external {
+    margin-top: 8px;
+    padding-top: 0;
+    border: 0;
+  }
+
+  .top-nav .nav-link {
+    position: relative;
+    width: max-content;
+    min-width: 44px;
+    min-height: 44px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 0 0 16px;
+    justify-content: flex-end;
+    touch-action: manipulation;
+    text-align: end;
+    font-size: var(--text-ui);
+    line-height: var(--leading-ui);
+  }
+
+  .top-nav .nav-link::after {
+    position: absolute;
+    inset-inline-end: calc(100% + 6px);
+    pointer-events: none;
+  }
+
+  .top-nav .external-link-arrow {
+    align-self: center;
+    transform: translateY(1px);
+  }
+
+  .menu-trigger-toggle:focus-visible,
+  .top-nav .nav-link:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  /* On scrolling pages, the fixed chrome gets an opaque-to-transparent veil.
+     Content remains visible as it passes underneath, without colliding with
+     the logo, menu, footer, or controls. */
+  body:has(.content-page) .site-header {
+    padding-bottom: calc(var(--frame-chrome-fade) + var(--frame-chrome-clearance));
+    background: linear-gradient(
+      to bottom,
+      rgba(var(--chrome-surface), 1) 0%,
+      rgba(var(--chrome-surface), 1) calc(100% - var(--frame-chrome-fade)),
+      rgba(var(--chrome-surface), 0) 100%
+    );
+  }
+
+  body:has(.content-page) .site-footer-bar {
+    padding-top: calc(var(--frame-chrome-fade) + var(--frame-chrome-clearance));
+    background: linear-gradient(
+      to top,
+      rgba(var(--chrome-surface), 1) 0%,
+      rgba(var(--chrome-surface), 1) calc(100% - var(--frame-chrome-fade)),
+      rgba(var(--chrome-surface), 0) 100%
+    );
+  }
+
+  .theme-night {
+    --chrome-surface: 46, 45, 43;
   }
 
   .content-page::before {
@@ -1785,10 +2072,6 @@ body:not(.theme-night) .nav-link::after {
   .page--prose .content-surface,
   .page--post-detail .content-surface {
     width: min(100%, 680px);
-  }
-
-  .page-back-nav {
-    margin-bottom: 32px;
   }
 
   .updates-overlay {
@@ -1824,34 +2107,6 @@ body:not(.theme-night) .nav-link::after {
     transition: max-height 0.22s ease;
   }
 
-  .page--prose .letter-body,
-  .page--posts .letter-body {
-    font-size: 17px;
-  }
-
-  .page--post-detail .email-meta {
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
-  .page--values .section-heading em strong {
-    font-size: 18px;
-  }
-
-  .page--posts .posts-list .post-name,
-  .page--posts .post-date {
-    font-size: 16px;
-  }
-
-  #site-footer {
-    bottom: 40px;
-    left: 40px;
-  }
-
-  .bottom-controls {
-    bottom: 40px;
-    right: 40px;
-  }
 
   .main-logo {
     width: 210px;
@@ -1860,18 +2115,42 @@ body:not(.theme-night) .nav-link::after {
 
   body:has(.page[data-page-type="home"]) .center-logo,
   body:has(.page[data-page-type="corner-logo"]) .center-logo {
-    left: calc(40px + 10px);
-    top: 35px;
+    margin-block-start: -10px;
   }
 
   body:has(.page[data-page-type="home"]) .main-logo,
   body:has(.page[data-page-type="corner-logo"]) .main-logo {
-    width: 85px;
-    max-width: calc(65vw * 0.29);
+    width: 22px;
+    max-width: none;
   }
 
-  .home-hero-text {
-    font-size: clamp(15.84px, 3.456vw, 25.2px);
+
+  @keyframes mobileMenuPanelIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes mobileMenuPanelOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .top-nav .menu-links {
+      animation-duration: 0.01ms;
+    }
   }
 
 }
@@ -1887,15 +2166,8 @@ body:not(.theme-night) .nav-link::after {
     --overlay-card-chrome: 44px;
     --overlay-close-clearance: 22px;
     --overlay-mobile-top-gap: 46px;
-  }
-
-  .top-nav {
-    top: 28px;
-    right: 28px;
-  }
-
-  .content-page {
-    padding: 104px 26px 120px;
+    --frame-inline: 28px;
+    --frame-block: 28px;
   }
 
   .content-page::before {
@@ -1910,20 +2182,7 @@ body:not(.theme-night) .nav-link::after {
     );
   }
 
-  .page--prose .letter-body,
-  .page--posts .letter-body {
-    font-size: 16px;
-    line-height: 1.55;
-  }
-
-  #site-footer {
-    bottom: 28px;
-    left: 28px;
-  }
-
   .bottom-controls {
-    bottom: 28px;
-    right: 28px;
     gap: 8px;
   }
 
@@ -1941,16 +2200,8 @@ body:not(.theme-night) .nav-link::after {
     margin-inline-start: 0;
   }
 
-  body:has(.page[data-page-type="home"]) .center-logo,
-  body:has(.page[data-page-type="corner-logo"]) .center-logo {
-    left: calc(28px + 10px);
-    top: 23px;
-  }
-
   .home-hero-text {
-    font-size: clamp(12.96px, 4.896vw, 20.16px);
-    line-height: 1.18;
-    width: min(92vw, 680px);
+    width: 100%;
   }
 
 }

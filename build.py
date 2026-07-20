@@ -336,11 +336,6 @@ def build_to(build_dir: Path) -> None:
             page_classes.extend(extra_page_classes.split())
         elif isinstance(extra_page_classes, list):
             page_classes.extend(str(value) for value in extra_page_classes if value)
-        # Compute the parent URL used by post-page back links.
-        if slug.startswith("/posts/") and slug != "/posts/":
-            dismiss_url = "/posts/"
-        else:
-            dismiss_url = "/"
         page = dict(frontmatter)
         if "date" in page:
             page["date_day"] = format_day_from_date(page.get("date", ""))
@@ -355,7 +350,6 @@ def build_to(build_dir: Path) -> None:
             slug=slug,
             posts=updates,
             is_posts_section=slug.startswith("/posts/"),
-            dismiss_url=dismiss_url,
             page_classes=" ".join(page_classes),
         )
         output_path.write_text(rendered)
