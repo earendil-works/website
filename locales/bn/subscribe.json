@@ -4,10 +4,10 @@
   "subscribe.placeholder": "আপনার@ইমেইল.com",
   "subscribe.success": "স্বাগতম",
   "subscribe.title": "Earendil থেকে খবর",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "আনসাবস্ক্রাইব",
+  "unsubscribe.error.generic": "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।",
+  "unsubscribe.error.invalidEmail": "একটি বৈধ ইমেল ঠিকানা লিখুন।",
+  "unsubscribe.intro": "সব নিউজলেটার থেকে আনসাবস্ক্রাইব করতে আপনার ইমেল ঠিকানা লিখুন।",
+  "unsubscribe.loading": "আনসাবস্ক্রাইব করা হচ্ছে…",
+  "unsubscribe.success": "আপনার সাবস্ক্রিপশন বাতিল করা হয়েছে।"
 }

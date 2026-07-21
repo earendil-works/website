@@ -4,10 +4,10 @@
   "subscribe.placeholder": "din@email.no",
   "subscribe.success": "Velkommen om bord",
   "subscribe.title": "Nyheter fra Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Meld av",
+  "unsubscribe.error.generic": "Noe gikk galt. Prøv igjen.",
+  "unsubscribe.error.invalidEmail": "Skriv inn en gyldig e-postadresse.",
+  "unsubscribe.intro": "Skriv inn e-postadressen din for å melde deg av alle nyhetsbrev.",
+  "unsubscribe.loading": "Melder av…",
+  "unsubscribe.success": "Du er meldt av."
 }

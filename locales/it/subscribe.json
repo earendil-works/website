@@ -4,10 +4,10 @@
   "subscribe.placeholder": "tua@email.it",
   "subscribe.success": "Benvenuto a bordo",
   "subscribe.title": "Notizie da Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Annulla iscrizione",
+  "unsubscribe.error.generic": "Qualcosa è andato storto. Riprova.",
+  "unsubscribe.error.invalidEmail": "Inserisci un indirizzo email valido.",
+  "unsubscribe.intro": "Inserisci il tuo indirizzo email per annullare l’iscrizione a tutte le newsletter.",
+  "unsubscribe.loading": "Annullamento iscrizione…",
+  "unsubscribe.success": "La tua iscrizione è stata annullata."
 }

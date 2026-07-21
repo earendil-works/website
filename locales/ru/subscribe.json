@@ -4,10 +4,10 @@
   "subscribe.placeholder": "ваш@email.com",
   "subscribe.success": "Добро пожаловать на борт",
   "subscribe.title": "Новости от Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Отписаться",
+  "unsubscribe.error.generic": "Что-то пошло не так. Попробуйте ещё раз.",
+  "unsubscribe.error.invalidEmail": "Пожалуйста, введите корректный адрес электронной почты.",
+  "unsubscribe.intro": "Введите адрес электронной почты, чтобы отписаться от всех рассылок.",
+  "unsubscribe.loading": "Отписка…",
+  "unsubscribe.success": "Вы отписались."
 }

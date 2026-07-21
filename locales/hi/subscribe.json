@@ -4,10 +4,10 @@
   "subscribe.placeholder": "आपका@ईमेल.com",
   "subscribe.success": "स्वागत है",
   "subscribe.title": "Earendil से समाचार",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "सदस्यता समाप्त करें",
+  "unsubscribe.error.generic": "कुछ गलत हो गया। कृपया फिर से प्रयास करें।",
+  "unsubscribe.error.invalidEmail": "कृपया एक मान्य ईमेल पता दर्ज करें।",
+  "unsubscribe.intro": "सभी न्यूज़लेटर से सदस्यता समाप्त करने के लिए अपना ईमेल पता दर्ज करें।",
+  "unsubscribe.loading": "सदस्यता समाप्त की जा रही है…",
+  "unsubscribe.success": "आपकी सदस्यता समाप्त कर दी गई है।"
 }

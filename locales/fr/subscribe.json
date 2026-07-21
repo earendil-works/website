@@ -4,10 +4,10 @@
   "subscribe.placeholder": "votre@email.fr",
   "subscribe.success": "Bienvenue à bord",
   "subscribe.title": "Nouvelles d'Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Se désabonner",
+  "unsubscribe.error.generic": "Une erreur est survenue. Veuillez réessayer.",
+  "unsubscribe.error.invalidEmail": "Veuillez saisir une adresse e-mail valide.",
+  "unsubscribe.intro": "Saisissez votre adresse e-mail pour vous désabonner de toutes les newsletters.",
+  "unsubscribe.loading": "Désabonnement…",
+  "unsubscribe.success": "Vous avez été désabonné."
 }

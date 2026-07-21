@@ -4,10 +4,10 @@
   "subscribe.placeholder": "din@email.se",
   "subscribe.success": "Välkommen ombord",
   "subscribe.title": "Nyheter från Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Avsluta prenumeration",
+  "unsubscribe.error.generic": "Något gick fel. Försök igen.",
+  "unsubscribe.error.invalidEmail": "Ange en giltig e-postadress.",
+  "unsubscribe.intro": "Ange din e-postadress för att avsluta prenumerationen på alla nyhetsbrev.",
+  "unsubscribe.loading": "Avslutar prenumeration…",
+  "unsubscribe.success": "Din prenumeration har avslutats."
 }

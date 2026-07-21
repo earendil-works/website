@@ -4,10 +4,10 @@
   "subscribe.placeholder": "jouw@email.nl",
   "subscribe.success": "Welkom aan boord",
   "subscribe.title": "Nieuws van Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Uitschrijven",
+  "unsubscribe.error.generic": "Er is iets misgegaan. Probeer het opnieuw.",
+  "unsubscribe.error.invalidEmail": "Voer een geldig e-mailadres in.",
+  "unsubscribe.intro": "Voer je e-mailadres in om je af te melden voor alle nieuwsbrieven.",
+  "unsubscribe.loading": "Bezig met uitschrijven…",
+  "unsubscribe.success": "Je bent uitgeschreven."
 }

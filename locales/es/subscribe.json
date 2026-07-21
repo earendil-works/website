@@ -4,10 +4,10 @@
   "subscribe.placeholder": "tu@correo.com",
   "subscribe.success": "Bienvenido a bordo",
   "subscribe.title": "Recibe noticias de Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Darse de baja",
+  "unsubscribe.error.generic": "Algo salió mal. Inténtalo de nuevo.",
+  "unsubscribe.error.invalidEmail": "Introduce una dirección de correo válida.",
+  "unsubscribe.intro": "Introduce tu correo electrónico para darte de baja de todos los boletines.",
+  "unsubscribe.loading": "Dando de baja…",
+  "unsubscribe.success": "Tu suscripción ha sido cancelada."
 }

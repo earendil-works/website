@@ -4,10 +4,10 @@
   "subscribe.placeholder": "email@adresiniz.com",
   "subscribe.success": "Aramıza hoş geldiniz",
   "subscribe.title": "Earendil'den haberler",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Abonelikten çık",
+  "unsubscribe.error.generic": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin.",
+  "unsubscribe.error.invalidEmail": "Lütfen geçerli bir e-posta adresi girin.",
+  "unsubscribe.intro": "Tüm bültenlerden çıkmak için e-posta adresinizi girin.",
+  "unsubscribe.loading": "Abonelikten çıkılıyor…",
+  "unsubscribe.success": "Aboneliğiniz iptal edildi."
 }

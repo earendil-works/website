@@ -4,10 +4,10 @@
   "subscribe.placeholder": "email@cuaban.com",
   "subscribe.success": "Chào mừng bạn",
   "subscribe.title": "Tin tức từ Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Hủy đăng ký",
+  "unsubscribe.error.generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
+  "unsubscribe.error.invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+  "unsubscribe.intro": "Nhập địa chỉ email của bạn để hủy đăng ký tất cả các bản tin.",
+  "unsubscribe.loading": "Đang hủy đăng ký…",
+  "unsubscribe.success": "Bạn đã hủy đăng ký."
 }

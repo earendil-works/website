@@ -4,10 +4,10 @@
   "subscribe.placeholder": "email@anda.com",
   "subscribe.success": "Selamat datang",
   "subscribe.title": "Berita dari Earendil",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "Berhenti berlangganan",
+  "unsubscribe.error.generic": "Terjadi kesalahan. Silakan coba lagi.",
+  "unsubscribe.error.invalidEmail": "Masukkan alamat email yang valid.",
+  "unsubscribe.intro": "Masukkan alamat email Anda untuk berhenti berlangganan dari semua buletin.",
+  "unsubscribe.loading": "Sedang berhenti berlangganan…",
+  "unsubscribe.success": "Langganan Anda telah dihentikan."
 }

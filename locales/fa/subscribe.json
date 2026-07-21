@@ -4,10 +4,10 @@
   "subscribe.placeholder": "ایمیل@شما.com",
   "subscribe.success": "به کشتی خوش آمدید",
   "subscribe.title": "اخبار ارندیل",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "لغو اشتراک",
+  "unsubscribe.error.generic": "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
+  "unsubscribe.error.invalidEmail": "لطفاً یک نشانی ایمیل معتبر وارد کنید.",
+  "unsubscribe.intro": "برای لغو اشتراک از همه خبرنامه‌ها، نشانی ایمیل خود را وارد کنید.",
+  "unsubscribe.loading": "در حال لغو اشتراک…",
+  "unsubscribe.success": "اشتراک شما لغو شد."
 }

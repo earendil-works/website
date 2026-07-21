@@ -4,10 +4,10 @@
   "subscribe.placeholder": "بريدك@الإلكتروني.com",
   "subscribe.success": "أهلاً بك على متن السفينة",
   "subscribe.title": "استمع من إيريندل",
-  "unsubscribe.button.title": "Unsubscribe",
-  "unsubscribe.error.generic": "Something went wrong. Please try again.",
-  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
-  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
-  "unsubscribe.loading": "Unsubscribing…",
-  "unsubscribe.success": "You have been unsubscribed."
+  "unsubscribe.button.title": "إلغاء الاشتراك",
+  "unsubscribe.error.generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "unsubscribe.error.invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صالح.",
+  "unsubscribe.intro": "أدخل عنوان بريدك الإلكتروني لإلغاء الاشتراك من جميع النشرات.",
+  "unsubscribe.loading": "جارٍ إلغاء الاشتراك…",
+  "unsubscribe.success": "تم إلغاء اشتراكك."
 }
