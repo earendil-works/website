@@ -126,6 +126,23 @@
 
     var isContentPageSwap = false;
 
+    // htmx swaps DOM but does not restore scroll on back/forward, so a blanket
+    // scrollTo(0,0) on every swap would yank a reader from the middle of a long
+    // post back to the top when they press Back. Remember each page's scroll
+    // offset and restore it on history-driven swaps; forward navigation resets
+    // to the top.
+    var scrollMemory = {};
+    var pendingHistoryPath = null;
+
+    function pathKey(url) {
+      try { return new URL(url, location.href).pathname; }
+      catch (err) { return url; }
+    }
+
+    function captureScroll() {
+      scrollMemory[pathKey(window.location.href)] = window.scrollY;
+    }
+
     function responseHasContentPage(response) {
       if (typeof response !== 'string') return false;
       var responseDocument = new DOMParser().parseFromString(response, 'text/html');
@@ -154,21 +171,33 @@
     }
 
     htmx.on('htmx:beforeSwap', function(event) {
+      captureScroll();
+      pendingHistoryPath = null;
       document.body.classList.add('skip-intro');
       configurePageSwap(event.detail.serverResponse, event.detail);
     });
 
     // History restores bypass beforeSwap, so apply the same content-page check.
     htmx.on('htmx:historyCacheHit', function(event) {
+      captureScroll();
+      pendingHistoryPath = pathKey(event.detail.path);
       configurePageSwap(event.detail.item && event.detail.item.content);
     });
 
     htmx.on('htmx:historyCacheMissLoad', function(event) {
+      captureScroll();
+      pendingHistoryPath = pathKey(event.detail.path);
       configurePageSwap(event.detail.response);
     });
 
     htmx.on('htmx:afterSwap', function() {
-      window.scrollTo(0, 0);
+      var historyPath = pendingHistoryPath;
+      pendingHistoryPath = null;
+      if (historyPath !== null) {
+        window.scrollTo(0, scrollMemory[historyPath] || 0);
+      } else {
+        window.scrollTo(0, 0);
+      }
     });
 
     htmx.on('htmx:afterSettle', function() {
