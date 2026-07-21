@@ -1,4 +1,5 @@
 {
-  "error.404.title": "לא נמצא",
-  "error.404.message": "הוא אבד, ולא נראה שוב."
+  "error.404.aria": "Page not found",
+  "error.404.message": "הוא אבד, ולא נראה שוב.",
+  "error.404.title": "לא נמצא"
 }

@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Earendil 动态",
-  "subscribe.placeholder": "your@email.com",
+  "subscribe.error": "出错了",
   "subscribe.loading": "光速存储中",
+  "subscribe.placeholder": "your@email.com",
   "subscribe.success": "欢迎加入",
-  "subscribe.error": "出错了"
+  "subscribe.title": "Earendil 动态",
+  "unsubscribe.button.title": "Unsubscribe",
+  "unsubscribe.error.generic": "Something went wrong. Please try again.",
+  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
+  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
+  "unsubscribe.loading": "Unsubscribing…",
+  "unsubscribe.success": "You have been unsubscribed."
 }

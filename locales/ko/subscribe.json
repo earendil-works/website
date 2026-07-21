@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Earendil 소식",
-  "subscribe.placeholder": "your@email.com",
+  "subscribe.error": "문제가 발생했습니다",
   "subscribe.loading": "빛의 속도로 저장 중",
+  "subscribe.placeholder": "your@email.com",
   "subscribe.success": "환영합니다",
-  "subscribe.error": "문제가 발생했습니다"
+  "subscribe.title": "Earendil 소식",
+  "unsubscribe.button.title": "Unsubscribe",
+  "unsubscribe.error.generic": "Something went wrong. Please try again.",
+  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
+  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
+  "unsubscribe.loading": "Unsubscribing…",
+  "unsubscribe.success": "You have been unsubscribed."
 }

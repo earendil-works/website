@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "חדשות מאֶרֶנדיל",
-  "subscribe.placeholder": "האימייל@שלך.com",
+  "subscribe.error": "משהו השתבש",
   "subscribe.loading": "שומר במהירות האור",
+  "subscribe.placeholder": "האימייל@שלך.com",
   "subscribe.success": "ברוכים הבאים על הסיפון",
-  "subscribe.error": "משהו השתבש"
+  "subscribe.title": "חדשות מאֶרֶנדיל",
+  "unsubscribe.button.title": "Unsubscribe",
+  "unsubscribe.error.generic": "Something went wrong. Please try again.",
+  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
+  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
+  "unsubscribe.loading": "Unsubscribing…",
+  "unsubscribe.success": "You have been unsubscribed."
 }

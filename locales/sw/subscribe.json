@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Habari kutoka Earendil",
-  "subscribe.placeholder": "barua@pepe.yako",
+  "subscribe.error": "Kuna kitu kilienda vibaya",
   "subscribe.loading": "Kuhifadhi kwa kasi ya mwanga",
+  "subscribe.placeholder": "barua@pepe.yako",
   "subscribe.success": "Karibu",
-  "subscribe.error": "Kuna kitu kilienda vibaya"
+  "subscribe.title": "Habari kutoka Earendil",
+  "unsubscribe.button.title": "Unsubscribe",
+  "unsubscribe.error.generic": "Something went wrong. Please try again.",
+  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
+  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
+  "unsubscribe.loading": "Unsubscribing…",
+  "unsubscribe.success": "You have been unsubscribed."
 }

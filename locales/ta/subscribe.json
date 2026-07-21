@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Earendil இலிருந்து செய்திகள்",
-  "subscribe.placeholder": "உங்கள்@மின்னஞ்சல்.com",
+  "subscribe.error": "ஏதோ தவறு நடந்தது",
   "subscribe.loading": "ஒளியின் வேகத்தில் சேமிக்கிறது",
+  "subscribe.placeholder": "உங்கள்@மின்னஞ்சல்.com",
   "subscribe.success": "வரவேற்கிறோம்",
-  "subscribe.error": "ஏதோ தவறு நடந்தது"
+  "subscribe.title": "Earendil இலிருந்து செய்திகள்",
+  "unsubscribe.button.title": "Unsubscribe",
+  "unsubscribe.error.generic": "Something went wrong. Please try again.",
+  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
+  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
+  "unsubscribe.loading": "Unsubscribing…",
+  "unsubscribe.success": "You have been unsubscribed."
 }

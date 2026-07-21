@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Earendil से समाचार",
-  "subscribe.placeholder": "आपका@ईमेल.com",
+  "subscribe.error": "कुछ गलत हो गया",
   "subscribe.loading": "प्रकाश की गति से सहेज रहे हैं",
+  "subscribe.placeholder": "आपका@ईमेल.com",
   "subscribe.success": "स्वागत है",
-  "subscribe.error": "कुछ गलत हो गया"
+  "subscribe.title": "Earendil से समाचार",
+  "unsubscribe.button.title": "Unsubscribe",
+  "unsubscribe.error.generic": "Something went wrong. Please try again.",
+  "unsubscribe.error.invalidEmail": "Please enter a valid email address.",
+  "unsubscribe.intro": "Enter your email address to unsubscribe from all newsletters.",
+  "unsubscribe.loading": "Unsubscribing…",
+  "unsubscribe.success": "You have been unsubscribed."
 }
