@@ -189,11 +189,13 @@ canvas.shader-ready {
 .site-header,
 .site-footer-bar {
   position: fixed;
-  inset-inline: 0;
+  left: 0;
+  right: 0;
+  direction: ltr;
   z-index: 200;
   box-sizing: border-box;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   pointer-events: none;
 }
 
@@ -212,6 +214,11 @@ canvas.shader-ready {
 .site-header > *,
 .site-footer-bar > * {
   pointer-events: auto;
+}
+
+.site-header > .top-nav,
+.site-footer-bar > .bottom-controls {
+  margin-left: auto;
 }
 
 /* ==========================================================================
