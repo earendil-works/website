@@ -3,6 +3,8 @@ title: Values
 template: page
 page_class: page--prose page--values
 aria_label: Earendil values
+i18n_key: page.values
+aria_i18n_key: values
 ---
 
 <p class="section-heading"><em><strong data-i18n="content.values.heading.main">Our Values</strong></em></p>

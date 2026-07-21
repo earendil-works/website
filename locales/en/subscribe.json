@@ -18,5 +18,29 @@
   "subscribe.error": {
     "message": "Something went wrong",
     "context": "Message shown when subscription fails"
+  },
+  "unsubscribe.intro": {
+    "message": "Enter your email address to unsubscribe from all newsletters.",
+    "context": "Instructional text above the unsubscribe email input"
+  },
+  "unsubscribe.button.title": {
+    "message": "Unsubscribe",
+    "context": "Title/tooltip attribute for the unsubscribe enter button"
+  },
+  "unsubscribe.error.invalidEmail": {
+    "message": "Please enter a valid email address.",
+    "context": "Validation error shown when no valid email was entered"
+  },
+  "unsubscribe.loading": {
+    "message": "Unsubscribing\u2026",
+    "context": "Message shown while the unsubscribe request is in flight"
+  },
+  "unsubscribe.success": {
+    "message": "You have been unsubscribed.",
+    "context": "Success message shown after a successful unsubscribe"
+  },
+  "unsubscribe.error.generic": {
+    "message": "Something went wrong. Please try again.",
+    "context": "Generic error shown when the unsubscribe request fails"
   }
 }
