@@ -6,5 +6,9 @@
   "error.404.message": {
     "message": "It was lost, and has not been seen again.",
     "context": "404 error message displayed to user"
+  },
+  "error.404.aria": {
+    "message": "Page not found",
+    "context": "404 page aria-label"
   }
 }

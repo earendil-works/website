@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "استمع من إيريندل",
-  "subscribe.placeholder": "بريدك@الإلكتروني.com",
+  "subscribe.error": "حدث خطأ ما",
   "subscribe.loading": "جاري التخزين بسرعة الضوء",
+  "subscribe.placeholder": "بريدك@الإلكتروني.com",
   "subscribe.success": "أهلاً بك على متن السفينة",
-  "subscribe.error": "حدث خطأ ما"
+  "subscribe.title": "استمع من إيريندل",
+  "unsubscribe.button.title": "إلغاء الاشتراك",
+  "unsubscribe.error.generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "unsubscribe.error.invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صالح.",
+  "unsubscribe.intro": "أدخل عنوان بريدك الإلكتروني لإلغاء الاشتراك من جميع النشرات.",
+  "unsubscribe.loading": "جارٍ إلغاء الاشتراك…",
+  "unsubscribe.success": "تم إلغاء اشتراكك."
 }

@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "ข่าวสารจาก Earendil",
-  "subscribe.placeholder": "อีเมล@ของคุณ.com",
+  "subscribe.error": "เกิดข้อผิดพลาด",
   "subscribe.loading": "กำลังบันทึกด้วยความเร็วแสง",
+  "subscribe.placeholder": "อีเมล@ของคุณ.com",
   "subscribe.success": "ยินดีต้อนรับ",
-  "subscribe.error": "เกิดข้อผิดพลาด"
+  "subscribe.title": "ข่าวสารจาก Earendil",
+  "unsubscribe.button.title": "ยกเลิกการสมัคร",
+  "unsubscribe.error.generic": "เกิดข้อผิดพลาด โปรดลองอีกครั้ง",
+  "unsubscribe.error.invalidEmail": "โปรดกรอกอีเมลที่ถูกต้อง",
+  "unsubscribe.intro": "กรอกอีเมลของคุณเพื่อยกเลิกการสมัครรับจดหมายข่าวทั้งหมด",
+  "unsubscribe.loading": "กำลังยกเลิกการสมัคร…",
+  "unsubscribe.success": "คุณได้ยกเลิกการสมัครแล้ว"
 }

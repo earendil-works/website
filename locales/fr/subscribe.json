@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Nouvelles d'Earendil",
-  "subscribe.placeholder": "votre@email.fr",
+  "subscribe.error": "Une erreur s'est produite",
   "subscribe.loading": "Enregistrement à la vitesse de la lumière",
+  "subscribe.placeholder": "votre@email.fr",
   "subscribe.success": "Bienvenue à bord",
-  "subscribe.error": "Une erreur s'est produite"
+  "subscribe.title": "Nouvelles d'Earendil",
+  "unsubscribe.button.title": "Se désabonner",
+  "unsubscribe.error.generic": "Une erreur est survenue. Veuillez réessayer.",
+  "unsubscribe.error.invalidEmail": "Veuillez saisir une adresse e-mail valide.",
+  "unsubscribe.intro": "Saisissez votre adresse e-mail pour vous désabonner de toutes les newsletters.",
+  "unsubscribe.loading": "Désabonnement…",
+  "unsubscribe.success": "Vous avez été désabonné."
 }

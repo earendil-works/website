@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Recibe noticias de Earendil",
-  "subscribe.placeholder": "tu@correo.com",
+  "subscribe.error": "Algo salió mal",
   "subscribe.loading": "Almacenando a la velocidad de la luz",
+  "subscribe.placeholder": "tu@correo.com",
   "subscribe.success": "Bienvenido a bordo",
-  "subscribe.error": "Algo salió mal"
+  "subscribe.title": "Recibe noticias de Earendil",
+  "unsubscribe.button.title": "Darse de baja",
+  "unsubscribe.error.generic": "Algo salió mal. Inténtalo de nuevo.",
+  "unsubscribe.error.invalidEmail": "Introduce una dirección de correo válida.",
+  "unsubscribe.intro": "Introduce tu correo electrónico para darte de baja de todos los boletines.",
+  "unsubscribe.loading": "Dando de baja…",
+  "unsubscribe.success": "Tu suscripción ha sido cancelada."
 }

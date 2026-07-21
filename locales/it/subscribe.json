@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Notizie da Earendil",
-  "subscribe.placeholder": "tua@email.it",
+  "subscribe.error": "Qualcosa è andato storto",
   "subscribe.loading": "Salvataggio alla velocità della luce",
+  "subscribe.placeholder": "tua@email.it",
   "subscribe.success": "Benvenuto a bordo",
-  "subscribe.error": "Qualcosa è andato storto"
+  "subscribe.title": "Notizie da Earendil",
+  "unsubscribe.button.title": "Annulla iscrizione",
+  "unsubscribe.error.generic": "Qualcosa è andato storto. Riprova.",
+  "unsubscribe.error.invalidEmail": "Inserisci un indirizzo email valido.",
+  "unsubscribe.intro": "Inserisci il tuo indirizzo email per annullare l’iscrizione a tutte le newsletter.",
+  "unsubscribe.loading": "Annullamento iscrizione…",
+  "unsubscribe.success": "La tua iscrizione è stata annullata."
 }

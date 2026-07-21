@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Tin tức từ Earendil",
-  "subscribe.placeholder": "email@cuaban.com",
+  "subscribe.error": "Đã xảy ra lỗi",
   "subscribe.loading": "Đang lưu với tốc độ ánh sáng",
+  "subscribe.placeholder": "email@cuaban.com",
   "subscribe.success": "Chào mừng bạn",
-  "subscribe.error": "Đã xảy ra lỗi"
+  "subscribe.title": "Tin tức từ Earendil",
+  "unsubscribe.button.title": "Hủy đăng ký",
+  "unsubscribe.error.generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
+  "unsubscribe.error.invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+  "unsubscribe.intro": "Nhập địa chỉ email của bạn để hủy đăng ký tất cả các bản tin.",
+  "unsubscribe.loading": "Đang hủy đăng ký…",
+  "unsubscribe.success": "Bạn đã hủy đăng ký."
 }

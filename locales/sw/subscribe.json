@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Habari kutoka Earendil",
-  "subscribe.placeholder": "barua@pepe.yako",
+  "subscribe.error": "Kuna kitu kilienda vibaya",
   "subscribe.loading": "Kuhifadhi kwa kasi ya mwanga",
+  "subscribe.placeholder": "barua@pepe.yako",
   "subscribe.success": "Karibu",
-  "subscribe.error": "Kuna kitu kilienda vibaya"
+  "subscribe.title": "Habari kutoka Earendil",
+  "unsubscribe.button.title": "Jiondoe kwenye usajili",
+  "unsubscribe.error.generic": "Kuna hitilafu. Tafadhali jaribu tena.",
+  "unsubscribe.error.invalidEmail": "Tafadhali weka anwani halali ya barua pepe.",
+  "unsubscribe.intro": "Weka anwani yako ya barua pepe ili kujiondoa kwenye majarida yote.",
+  "unsubscribe.loading": "Inajiondoa kwenye usajili…",
+  "unsubscribe.success": "Umeondolewa kwenye usajili."
 }

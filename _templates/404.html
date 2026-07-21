@@ -3,7 +3,7 @@
 {% block page_attrs %} data-page-type="404"{% endblock %}
 
 {% block body %}
-  <div class="error-text" role="alert" aria-label="{{ page.aria_label }}">
+  <div class="error-text" role="alert" aria-label="{{ page.aria_label }}" data-i18n-aria="errors.error.404.aria">
     {{ content }}
   </div>
 {% endblock %}

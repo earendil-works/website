@@ -3,6 +3,8 @@ title: Subscribe to posts
 template: page
 page_class: page--posts
 aria_label: Subscribe to Earendil posts
+i18n_key: page.subscribe
+aria_i18n_key: subscribe
 ---
 
 <span data-i18n="subscribe.subscribe.title">Hear from Earendil</span>
@@ -21,6 +23,7 @@ aria_label: Subscribe to Earendil posts
       autocorrect="off"
       spellcheck="false"
       aria-label="Email address"
+      data-i18n-aria="common.aria.emailAddress"
       data-1p-ignore="true"
       data-lpignore="true"
       data-form-type="other"

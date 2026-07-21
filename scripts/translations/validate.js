@@ -44,6 +44,22 @@ function validateHtmlTags(englishMsg, translatedMsg, key, lang) {
   return null;
 }
 
+function validateEncodingArtifacts(translatedMsg, key, lang) {
+  const patterns = [
+    { regex: /�/, label: 'replacement character U+FFFD' },
+    { regex: /ï¿½/, label: 'replacement-character mojibake sequence' },
+    { regex: /â€”|â€“|â€™|â€œ|â€�/, label: 'common UTF-8 mojibake punctuation' },
+    { regex: /Ã|Â/, label: 'common mojibake latin-1/utf-8 marker' },
+  ];
+
+  for (const { regex, label } of patterns) {
+    if (regex.test(translatedMsg)) {
+      return `Encoding artifact in ${lang}/${key}: ${label}`;
+    }
+  }
+  return null;
+}
+
 function main() {
   console.log('Validating translations...\n');
 
@@ -101,6 +117,10 @@ function main() {
           // Validate HTML tags
           const htmlError = validateHtmlTags(englishMsg, translatedMsg, key, lang);
           if (htmlError) warnings.push(htmlError);
+
+          // Validate encoding artifacts / mojibake
+          const encodingError = validateEncodingArtifacts(translatedMsg, key, lang);
+          if (encodingError) errors.push(encodingError);
         }
       }
 

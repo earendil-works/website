@@ -7,21 +7,33 @@
     "message": "EARENDIL INC.",
     "context": "Footer company name"
   },
+  "nav.menu": {
+    "message": "MENU",
+    "context": "Trigger label for the site navigation menu"
+  },
   "nav.purpose": {
     "message": "Purpose",
     "context": "Navigation link to purpose page"
+  },
+  "nav.values": {
+    "message": "Values",
+    "context": "Navigation link to values page"
   },
   "nav.joinUs": {
     "message": "Join Us",
     "context": "Navigation link to join page"
   },
-  "nav.lefos": {
-    "message": "Lefos",
-    "context": "Navigation link to Lefos product (external)"
-  },
   "nav.posts": {
     "message": "Posts",
     "context": "Navigation link to posts/blog section"
+  },
+  "nav.pi": {
+    "message": "Pi",
+    "context": "Navigation link to Pi product (external)"
+  },
+  "nav.lefos": {
+    "message": "Lefos",
+    "context": "Navigation link to Lefos product (external)"
   },
   "nav.works": {
     "message": "Works",
@@ -50,5 +62,73 @@
   "announcement.banner": {
     "message": "ANNOUNCING PI & LEFOS →",
     "context": "Announcement banner linking to press release"
+  },
+  "home.hero": {
+    "message": "Earendil crafts tools to harness AI with <a class=\"home-hero-link\" href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a> and <a class=\"home-hero-link\" href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a>.<br><span class=\"home-hero-open-clause\">Built in the <a class=\"home-hero-open\" href=\"https://github.com/earendil-works\" target=\"_blank\" rel=\"noopener noreferrer\">open</a>,</span> <span class=\"home-hero-tail-clause\">shaped by the humans who use them.</span>",
+    "context": "Home page hero paragraph introducing Earendil with links to Pi, Lefos, and open source"
+  },
+  "meta.titleFormat": {
+    "message": "{title} | EARENDIL",
+    "context": "Format string for the browser tab title; {title} is replaced by the page title"
+  },
+  "aria.primaryNav": {
+    "message": "Primary navigation",
+    "context": "Aria-label for the site navigation region"
+  },
+  "aria.externalLinks": {
+    "message": "External links",
+    "context": "Aria-label for the external links group in the navigation"
+  },
+  "aria.openMenu": {
+    "message": "Open menu",
+    "context": "Aria-label for the menu toggle button when the menu is closed"
+  },
+  "aria.closeMenu": {
+    "message": "Close menu",
+    "context": "Aria-label for the menu toggle button when the menu is open"
+  },
+  "aria.changeLanguage": {
+    "message": "Change language",
+    "context": "Aria-label for the language picker toggle button"
+  },
+  "aria.selectLanguage": {
+    "message": "Select language",
+    "context": "Aria-label for the language picker dropdown menu"
+  },
+  "aria.appearanceLabel": {
+    "message": "Appearance: {state}",
+    "context": "Aria-label for the theme toggle button; {state} is the current theme name (auto/dark/light)"
+  },
+  "aria.emailAddress": {
+    "message": "Email address",
+    "context": "Aria-label for the email input field on subscribe/unsubscribe forms"
+  },
+  "aria.hero": {
+    "message": "Earendil hero",
+    "context": "Aria-label for the home page hero section"
+  },
+  "aria.purpose": {
+    "message": "Earendil purpose",
+    "context": "Aria-label for the purpose page"
+  },
+  "aria.values": {
+    "message": "Earendil values",
+    "context": "Aria-label for the values page"
+  },
+  "aria.join": {
+    "message": "Join Earendil",
+    "context": "Aria-label for the join page"
+  },
+  "aria.subscribe": {
+    "message": "Subscribe to Earendil posts",
+    "context": "Aria-label for the subscribe page"
+  },
+  "aria.unsubscribe": {
+    "message": "Unsubscribe from Earendil emails",
+    "context": "Aria-label for the unsubscribe page"
+  },
+  "aria.posts": {
+    "message": "Earendil posts",
+    "context": "Aria-label for posts listing and post detail pages"
   }
 }

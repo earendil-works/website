@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Earendilからのお知らせ",
-  "subscribe.placeholder": "your@email.com",
+  "subscribe.error": "エラーが発生しました",
   "subscribe.loading": "光速で保存中",
+  "subscribe.placeholder": "あなた@メール.jp",
   "subscribe.success": "ようこそ",
-  "subscribe.error": "エラーが発生しました"
+  "subscribe.title": "Earendilからのお知らせ",
+  "unsubscribe.button.title": "購読を解除する",
+  "unsubscribe.error.generic": "問題が発生しました。もう一度お試しください。",
+  "unsubscribe.error.invalidEmail": "有効なメールアドレスを入力してください。",
+  "unsubscribe.intro": "すべてのニュースレターの購読を解除するには、メールアドレスを入力してください。",
+  "unsubscribe.loading": "購読を解除しています…",
+  "unsubscribe.success": "購読を解除しました。"
 }

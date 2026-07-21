@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Earendil থেকে খবর",
-  "subscribe.placeholder": "আপনার@ইমেইল.com",
+  "subscribe.error": "কিছু ভুল হয়েছে",
   "subscribe.loading": "আলোর গতিতে সংরক্ষণ করা হচ্ছে",
+  "subscribe.placeholder": "আপনার@ইমেইল.com",
   "subscribe.success": "স্বাগতম",
-  "subscribe.error": "কিছু ভুল হয়েছে"
+  "subscribe.title": "Earendil থেকে খবর",
+  "unsubscribe.button.title": "আনসাবস্ক্রাইব",
+  "unsubscribe.error.generic": "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।",
+  "unsubscribe.error.invalidEmail": "একটি বৈধ ইমেল ঠিকানা লিখুন।",
+  "unsubscribe.intro": "সব নিউজলেটার থেকে আনসাবস্ক্রাইব করতে আপনার ইমেল ঠিকানা লিখুন।",
+  "unsubscribe.loading": "আনসাবস্ক্রাইব করা হচ্ছে…",
+  "unsubscribe.success": "আপনার সাবস্ক্রিপশন বাতিল করা হয়েছে।"
 }

@@ -1,4 +1,5 @@
 {
-  "error.404.title": "Haijapatikana",
-  "error.404.message": "Ilipotea na haijawahi kuonekana tena."
+  "error.404.aria": "Haijapatikana",
+  "error.404.message": "Ilipotea na haijawahi kuonekana tena.",
+  "error.404.title": "Haijapatikana"
 }

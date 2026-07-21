@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Earendil'den haberler",
-  "subscribe.placeholder": "email@adresiniz.com",
+  "subscribe.error": "Bir şeyler ters gitti",
   "subscribe.loading": "Işık hızında kaydediliyor",
+  "subscribe.placeholder": "email@adresiniz.com",
   "subscribe.success": "Aramıza hoş geldiniz",
-  "subscribe.error": "Bir şeyler ters gitti"
+  "subscribe.title": "Earendil'den haberler",
+  "unsubscribe.button.title": "Abonelikten çık",
+  "unsubscribe.error.generic": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin.",
+  "unsubscribe.error.invalidEmail": "Lütfen geçerli bir e-posta adresi girin.",
+  "unsubscribe.intro": "Tüm bültenlerden çıkmak için e-posta adresinizi girin.",
+  "unsubscribe.loading": "Abonelikten çıkılıyor…",
+  "unsubscribe.success": "Aboneliğiniz iptal edildi."
 }

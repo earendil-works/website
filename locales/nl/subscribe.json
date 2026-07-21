@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Nieuws van Earendil",
-  "subscribe.placeholder": "jouw@email.nl",
+  "subscribe.error": "Er ging iets mis",
   "subscribe.loading": "Opslaan met de snelheid van het licht",
+  "subscribe.placeholder": "jouw@email.nl",
   "subscribe.success": "Welkom aan boord",
-  "subscribe.error": "Er ging iets mis"
+  "subscribe.title": "Nieuws van Earendil",
+  "unsubscribe.button.title": "Uitschrijven",
+  "unsubscribe.error.generic": "Er is iets misgegaan. Probeer het opnieuw.",
+  "unsubscribe.error.invalidEmail": "Voer een geldig e-mailadres in.",
+  "unsubscribe.intro": "Voer je e-mailadres in om je af te melden voor alle nieuwsbrieven.",
+  "unsubscribe.loading": "Bezig met uitschrijven…",
+  "unsubscribe.success": "Je bent uitgeschreven."
 }

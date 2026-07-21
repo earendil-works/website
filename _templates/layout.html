@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ title }} | EARENDIL</title>
+  {% if not title_key %}
+    {% if slug == "/404/" %}
+      {% set title_key = "error.404.title" %}
+    {% elif slug == "/posts/" %}
+      {% set title_key = "posts.posts.title" %}
+    {% elif page and page.i18n_key %}
+      {% set title_key = "content." ~ page.i18n_key ~ ".title" %}
+    {% endif %}
+  {% endif %}
+
+  <title data-i18n-doc-title="common.meta.titleFormat"{% if title_key %} data-i18n-title-key="{{ title_key }}"{% endif %} data-i18n-default-title="{{ title }}">{{ title }} | EARENDIL</title>
 
   {# SEO meta tags #}
   {% set default_description = "Earendil is a public benefit corporation crafting software and open protocols to strengthen human agency, bridge division, and cultivate lasting joy." %}
@@ -67,23 +77,23 @@
         <img class="main-logo" id="logo" src="{% if slug == "/" or slug in ["/values/", "/purpose/", "/join/", "/posts/"] or slug[:7] == "/posts/" %}/static/earendil-emblem.svg{% else %}/static/earendil-logo.svg{% endif %}" alt="Earendil">
       </a>
 
-      <nav class="top-nav" dir="ltr" data-site-menu aria-label="Primary navigation">
+      <nav class="top-nav" dir="ltr" data-site-menu aria-label="Primary navigation" data-i18n-aria="common.aria.primaryNav">
         <div class="menu-trigger">
-          <button class="menu-trigger-toggle" type="button" aria-expanded="false" aria-controls="site-menu-links" aria-label="Open menu">
-            <span class="menu-label">MENU</span>
+          <button class="menu-trigger-toggle" type="button" aria-expanded="false" aria-controls="site-menu-links" aria-label="Open menu" data-i18n-aria="common.aria.openMenu">
+            <span class="menu-label" data-i18n="common.nav.menu">MENU</span>
           </button>
         </div>
         <div class="menu-links" id="site-menu-links" hidden>
           <div class="menu-link-group">
-            <a class="nav-link" href="/purpose/">Purpose</a>
-            <a class="nav-link" href="/values/">Values</a>
-            <a class="nav-link" href="/join/">Join</a>
-            <a class="nav-link" href="/posts/">Posts</a>
+            <a class="nav-link" href="/purpose/" data-i18n="common.nav.purpose">Purpose</a>
+            <a class="nav-link" href="/values/" data-i18n="common.nav.values">Values</a>
+            <a class="nav-link" href="/join/" data-i18n="common.nav.joinUs">Join Us</a>
+            <a class="nav-link" href="/posts/" data-i18n="common.nav.posts">Posts</a>
           </div>
-          <div class="menu-link-group menu-link-group--external" role="group" aria-label="External links">
-            <a class="nav-link" href="https://pi.dev" target="_blank" rel="noopener noreferrer">Pi</a>
-            <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer">Lefos</a>
-            <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer">Works</a>
+          <div class="menu-link-group menu-link-group--external" role="group" aria-label="External links" data-i18n-aria="common.aria.externalLinks">
+            <a class="nav-link" href="https://pi.dev" target="_blank" rel="noopener noreferrer" data-i18n="common.nav.pi">Pi</a>
+            <a class="nav-link" href="https://lefos.com" target="_blank" rel="noopener noreferrer" data-i18n="common.nav.lefos">Lefos</a>
+            <a class="nav-link" href="https://github.com/earendil-works/" target="_blank" rel="noopener noreferrer" data-i18n="common.nav.works">Works</a>
           </div>
         </div>
       </nav>
@@ -99,10 +109,10 @@
 
       <div class="bottom-controls" dir="ltr">
         <div id="lang-picker" class="lang-picker">
-          <button id="lang-toggle" type="button" aria-label="Change language" aria-expanded="false" aria-haspopup="listbox">
+          <button id="lang-toggle" type="button" aria-label="Change language" data-i18n-aria="common.aria.changeLanguage" aria-expanded="false" aria-haspopup="listbox">
             <span class="lang-current">EN</span>
           </button>
-          <ul id="lang-menu" class="lang-menu" role="listbox" aria-label="Select language" hidden></ul>
+          <ul id="lang-menu" class="lang-menu" role="listbox" aria-label="Select language" data-i18n-aria="common.aria.selectLanguage" hidden></ul>
         </div>
         <button id="theme-toggle" type="button" aria-label="Toggle color theme"><span class="value"></span></button>
       </div>

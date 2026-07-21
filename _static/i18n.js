@@ -173,6 +173,38 @@
         el.setAttribute('aria-label', text);
       }
     });
+
+    // Update title/tooltip attributes
+    var tooltips = document.querySelectorAll('[data-i18n-tooltip]');
+    tooltips.forEach(function(el) {
+      var key = el.getAttribute('data-i18n-tooltip');
+      var text = t(key);
+      if (text !== key) {
+        el.setAttribute('title', text);
+      }
+    });
+
+    // Update document title (browser tab)
+    // Format string from data-i18n-doc-title is interpolated with the
+    // translated page title (data-i18n-title-key) or the server-rendered
+    // default (data-i18n-default-title).
+    var docTitle = document.querySelector('title[data-i18n-doc-title]');
+    if (docTitle) {
+      var formatKey = docTitle.getAttribute('data-i18n-doc-title');
+      var pageTitleKey = docTitle.getAttribute('data-i18n-title-key');
+      var defaultTitle = docTitle.getAttribute('data-i18n-default-title') || '';
+      var format = t(formatKey);
+      if (format !== formatKey) {
+        var pageTitle = defaultTitle;
+        if (pageTitleKey) {
+          var translatedTitle = t(pageTitleKey);
+          if (translatedTitle !== pageTitleKey) {
+            pageTitle = translatedTitle;
+          }
+        }
+        docTitle.textContent = format.replace(/\{title\}/g, pageTitle);
+      }
+    }
   }
 
   // Change language

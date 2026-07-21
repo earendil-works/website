@@ -1,4 +1,5 @@
 {
-  "error.404.title": "Hittades inte",
-  "error.404.message": "Det försvann och har aldrig setts igen."
+  "error.404.aria": "Hittades inte",
+  "error.404.message": "Det försvann och har aldrig setts igen.",
+  "error.404.title": "Hittades inte"
 }

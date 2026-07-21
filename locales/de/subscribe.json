@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Neuigkeiten von Earendil",
-  "subscribe.placeholder": "deine@email.de",
+  "subscribe.error": "Etwas ist schiefgelaufen",
   "subscribe.loading": "Speichern mit Lichtgeschwindigkeit",
+  "subscribe.placeholder": "deine@email.de",
   "subscribe.success": "Willkommen an Bord",
-  "subscribe.error": "Etwas ist schiefgelaufen"
+  "subscribe.title": "Neuigkeiten von Earendil",
+  "unsubscribe.button.title": "Abbestellen",
+  "unsubscribe.error.generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+  "unsubscribe.error.invalidEmail": "Bitte gib eine gültige E-Mail-Adresse ein.",
+  "unsubscribe.intro": "Gib deine E-Mail-Adresse ein, um alle Newsletter abzubestellen.",
+  "unsubscribe.loading": "Wird abbestellt…",
+  "unsubscribe.success": "Du wurdest abgemeldet."
 }

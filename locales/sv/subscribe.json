@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Nyheter från Earendil",
-  "subscribe.placeholder": "din@email.se",
+  "subscribe.error": "Något gick fel",
   "subscribe.loading": "Sparar med ljusets hastighet",
+  "subscribe.placeholder": "din@email.se",
   "subscribe.success": "Välkommen ombord",
-  "subscribe.error": "Något gick fel"
+  "subscribe.title": "Nyheter från Earendil",
+  "unsubscribe.button.title": "Avsluta prenumeration",
+  "unsubscribe.error.generic": "Något gick fel. Försök igen.",
+  "unsubscribe.error.invalidEmail": "Ange en giltig e-postadress.",
+  "unsubscribe.intro": "Ange din e-postadress för att avsluta prenumerationen på alla nyhetsbrev.",
+  "unsubscribe.loading": "Avslutar prenumeration…",
+  "unsubscribe.success": "Din prenumeration har avslutats."
 }

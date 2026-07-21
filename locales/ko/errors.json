@@ -1,4 +1,5 @@
 {
-  "error.404.title": "찾을 수 없음",
-  "error.404.message": "길을 잃었고, 다시 보이지 않았습니다."
+  "error.404.aria": "찾을 수 없음",
+  "error.404.message": "길을 잃었고, 다시 보이지 않았습니다.",
+  "error.404.title": "찾을 수 없음"
 }

@@ -154,7 +154,8 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
     if (triggerButton) {
       triggerButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      triggerButton.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+      var menuKey = isOpen ? 'common.aria.closeMenu' : 'common.aria.openMenu';
+      triggerButton.setAttribute('aria-label', window.i18n.t(menuKey));
     }
     syncMobileMenuState(menu);
     if (layoutRuntime.updateOverlayVerticalBand) {
@@ -268,6 +269,19 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     updateMenuOverlapBackdrop(menu);
     scheduleMenuOverlapBackdropUpdate(menu);
   }
+
+  // Re-sync menu state when the active language changes, so the aria-label
+  // reflects the current open/close state in the new language.
+  window.addEventListener('languagechange', function() {
+    var menuList = document.querySelectorAll('[data-site-menu]');
+    menuList.forEach(function(navMenu) {
+      var triggerBtn = navMenu.querySelector('.menu-trigger-toggle');
+      if (!triggerBtn) return;
+      var open = navMenu.classList.contains('is-open');
+      var menuKey = open ? 'common.aria.closeMenu' : 'common.aria.openMenu';
+      triggerBtn.setAttribute('aria-label', window.i18n.t(menuKey));
+    });
+  });
 
   initSiteMenu();
   document.body.addEventListener('htmx:afterSettle', initSiteMenu);
@@ -586,7 +600,7 @@ function applyThemePreference() {
 function updateThemeToggle() {
   const valueSpan = themeToggle.querySelector('.value');
   valueSpan.textContent = getThemeLabel(themeMode);
-  themeToggle.setAttribute('aria-label', 'Appearance: ' + getThemeLabel(themeMode));
+  themeToggle.setAttribute('aria-label', window.i18n.t('common.aria.appearanceLabel', { state: getThemeLabel(themeMode) }));
   applyThemePreference();
 }
 

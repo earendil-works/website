@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Earendil నుండి వార్తలు",
-  "subscribe.placeholder": "మీ@ఇమెయిల్.com",
+  "subscribe.error": "ఏదో తప్పు జరిగింది",
   "subscribe.loading": "వెలుగు వేగంతో సేవ్ అవుతోంది",
+  "subscribe.placeholder": "మీ@ఇమెయిల్.com",
   "subscribe.success": "స్వాగతం",
-  "subscribe.error": "ఏదో తప్పు జరిగింది"
+  "subscribe.title": "Earendil నుండి వార్తలు",
+  "unsubscribe.button.title": "చందా రద్దు చేయండి",
+  "unsubscribe.error.generic": "ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+  "unsubscribe.error.invalidEmail": "దయచేసి చెల్లుబాటు అయ్యే ఇమెయిల్ చిరునామాను నమోదు చేయండి.",
+  "unsubscribe.intro": "అన్ని వార్తాలేఖల నుండి చందా రద్దు చేసుకోవడానికి మీ ఇమెయిల్ చిరునామాను నమోదు చేయండి.",
+  "unsubscribe.loading": "చందా రద్దు చేస్తోంది…",
+  "unsubscribe.success": "మీ చందా రద్దు చేయబడింది."
 }

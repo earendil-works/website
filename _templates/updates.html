@@ -4,8 +4,8 @@
 
 {% block body %}
   <main class="content-page{% if page_classes %} {{ page_classes }}{% endif %}">
-    <article class="content-surface" aria-label="{{ page.aria_label }}">
-      <h1 class="visually-hidden">{{ title }}</h1>
+    <article class="content-surface" aria-label="{{ page.aria_label }}" data-i18n-aria="common.aria.posts">
+      <h1 class="visually-hidden"{% if page.i18n_key %} data-i18n="content.{{ page.i18n_key }}.title"{% endif %}>{{ title }}</h1>
       <div class="updates-scroll-content">
         <div class="email-meta">
           <p><span class="email-meta-key" data-i18n="posts.email.date">Date:</span><span class="email-meta-value" data-i18n="posts.email.date.{{ page.i18n_key }}">{{ page.date_day or page.date }}</span></p>

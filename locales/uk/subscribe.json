@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Новини від Earendil",
-  "subscribe.placeholder": "ваш@email.com",
+  "subscribe.error": "Щось пішло не так",
   "subscribe.loading": "Збереження зі швидкістю світла",
+  "subscribe.placeholder": "ваш@email.com",
   "subscribe.success": "Ласкаво просимо на борт",
-  "subscribe.error": "Щось пішло не так"
+  "subscribe.title": "Новини від Earendil",
+  "unsubscribe.button.title": "Відписатися",
+  "unsubscribe.error.generic": "Щось пішло не так. Спробуйте ще раз.",
+  "unsubscribe.error.invalidEmail": "Будь ласка, введіть дійсну електронну адресу.",
+  "unsubscribe.intro": "Введіть свою електронну адресу, щоб відписатися від усіх розсилок.",
+  "unsubscribe.loading": "Відписуємо…",
+  "unsubscribe.success": "Ви відписалися."
 }

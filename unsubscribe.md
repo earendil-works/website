@@ -2,18 +2,18 @@
 title: Unsubscribe
 template: page
 aria_label: Unsubscribe from Earendil emails
+i18n_key: page.unsubscribe
+aria_i18n_key: unsubscribe
 ---
 
-<div id="unsubscribe-form">
-  <p>Enter your email address to unsubscribe from all newsletters.</p>
-  <p class="updates-form-area" style="margin:16px 0">
-    <span class="updates-input-wrapper">
-      <input type="email" id="unsubscribe-email" class="updates-input" placeholder="your@email.com" style="width:100%;min-width:260px" />
-      <span id="unsubscribe-enter" class="updates-enter" style="cursor:pointer" title="Unsubscribe">↩</span>
-    </span>
-  </p>
-  <p id="unsubscribe-message" style="min-height:1.6em"></p>
-</div>
+<p data-i18n="subscribe.unsubscribe.intro">Enter your email address to unsubscribe from all newsletters.</p>
+<p class="updates-form-area" style="margin:16px 0">
+  <span class="updates-input-wrapper">
+    <input type="email" id="unsubscribe-email" class="updates-input" placeholder="your@email.com" data-i18n-placeholder="subscribe.subscribe.placeholder" aria-label="Email address" data-i18n-aria="common.aria.emailAddress" style="width:100%;min-width:260px" />
+    <span id="unsubscribe-enter" class="updates-enter" style="cursor:pointer" title="Unsubscribe" data-i18n-tooltip="subscribe.unsubscribe.button.title">↩</span>
+  </span>
+</p>
+<p id="unsubscribe-message" style="min-height:1.6em"></p>
 
 <script>
   (function () {
@@ -37,11 +37,11 @@ aria_label: Unsubscribe from Earendil emails
       if (busy) return;
       var email = (input.value || '').trim();
       if (!email || email.indexOf('@') === -1) {
-        showMessage('Please enter a valid email address.');
+        showMessage(window.i18n.t('subscribe.unsubscribe.error.invalidEmail'));
         return;
       }
       busy = true;
-      showMessage('Unsubscribing\u2026');
+      showMessage(window.i18n.t('subscribe.unsubscribe.loading'));
 
       fetch('https://lefos.com/api/newsletter/unsubscribe-all', {
         method: 'POST',
@@ -53,11 +53,11 @@ aria_label: Unsubscribe from Earendil emails
         return response.json();
       })
       .then(function () {
-        showMessage('You have been unsubscribed.');
+        showMessage(window.i18n.t('subscribe.unsubscribe.success'));
         input.disabled = true;
       })
       .catch(function () {
-        showMessage('Something went wrong. Please try again.');
+        showMessage(window.i18n.t('subscribe.unsubscribe.error.generic'));
       })
       .finally(function () {
         busy = false;

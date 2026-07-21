@@ -1,7 +1,13 @@
 {
-  "subscribe.title": "Berita dari Earendil",
-  "subscribe.placeholder": "email@anda.com",
+  "subscribe.error": "Terjadi kesalahan",
   "subscribe.loading": "Menyimpan dengan kecepatan cahaya",
+  "subscribe.placeholder": "email@anda.com",
   "subscribe.success": "Selamat datang",
-  "subscribe.error": "Terjadi kesalahan"
+  "subscribe.title": "Berita dari Earendil",
+  "unsubscribe.button.title": "Berhenti berlangganan",
+  "unsubscribe.error.generic": "Terjadi kesalahan. Silakan coba lagi.",
+  "unsubscribe.error.invalidEmail": "Masukkan alamat email yang valid.",
+  "unsubscribe.intro": "Masukkan alamat email Anda untuk berhenti berlangganan dari semua buletin.",
+  "unsubscribe.loading": "Sedang berhenti berlangganan…",
+  "unsubscribe.success": "Langganan Anda telah dihentikan."
 }

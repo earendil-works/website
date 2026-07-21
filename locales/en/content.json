@@ -1,4 +1,32 @@
 {
+  "page.home.title": {
+    "message": "Welcome",
+    "context": "Page title for the home page shown in the browser tab and as the visually-hidden heading"
+  },
+  "page.purpose.title": {
+    "message": "Purpose",
+    "context": "Page title for the purpose page shown in the browser tab and as the visually-hidden heading"
+  },
+  "page.values.title": {
+    "message": "Values",
+    "context": "Page title for the values page shown in the browser tab and as the visually-hidden heading"
+  },
+  "page.join.title": {
+    "message": "Join",
+    "context": "Page title for the join page shown in the browser tab and as the visually-hidden heading"
+  },
+  "page.subscribe.title": {
+    "message": "Subscribe to posts",
+    "context": "Page title for the posts subscribe page shown in the browser tab and as the visually-hidden heading"
+  },
+  "page.unsubscribe.title": {
+    "message": "Unsubscribe",
+    "context": "Page title for the unsubscribe page shown in the browser tab and as the visually-hidden heading"
+  },
+  "join.hiring": {
+    "message": "We're hiring Members of our Technical Staff and Founder's Office",
+    "context": "Join page body message describing open roles"
+  },
   "purpose.intro": {
     "message": "<a href=\"/\">Earendil</a> is a public benefit corporation founded by <a href=\"https://ronacher.eu/\" target=\"_blank\" rel=\"noopener noreferrer\">Armin Ronacher</a> and <a href=\"https://colin.day/\" target=\"_blank\" rel=\"noopener noreferrer\">Colin Daymond Hanna</a>",
     "context": "Purpose page intro with founder links"
@@ -47,10 +75,7 @@
     "message": "Our products seek to bring people lasting joy and greater mutual understanding.",
     "context": "Purpose charter item 4 body"
   },
-  "join.title": {
-    "message": "We're hiring Members of our Technical Staff and Founder's Office",
-    "context": "Join page hiring message"
-  },
+
   "post.invitation.title": {
     "message": "An Invitation to Begin a Correspondence",
     "context": "Blog post title"
