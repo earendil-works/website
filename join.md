@@ -2,7 +2,7 @@
 title: Join
 description: Join Earendil
 template: page
-overlay_class: overlay--prose
+page_class: page--prose
 aria_label: Join Earendil
 ---
 

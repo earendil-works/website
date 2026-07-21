@@ -325,22 +325,17 @@ def build_to(build_dir: Path) -> None:
         output_path = output_path_for(md_path, build_dir, frontmatter)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         slug = slug_for_path(md_path)
-        overlay_classes: list[str] = []
+        page_classes: list[str] = []
         if template_key == "posts-index":
-            overlay_classes.append("overlay--posts")
+            page_classes.append("page--posts")
         elif template_key == "updates":
-            overlay_classes.extend(["overlay--posts", "overlay--post-detail"])
+            page_classes.extend(["page--posts", "page--post-detail"])
 
-        extra_overlay_classes = frontmatter.get("overlay_class", "")
-        if isinstance(extra_overlay_classes, str):
-            overlay_classes.extend(extra_overlay_classes.split())
-        elif isinstance(extra_overlay_classes, list):
-            overlay_classes.extend(str(value) for value in extra_overlay_classes if value)
-        # Compute dismiss URL (parent directory)
-        if slug.startswith("/posts/") and slug != "/posts/":
-            dismiss_url = "/posts/"
-        else:
-            dismiss_url = "/"
+        extra_page_classes = frontmatter.get("page_class", "")
+        if isinstance(extra_page_classes, str):
+            page_classes.extend(extra_page_classes.split())
+        elif isinstance(extra_page_classes, list):
+            page_classes.extend(str(value) for value in extra_page_classes if value)
         page = dict(frontmatter)
         if "date" in page:
             page["date_day"] = format_day_from_date(page.get("date", ""))
@@ -355,8 +350,7 @@ def build_to(build_dir: Path) -> None:
             slug=slug,
             posts=updates,
             is_posts_section=slug.startswith("/posts/"),
-            dismiss_url=dismiss_url,
-            overlay_classes=" ".join(overlay_classes),
+            page_classes=" ".join(page_classes),
         )
         output_path.write_text(rendered)
         rel_path = md_path.relative_to(ROOT)

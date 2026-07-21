@@ -3,12 +3,12 @@
 {% block page_attrs %}{% if slug in ["/values/", "/purpose/", "/join/"] or slug[:7] == "/posts/" %} data-page-type="corner-logo"{% endif %}{% endblock %}
 
 {% block body %}
-  <div class="updates-overlay{% if overlay_classes %} {{ overlay_classes }}{% endif %}" aria-hidden="true">
-    <div class="updates-letter" role="dialog" aria-label="{{ page.aria_label }}">
-      <a class="updates-dismiss" href="{{ dismiss_url }}" aria-label="Dismiss" data-dismiss-url="{{ dismiss_url }}">×</a>
+  <main class="content-page{% if page_classes %} {{ page_classes }}{% endif %}">
+    <article class="content-surface" aria-label="{{ page.aria_label }}">
+      <h1 class="visually-hidden">{{ title }}</h1>
       <div class="letter-body">
         {{ content }}
       </div>
-    </div>
-  </div>
+    </article>
+  </main>
 {% endblock %}

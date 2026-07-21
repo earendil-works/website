@@ -1,7 +1,7 @@
 ---
 title: Subscribe to posts
 template: page
-overlay_class: overlay--posts
+page_class: page--posts
 aria_label: Subscribe to Earendil posts
 ---
 

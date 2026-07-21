@@ -1,3 +1,6 @@
+/* Prose typography for rendered markdown (Tailwind Typography port). */
+@import url('/static/prose.css');
+
 /* ==========================================================================
    Z-INDEX LAYERS
    0   - Canvas background
@@ -14,12 +17,67 @@
   --cursor-dark: url('/static/cursor-dark.svg') 12 12;
   --mono-font: 'Departure Mono', 'SFMono-Regular', ui-monospace, monospace;
   --serif-font: 'PlantinNow', 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
+
+  /* Primitive type scale. Components consume these shared steps instead of
+     introducing page-specific pixel sizes. */
+  --font-size-xs: 0.8125rem;
+  --font-size-sm: 0.9375rem;
+  --font-size-md: 1.0625rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: 1.625rem;
+  --font-size-3xl: 2.25rem;
+
+  /* Semantic roles. Reading and display text scale continuously; interface
+     and form text stay stable across viewport breakpoints. */
+  --text-ui: var(--font-size-sm);
+  --text-meta: var(--font-size-sm);
+  --text-form: var(--font-size-md);
+  --text-body: var(--font-size-md);
+  --text-reading: clamp(1.125rem, 1.05rem + 0.375vw, 1.25rem);
+  --text-title: var(--font-size-lg);
+  --text-hero: clamp(1.25rem, 0.875rem + 1.5vw, 2.5rem);
+  --leading-ui: 1.25;
+  --leading-body: 1.6;
+  --leading-tight: 1.15;
+
   --viewport-height: 100vh;
   --overlay-top-safe-zone: 30px;
   --overlay-bottom-safe-zone: 170px;
   --overlay-card-chrome: 150px;
   --overlay-close-clearance: 0px;
   --overlay-border-gap: 2px;
+  --theme-transition-duration: 900ms;
+  /* Exactly matches the shader's smoothstep easing. */
+  --theme-transition-easing: cubic-bezier(0.333333, 0, 0.666667, 1);
+
+  /* One responsive frame controls every outer alignment. Components should
+     consume these tokens rather than introducing their own viewport offsets. */
+  --frame-inline: 75px;
+  --frame-block: 75px;
+  --frame-content-top: calc(var(--frame-block) + 76px);
+  --frame-content-bottom: calc(var(--frame-block) + 100px);
+  --frame-chrome-fade: 40px;
+  --chrome-surface: 250, 249, 246;
+  --color-text-day: #353431;
+}
+
+@property --page-veil-r {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 250;
+}
+
+@property --page-veil-g {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 249;
+}
+
+@property --page-veil-b {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 246;
 }
 
 @supports (height: 100dvh) {
@@ -28,18 +86,33 @@
   }
 }
 
+html:has(body:not(.theme-night)),
+body:not(.theme-night) {
+  --cursor-light: url('/static/cursor-dark.svg') 12 12;
+  --cursor-dark: url('/static/cursor-dark.svg') 12 12;
+}
+
 html, body {
   cursor: var(--cursor-light), auto;
   background: #b8b8b8;
-  overflow: hidden;
 }
 
-body.has-overlay {
-  overflow: hidden;
+html {
+  font-size: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: var(--viewport-height);
+  overflow-x: hidden;
+  font-family: var(--mono-font);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+
+body:has(.page[data-page-type="home"]),
+body:has(.page[data-page-type="404"]) {
   height: var(--viewport-height);
-}
-
-html:has(body.has-overlay) {
   overflow: hidden;
 }
 
@@ -104,6 +177,44 @@ canvas.shader-ready {
 }
 
 /* ==========================================================================
+   SHARED SITE FRAME
+   The page and both chrome rows share one parent and one set of gutters.
+   ========================================================================== */
+
+.site-frame {
+  position: relative;
+  min-height: var(--viewport-height);
+}
+
+.site-header,
+.site-footer-bar {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 200;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.site-header {
+  top: 0;
+  align-items: flex-start;
+  padding: var(--frame-block) var(--frame-inline) 0;
+}
+
+.site-footer-bar {
+  bottom: 0;
+  align-items: center;
+  padding: 0 var(--frame-inline) var(--frame-block);
+}
+
+.site-header > *,
+.site-footer-bar > * {
+  pointer-events: auto;
+}
+
+/* ==========================================================================
    LAYER 10: Center Logo
    ========================================================================== */
 
@@ -118,10 +229,11 @@ canvas.shader-ready {
 }
 
 .main-logo {
+  display: block;
   width: 300px;
   max-width: 65vw;
   opacity: 0;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.35s ease, filter 0.48s ease;
 }
 
 .loaded .main-logo,
@@ -131,15 +243,18 @@ canvas.shader-ready {
 
 body:has(.page[data-page-type="home"]) .center-logo,
 body:has(.page[data-page-type="corner-logo"]) .center-logo {
-  left: calc(75px + 10px);
-  top: 75px;
+  position: static;
   transform: none;
+  flex: 0 0 auto;
+  /* Optical exception: center the tall emblem on the first navigation row. */
+  margin-block-start: -35px;
 }
 
 body:has(.page[data-page-type="home"]) .main-logo,
 body:has(.page[data-page-type="corner-logo"]) .main-logo {
-  width: 122px;
-  max-width: calc(65vw * 0.41);
+  /* The emblem SVG has a tight viewBox, so its visible edge is the frame edge. */
+  width: 32px;
+  max-width: none;
 }
 
 /* ==========================================================================
@@ -149,6 +264,205 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .page {
   position: relative;
   z-index: 100;
+  opacity: 1;
+  transition: opacity 0.52s ease;
+}
+
+.page.is-leaving {
+  opacity: 0;
+  transition-duration: 0.22s;
+  transition-timing-function: ease-out;
+}
+
+.page.htmx-settling {
+  opacity: 0;
+  transition: none;
+}
+
+.page.is-entering {
+  transition: none;
+  animation: pageEnter 0.52s ease both;
+}
+
+/* Between content pages, keep the page veil fully present and transition only
+   the readable content. This prevents the background from flashing away. */
+body.content-page-swap .page,
+body.content-page-swap .page.is-leaving,
+body.content-page-swap .page.htmx-settling {
+  opacity: 1;
+  transition: none;
+  animation: none;
+}
+
+body.content-page-swap .page.is-leaving .content-surface {
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+body.content-page-swap .page.htmx-settling .content-surface {
+  opacity: 0;
+  transition: none;
+}
+
+.page.is-content-entering .content-surface {
+  animation: contentPageEnter 0.3s ease both;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes contentPageEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Full document pages. The fixed veil belongs to the page rather than a
+   floating card, so content uses the browser's normal scroll flow. */
+.content-page {
+  --page-veil-r: 250;
+  --page-veil-g: 249;
+  --page-veil-b: 246;
+  --page-veil: var(--page-veil-r), var(--page-veil-g), var(--page-veil-b);
+  position: relative;
+  isolation: isolate;
+  min-height: var(--viewport-height);
+  box-sizing: border-box;
+  padding: var(--frame-content-top) var(--frame-inline) var(--frame-content-bottom);
+  color: var(--color-text-day);
+  text-shadow: none;
+}
+
+.content-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 72% 115% at 50% 48%,
+    rgba(var(--page-veil), 0.985) 0%,
+    rgba(var(--page-veil), 0.985) 45%,
+    rgba(var(--page-veil), 0.96) 54%,
+    rgba(var(--page-veil), 0.68) 67%,
+    rgba(var(--page-veil), 0.28) 80%,
+    rgba(var(--page-veil), 0) 96%
+  );
+}
+
+.theme-night .content-page {
+  --page-veil-r: 46;
+  --page-veil-g: 45;
+  --page-veil-b: 43;
+  color: #fff;
+}
+
+/* Theme changes use the same 900ms smoothstep as the WebGL background. The
+   registered RGB channels let the radial veil interpolate without changing
+   its opacity or shape midway through the transition. */
+body.theme-transition-ready .content-page {
+  transition:
+    color var(--theme-transition-duration) var(--theme-transition-easing),
+    --page-veil-r var(--theme-transition-duration) var(--theme-transition-easing),
+    --page-veil-g var(--theme-transition-duration) var(--theme-transition-easing),
+    --page-veil-b var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+.content-surface {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  font-family: var(--mono-font);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+
+.page--prose .content-surface {
+  width: min(100%, 760px);
+}
+
+.page--post-detail .content-surface {
+  width: min(100%, 760px);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .page.is-leaving,
+  body.content-page-swap .page.is-leaving .content-surface,
+  body.theme-transition-ready .content-page {
+    transition-duration: 0.01ms;
+  }
+
+  .page.is-entering,
+  .page.is-content-entering .content-surface {
+    animation-duration: 0.01ms;
+  }
+}
+
+body:has(.content-page) .center-logo {
+  z-index: 200;
+}
+
+body:not(.theme-night):has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
+  color: var(--color-text-day);
+  text-shadow: none;
+}
+
+body.theme-night:has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
+  color: #fff;
+  text-shadow: none;
+}
+
+html :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
+  transition-duration: 0.52s;
+  transition-timing-function: ease;
+}
+
+body:not(.theme-night):has(.content-page) {
+  cursor: var(--cursor-dark), auto;
+}
+
+body:not(.theme-night):has(.content-page) :is(a, button, summary) {
+  cursor: var(--cursor-dark), pointer;
+}
+
+body.theme-night:has(.content-page) {
+  cursor: var(--cursor-light), auto;
+}
+
+body.theme-night:has(.content-page) :is(a, button, summary) {
+  cursor: var(--cursor-light), pointer;
+}
+
+body:not(.theme-night) .main-logo {
+  filter: url('#logo-day-color');
+}
+
+body:not(.theme-night) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
+  color: var(--color-text-day);
+  text-shadow: none;
+}
+
+body:not(.theme-night) .menu-trigger-toggle,
+body:not(.theme-night) :is(.nav-link, .menu-trigger-toggle, #theme-toggle, #lang-toggle):hover {
+  color: var(--color-text-day);
+}
+
+body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-link {
+  color: var(--color-text-day);
+  text-shadow: none;
 }
 
 .home-hero {
@@ -158,6 +472,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   place-items: center;
   box-sizing: border-box;
   padding-top: 4vh;
+  padding-inline: var(--frame-inline);
   text-align: center;
   color: rgba(255, 255, 255, 0.95);
 }
@@ -165,8 +480,8 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .home-hero-text {
   margin: 0;
   font-family: var(--serif-font);
-  font-size: clamp(20.16px, 2.16vw, 37.44px);
-  line-height: 1.12;
+  font-size: var(--text-hero);
+  line-height: var(--leading-tight);
   font-style: italic;
   font-weight: 400;
   text-wrap: balance;
@@ -197,8 +512,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .home-hero-link,
 .home-hero-open {
   color: inherit;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0);
-  transition: text-shadow 0.3s ease;
+  text-shadow: none;
   cursor: var(--cursor-light), pointer;
 }
 
@@ -206,8 +520,13 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .home-hero-open:hover {
   color: inherit;
   text-decoration: none;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+  text-shadow: none;
   cursor: var(--cursor-dark), pointer;
+}
+
+body:not(.theme-night) .home-hero {
+  color: var(--color-text-day);
+  text-shadow: none;
 }
 
 .theme-night .home-hero-link,
@@ -233,6 +552,11 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease;
+}
+
+body:not(.theme-night) .home-hero-link::before,
+body:not(.theme-night) .home-hero-open::after {
+  background-image: url('/static/cursor-dark.svg');
 }
 
 .home-hero-link::before {
@@ -305,8 +629,10 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   background: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), url('/static/paper.png') center/256px 256px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(25, 20, 12, 0.2);
-  font: 15px/1.5 var(--mono-font);
-  color: #1c1b1a;
+  font-family: var(--mono-font);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  color: var(--color-text-day);
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.35s ease, transform 0.35s ease;
@@ -448,27 +774,9 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
    LAYER 200: Chrome (Nav, Footer, Controls)
    ========================================================================== */
 
-#fps { 
-  position: fixed; 
-  top: 10px; 
-  left: 10px; 
-  color: white; 
-  font: 16px var(--mono-font); 
-  background: rgba(0,0,0,0.5); 
-  padding: 5px 10px; 
-  z-index: 200; 
-  display: none; 
-}
-
-#fps.visible { 
-  display: block; 
-}
-
 /* Top Navigation */
 .top-nav {
-  position: fixed;
-  top: 75px;
-  right: 75px;
+  position: relative;
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -501,6 +809,8 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 }
 
 .menu-trigger {
+  position: relative;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
 }
@@ -512,47 +822,30 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   padding: 0;
   margin: 0;
   display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.95);
   cursor: var(--cursor-light), pointer;
 }
 
-.menu-about {
+.menu-label {
   display: inline-block;
-  font: 14px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
   letter-spacing: 0;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.95);
-  transition: opacity 0.2s ease, color 0.2s ease;
+  color: inherit;
+  transition: color 0.2s ease;
 }
 
-.top-nav.is-open .menu-about {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.menu-chevron {
-  display: inline-block;
-  position: relative;
-  top: 1px;
-  font: 20px/1 var(--mono-font);
-  letter-spacing: 0;
-  color: rgba(255, 255, 255, 0.45);
-  transform-origin: center;
-  transition: transform 0.25s ease, color 0.25s ease;
-  animation: chevronPulse 1.1s ease-in-out infinite alternate;
-}
-
-.menu-trigger-toggle:hover .menu-about,
-.menu-trigger-toggle:hover .menu-chevron {
+.menu-trigger-toggle:hover {
   color: #fff;
-  animation: none;
 }
 
-.top-nav.is-open .menu-chevron {
-  animation: none;
-  transform: rotate(90deg);
-  color: rgba(255, 255, 255, 0.95);
+body:not(.theme-night) .menu-trigger-toggle:hover,
+body:not(.theme-night) .top-nav.is-open .menu-trigger-toggle {
+  color: var(--color-text-day);
+  text-shadow: none;
 }
 
 .menu-links {
@@ -566,23 +859,27 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   display: none;
 }
 
-@keyframes chevronPulse {
-  from {
-    color: rgba(160, 160, 160, 0.6);
-  }
-  to {
-    color: rgba(255, 255, 255, 0.95);
-  }
+.menu-link-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.menu-link-group--external {
+  margin-top: 12px;
 }
 
 .nav-link {
-  font: 14px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
   text-transform: uppercase;
   letter-spacing: 0;
   color: rgba(255, 255, 255, 0.95);
   text-decoration: none;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0);
-  transition: color 0.2s ease, text-shadow 0.3s ease;
+  text-shadow: none;
+  transition: color 0.2s ease;
   cursor: var(--cursor-light), pointer;
   display: inline-flex;
   align-items: center;
@@ -602,14 +899,21 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 .nav-link:hover {
   color: #fff;
-  text-decoration: none;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+  text-shadow: none;
   cursor: var(--cursor-dark), pointer;
+}
+
+body:not(.theme-night) .nav-link::after {
+  background-image: url('/static/cursor-dark.svg');
 }
 
 .nav-link:hover::after {
   opacity: 1;
-  animation: navLinkStarSpin 0.85s linear infinite;
+  animation: navLinkStarSpin 1.15s linear infinite;
 }
 
 @keyframes navLinkStarSpin {
@@ -622,7 +926,9 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-link:hover::after {
+  .nav-link:hover::after,
+  .page--values .disclosure-summary:is(:hover, :focus-visible)::after,
+  .posts-list a:is(:hover, :focus-visible) .post-name::after {
     animation: none;
   }
 }
@@ -639,20 +945,17 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 /* Footer */
 #site-footer {
-  position: fixed;
-  bottom: 75px;
-  left: 75px;
+  position: relative;
   z-index: 200;
   color: rgba(255, 255, 255, 0.95);
-  font: 14px/1 var(--mono-font);
-  padding: 6px 10px;
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
 }
 
 /* Bottom Controls */
 .bottom-controls {
-  position: fixed;
-  bottom: 75px;
-  right: 75px;
+  position: relative;
   z-index: 200;
   display: flex;
   align-items: center;
@@ -663,7 +966,9 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   border: 0;
   background: none;
   color: rgba(255, 255, 255, 0.95);
-  font: 14px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
   padding: 6px 10px;
   cursor: var(--cursor-light), pointer;
   transition: color 0.2s ease;
@@ -697,7 +1002,9 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   border: 0;
   background: none;
   color: rgba(255, 255, 255, 0.95);
-  font: 14px/1 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: var(--leading-ui);
   padding: 6px 10px;
   cursor: var(--cursor-light), pointer;
   transition: color 0.2s ease;
@@ -774,7 +1081,9 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   border: 0;
   background: none;
   color: rgba(255, 255, 255, 0.8);
-  font: 13px/1.4 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-ui);
+  line-height: 1.4;
   padding: 8px 16px;
   text-align: start;
   cursor: var(--cursor-dark), pointer;
@@ -797,7 +1106,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 .lang-menu .lang-check {
   width: 1.2em;
   text-align: center;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   opacity: 0;
 }
 
@@ -807,7 +1116,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 .lang-menu .lang-code {
   opacity: 0.5;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
 }
 
@@ -816,13 +1125,31 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
    ========================================================================== */
 
 .email-meta {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 1ch;
+  align-items: baseline;
   margin-bottom: 24px;
-  opacity: 0.85;
+  font-size: var(--text-meta);
+  line-height: 1.5;
 }
 
 .email-meta p {
-  margin-bottom: 0;
+  display: contents;
+}
+
+.email-meta-key,
+.email-meta-value {
+  min-width: 0;
   line-height: 1.5;
+}
+
+.email-meta-key {
+  opacity: 0.6;
+}
+
+.email-meta-value {
+  overflow-wrap: anywhere;
 }
 
 .email-meta a {
@@ -842,7 +1169,8 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 .email-meta + .letter-body {
   font-family: var(--serif-font);
-  font-size: 18px;
+  font-size: var(--text-reading);
+  line-height: var(--leading-body);
   font-weight: 400;
 }
 
@@ -858,24 +1186,26 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   font-weight: 700;
 }
 
-.letter-body p {
+/* These letter defaults live in :where() so they carry zero specificity and
+   .prose (imported above) can override them on markdown-rendered bodies. */
+:where(.letter-body) p {
   margin-bottom: 20px;
 }
 
-.letter-body ul,
-.letter-body ol {
+:where(.letter-body) ul,
+:where(.letter-body) ol {
   list-style: none;
   padding-inline-start: 0;
   margin: 20px 0;
 }
 
-.letter-body li {
+:where(.letter-body) li {
   position: relative;
   padding-inline-start: 1.4em;
   margin: 6px 0;
 }
 
-.letter-body li::before {
+:where(.letter-body) li::before {
   content: "•";
   position: absolute;
   inset-inline-start: 0;
@@ -895,16 +1225,55 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 }
 
 .post-date {
+  font-size: var(--text-meta);
   font-weight: 400;
+  color: rgba(25, 24, 22, 0.6);
+}
+
+.theme-night .post-date {
+  color: rgba(240, 240, 240, 0.6);
 }
 
 .posts-list .post-name {
   margin-inline-start: 0.6em;
   font-family: var(--serif-font);
-  font-size: 18px;
-  line-height: 1.1;
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
   font-style: italic;
   font-weight: 400;
+}
+
+/* Hover treatment matching the values disclosures: dotted underline on the
+   title plus the spinning star. The star lives on the name's ::after so it
+   follows the title text, including when it wraps below the date on mobile.
+   Being an inline-block, it is not painted by the propagated underline. */
+.posts-list a:is(:hover, :focus-visible) .post-name {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+
+.posts-list .post-name::after {
+  content: "";
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-inline-start: 8px;
+  background: url('/static/cursor-light.svg') center/contain no-repeat;
+  transform-origin: center;
+  vertical-align: -2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body:not(.theme-night) .posts-list .post-name::after {
+  background-image: url('/static/cursor-dark.svg');
+}
+
+.posts-list a:is(:hover, :focus-visible) .post-name::after {
+  opacity: 1;
+  animation: navLinkStarSpin 1.15s linear infinite;
 }
 
 .letter-body a {
@@ -925,6 +1294,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 .letter-footer {
   margin-top: 28px;
+  font-size: var(--text-meta);
   font-weight: 400;
   line-height: 1.5;
   color: rgba(25, 24, 22, 0.6);
@@ -984,8 +1354,8 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: inherit;
-  line-height: 1.6;
+  font-size: var(--text-form);
+  line-height: var(--leading-body);
   color: inherit;
   caret-color: rgba(25, 24, 22, 0.8);
   cursor: inherit;
@@ -1068,14 +1438,14 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 }
 
 .updates-enter:hover {
-  color: rgba(25, 24, 22, 1);
+  color: var(--color-text-day);
 }
 
 .updates-message {
   display: none;
-  font-size: inherit;
+  font-size: var(--text-form);
   font-family: inherit;
-  line-height: 1.6;
+  line-height: var(--leading-body);
   color: inherit;
   margin: 0;
   white-space: nowrap;
@@ -1129,7 +1499,9 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   left: 50%;
   transform: translate(-50%, -50%) translateY(20px);
   text-align: center;
-  font: 15px/1.5 var(--mono-font);
+  font-family: var(--mono-font);
+  font-size: var(--text-body);
+  line-height: 1.5;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.02em;
@@ -1148,37 +1520,51 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
    Page + Content Variants
    ========================================================================== */
 
-.updates-overlay.overlay--prose .letter-body {
-  font-family: var(--serif-font);
-  font-weight: 400;
-  font-size: 18px;
-  line-height: 1.5;
+.letter-body {
+  text-wrap: pretty;
+  orphans: 3;
+  widows: 3;
 }
 
-.updates-overlay.overlay--prose .letter-body strong,
-.updates-overlay.overlay--prose .letter-body b,
-.updates-overlay.overlay--prose .letter-body a {
+.letter-body :is(h1, h2, h3, h4, h5, h6) {
+  text-wrap: balance;
+  break-after: avoid;
+}
+
+.page--prose .letter-body {
+  font-family: var(--serif-font);
+  font-weight: 400;
+  font-size: var(--text-reading);
+  line-height: var(--leading-body);
+}
+
+.page--prose .letter-body strong,
+.page--prose .letter-body b,
+.page--prose .letter-body a {
   font-weight: 700;
 }
 
-.updates-overlay.overlay--purpose .prose-subheading {
-  font-weight: 500;
+.page--purpose .prose-subheading {
+  font-weight: 600;
 }
 
-.updates-overlay.overlay--values .letter-body {
-  font-size: 16px;
+/* Indexes and forms use the stable body role. Individual post bodies receive
+   the reading role from .email-meta + .letter-body above. */
+.page--posts:not(.page--post-detail) .letter-body {
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
 }
 
 .section-heading {
   margin: 0 0 10px;
 }
 
-.updates-overlay.overlay--values .letter-body .section-heading {
+.page--values .letter-body .section-heading {
   margin-bottom: 10px;
 }
 
 .section-heading em strong {
-  font-size: 18px;
+  font-size: var(--text-title);
 }
 
 .section-heading--spaced {
@@ -1194,9 +1580,7 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  --values-chevron-index: 0;
-  --values-chevron-glow: 0;
-  color: rgba(28, 27, 26, 0.9);
+  color: var(--color-text-day);
   cursor: var(--cursor-light), pointer;
   transition: color 0.2s ease;
 }
@@ -1207,14 +1591,11 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 .disclosure-summary::before {
   content: ">";
-  font: 11px/1 var(--mono-font);
-  color: rgba(
-    calc(28 + (255 - 28) * var(--values-chevron-glow)),
-    calc(27 + (255 - 27) * var(--values-chevron-glow)),
-    calc(26 + (255 - 26) * var(--values-chevron-glow)),
-    calc(0.9 + 0.05 * var(--values-chevron-glow))
-  );
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+  font-family: var(--mono-font);
+  font-size: var(--font-size-xs);
+  line-height: 1;
+  color: currentColor;
+  text-shadow: none;
   transform-origin: center;
   transition: transform 0.2s ease, color 0.2s ease;
   margin-top: 3px;
@@ -1236,13 +1617,30 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 }
 
 .disclosure-title {
-  font-size: 16px;
+  display: block;
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
+  font-style: italic;
   font-weight: 400;
   color: inherit;
   transition: color 0.2s ease;
 }
 
-.updates-overlay.overlay--values .letter-body .icon-list {
+/* Cross-browser cap-height trimming for Plantin Now Italic. Its ascent is
+   0.75em, descent 0.25em, and cap height 0.682em. */
+.disclosure-title::before {
+  content: "";
+  display: table;
+  margin-bottom: -0.068em;
+}
+
+.disclosure-title::after {
+  content: "";
+  display: table;
+  margin-top: -0.25em;
+}
+
+.page--values .letter-body .icon-list {
   margin: 6px 0 14px 20px;
   padding: 0;
   list-style: none;
@@ -1259,20 +1657,11 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
   position: absolute;
   inset-inline-start: 0;
   top: 0;
-  color: rgba(0, 0, 0, 0.95);
+  color: var(--color-text-day);
 }
 
 .theme-night .disclosure-summary {
   color: rgba(240, 240, 240, 0.8);
-}
-
-.theme-night .disclosure-summary::before {
-  color: rgba(
-    calc(200 + (255 - 200) * var(--values-chevron-glow)),
-    calc(200 + (255 - 200) * var(--values-chevron-glow)),
-    calc(200 + (255 - 200) * var(--values-chevron-glow)),
-    calc(0.65 + 0.3 * var(--values-chevron-glow))
-  );
 }
 
 .theme-night .disclosure[open] .disclosure-summary::before {
@@ -1291,6 +1680,174 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 .theme-night .icon-list--star > li::before {
   color: rgba(240, 240, 240, 0.8);
+}
+
+/* Readable page treatment */
+.content-page .letter-body a,
+.content-page .email-meta a,
+.content-page .letter-footer a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+
+.content-page .letter-body a:hover,
+.content-page .email-meta a:hover,
+.content-page .letter-footer a:hover,
+.theme-night .content-page .letter-body a:hover,
+.theme-night .content-page .email-meta a:hover,
+.theme-night .content-page .letter-footer a:hover {
+  color: var(--color-text-day);
+  text-decoration-style: solid;
+}
+
+.theme-night .content-page .letter-body a:hover,
+.theme-night .content-page .email-meta a:hover,
+.theme-night .content-page .letter-footer a:hover {
+  color: #fff;
+}
+
+.content-page .email-meta {
+  padding-bottom: 24px;
+  margin-bottom: 36px;
+  border-bottom: 1px solid rgba(39, 37, 34, 0.18);
+}
+
+.theme-night .content-page .email-meta {
+  border-bottom-color: rgba(244, 242, 238, 0.18);
+}
+
+.page--post-detail .letter-footer {
+  padding-top: 28px;
+  margin-top: 48px;
+  border-top: 1px solid rgba(39, 37, 34, 0.14);
+}
+
+.theme-night .page--post-detail .letter-footer {
+  border-top-color: rgba(244, 242, 238, 0.14);
+}
+
+.page--posts:not(.page--post-detail) .posts-list {
+  margin: 20px 0;
+}
+
+.page--posts:not(.page--post-detail) .posts-list li {
+  margin: 6px 0;
+}
+
+.page--posts:not(.page--post-detail) .posts-list li > a {
+  text-decoration: none;
+}
+
+.content-page .disclosure-summary {
+  color: inherit;
+  cursor: var(--cursor-dark), pointer;
+}
+
+.page--values .disclosure-summary {
+  align-items: center;
+  padding-block: 7px;
+  /* Follow the page's interpolated theme color directly. A second color
+     transition here repeatedly restarted and made the control flash. */
+  transition: none;
+}
+
+.page--values .disclosure-summary > em {
+  display: contents;
+}
+
+.page--values .disclosure-summary::before {
+  content: "";
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  margin-top: 0;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+.page--values .disclosure-title {
+  transition: none;
+}
+
+.page--values .disclosure-summary:is(:hover, :focus-visible) .disclosure-title {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+
+/* Spinning star on hover, matching .nav-link. The summary's ::before is the
+   chevron and the title's pseudo-elements trim cap height, so the star lives
+   on the summary's ::after. */
+.page--values .disclosure-summary::after {
+  content: "";
+  width: 15px;
+  height: 15px;
+  background: url('/static/cursor-light.svg') center/contain no-repeat;
+  transform-origin: center;
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body:not(.theme-night) .page--values .disclosure-summary::after {
+  background-image: url('/static/cursor-dark.svg');
+}
+
+.page--values .disclosure-summary:is(:hover, :focus-visible)::after {
+  opacity: 1;
+  animation: navLinkStarSpin 1.15s linear infinite;
+}
+
+.content-page.page--values .disclosure[open] .disclosure-summary::before {
+  color: currentColor;
+  transform: rotate(45deg);
+}
+
+.content-page .disclosure-summary::before {
+  color: currentColor;
+  text-shadow: none;
+}
+
+.content-page .disclosure-summary:hover,
+.content-page .disclosure[open] .disclosure-summary:hover,
+.content-page .disclosure-summary:hover::before,
+.content-page .disclosure[open] .disclosure-summary:hover::before {
+  color: var(--color-text-day);
+}
+
+.theme-night .content-page .disclosure-summary {
+  color: inherit;
+  cursor: var(--cursor-light), pointer;
+}
+
+.theme-night .content-page .disclosure-summary:hover,
+.theme-night .content-page .disclosure[open] .disclosure-summary:hover,
+.theme-night .content-page .disclosure-summary:hover::before,
+.theme-night .content-page .disclosure[open] .disclosure-summary:hover::before {
+  color: #fff;
+}
+
+@media (min-width: 801px) {
+  /* Navigation links reserve room for their hover star. Match that inset so
+     the MENU label and link text share the same right-hand alignment. */
+  .menu-trigger-toggle {
+    padding-inline-end: 21px;
+  }
+}
+
+@media (min-width: 801px) and (max-width: 1100px) {
+  .content-surface,
+  .page--prose .content-surface,
+  .page--post-detail .content-surface {
+    width: min(680px, calc(100vw - 360px));
+  }
 }
 
 /* ==========================================================================
@@ -1320,16 +1877,182 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
 @media (max-width: 800px) {
   :root {
+    --text-hero: var(--font-size-xl);
     --overlay-top-safe-zone: 58px;
     --overlay-bottom-safe-zone: 140px;
     --overlay-card-chrome: 56px;
     --overlay-close-clearance: 26px;
     --overlay-mobile-top-gap: 58px;
+    --frame-inline: 40px;
+    --frame-block: 40px;
+    --frame-chrome-fade: 64px;
+    --frame-chrome-clearance: 20px;
+    --frame-content-top: calc(var(--frame-block) + 88px);
+    --frame-content-bottom: calc(var(--frame-block) + 92px);
+  }
+
+  body.mobile-menu-open {
+    overflow: hidden;
+  }
+
+  .site-header {
+    z-index: 220;
   }
 
   .top-nav {
-    top: 40px;
-    right: 40px;
+    z-index: 300;
+  }
+
+  .top-nav.has-overlap-backdrop::before {
+    display: none;
+  }
+
+  .menu-trigger {
+    justify-content: flex-end;
+  }
+
+  .menu-trigger-toggle {
+    min-height: 44px;
+    margin: -15px -10px;
+    padding: 15px 10px;
+  }
+
+  .top-nav .menu-links {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: calc(var(--frame-block) + 44px) var(--frame-inline) var(--frame-block);
+    align-items: flex-end;
+    gap: 8px;
+    color: var(--color-text-day);
+    animation: mobileMenuPanelIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .top-nav .menu-links::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: #faf9f6;
+    background-image:
+      linear-gradient(rgba(250, 249, 246, 0.97), rgba(250, 249, 246, 0.97)),
+      url('/static/paper.png');
+    background-size: auto, 260px 260px;
+    /* The menu surface fades across the left half, then remains fully opaque
+       behind the right-aligned navigation. */
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 50%, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 50%, #000 100%);
+  }
+
+  .top-nav.is-closing .menu-links {
+    pointer-events: none;
+    animation: mobileMenuPanelOut 0.18s ease-in both;
+  }
+
+  .theme-night .top-nav .menu-links {
+    color: #fff;
+  }
+
+  .theme-night .top-nav .menu-links::before {
+    background-color: #2e2d2b;
+    background-image:
+      linear-gradient(rgba(46, 45, 43, 0.97), rgba(46, 45, 43, 0.97)),
+      url('/static/paper-dark.png');
+  }
+
+  .top-nav .menu-links[hidden] {
+    display: none;
+  }
+
+  .top-nav .menu-link-group {
+    position: relative;
+    z-index: 1;
+    width: auto;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .top-nav .menu-link-group--external {
+    margin-top: 8px;
+    padding-top: 0;
+    border: 0;
+  }
+
+  .top-nav .nav-link {
+    position: relative;
+    width: max-content;
+    min-width: 44px;
+    min-height: 44px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 0 0 16px;
+    justify-content: flex-end;
+    touch-action: manipulation;
+    text-align: end;
+    font-size: var(--text-ui);
+    line-height: var(--leading-ui);
+  }
+
+  .top-nav .nav-link::after {
+    position: absolute;
+    inset-inline-end: calc(100% + 6px);
+    pointer-events: none;
+  }
+
+  .menu-trigger-toggle:focus-visible,
+  .top-nav .nav-link:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  /* On scrolling pages, the fixed chrome gets an opaque-to-transparent veil.
+     Content remains visible as it passes underneath, without colliding with
+     the logo, menu, footer, or controls. */
+  body:has(.content-page) .site-header {
+    padding-bottom: calc(var(--frame-chrome-fade) + var(--frame-chrome-clearance));
+    background: linear-gradient(
+      to bottom,
+      rgba(var(--chrome-surface), 1) 0%,
+      rgba(var(--chrome-surface), 1) calc(100% - var(--frame-chrome-fade)),
+      rgba(var(--chrome-surface), 0) 100%
+    );
+  }
+
+  body:has(.content-page) .site-footer-bar {
+    padding-top: calc(var(--frame-chrome-fade) + var(--frame-chrome-clearance));
+    background: linear-gradient(
+      to top,
+      rgba(var(--chrome-surface), 1) 0%,
+      rgba(var(--chrome-surface), 1) calc(100% - var(--frame-chrome-fade)),
+      rgba(var(--chrome-surface), 0) 100%
+    );
+  }
+
+  .theme-night {
+    --chrome-surface: 46, 45, 43;
+  }
+
+  .content-page::before {
+    background: radial-gradient(
+      ellipse 88% 120% at 50% 48%,
+      rgba(var(--page-veil), 0.985) 0%,
+      rgba(var(--page-veil), 0.985) 42%,
+      rgba(var(--page-veil), 0.96) 52%,
+      rgba(var(--page-veil), 0.72) 64%,
+      rgba(var(--page-veil), 0.34) 76%,
+      rgba(var(--page-veil), 0) 92%
+    );
+  }
+
+  .content-surface,
+  .page--prose .content-surface,
+  .page--post-detail .content-surface {
+    width: min(100%, 680px);
   }
 
   .updates-overlay {
@@ -1365,34 +2088,6 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
     transition: max-height 0.22s ease;
   }
 
-  .updates-overlay.overlay--prose .letter-body,
-  .updates-overlay.overlay--posts .letter-body {
-    font-size: 16px;
-  }
-
-  .updates-overlay.overlay--post-detail .email-meta {
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .updates-overlay.overlay--values .section-heading em strong {
-    font-size: 17px;
-  }
-
-  .updates-overlay.overlay--posts .posts-list .post-name,
-  .updates-overlay.overlay--posts .post-date {
-    font-size: 16px;
-  }
-
-  #site-footer {
-    bottom: 40px;
-    left: 40px;
-  }
-
-  .bottom-controls {
-    bottom: 40px;
-    right: 40px;
-  }
 
   .main-logo {
     width: 210px;
@@ -1401,18 +2096,42 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 
   body:has(.page[data-page-type="home"]) .center-logo,
   body:has(.page[data-page-type="corner-logo"]) .center-logo {
-    left: calc(40px + 10px);
-    top: 40px;
+    margin-block-start: -10px;
   }
 
   body:has(.page[data-page-type="home"]) .main-logo,
   body:has(.page[data-page-type="corner-logo"]) .main-logo {
-    width: 85px;
-    max-width: calc(65vw * 0.29);
+    width: 22px;
+    max-width: none;
   }
 
-  .home-hero-text {
-    font-size: clamp(15.84px, 3.456vw, 25.2px);
+
+  @keyframes mobileMenuPanelIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes mobileMenuPanelOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .top-nav .menu-links {
+      animation-duration: 0.01ms;
+    }
   }
 
 }
@@ -1428,21 +2147,23 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
     --overlay-card-chrome: 44px;
     --overlay-close-clearance: 22px;
     --overlay-mobile-top-gap: 46px;
+    --frame-inline: 28px;
+    --frame-block: 28px;
   }
 
-  .top-nav {
-    top: 28px;
-    right: 28px;
-  }
-
-  #site-footer {
-    bottom: 28px;
-    left: 28px;
+  .content-page::before {
+    background: radial-gradient(
+      ellipse 88% 120% at 50% 48%,
+      rgba(var(--page-veil), 0.985) 0%,
+      rgba(var(--page-veil), 0.985) 42%,
+      rgba(var(--page-veil), 0.96) 52%,
+      rgba(var(--page-veil), 0.72) 64%,
+      rgba(var(--page-veil), 0.34) 76%,
+      rgba(var(--page-veil), 0) 92%
+    );
   }
 
   .bottom-controls {
-    bottom: 28px;
-    right: 28px;
     gap: 8px;
   }
 
@@ -1460,16 +2181,8 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
     margin-inline-start: 0;
   }
 
-  body:has(.page[data-page-type="home"]) .center-logo,
-  body:has(.page[data-page-type="corner-logo"]) .center-logo {
-    left: calc(28px + 10px);
-    top: 28px;
-  }
-
   .home-hero-text {
-    font-size: clamp(12.96px, 4.896vw, 20.16px);
-    line-height: 1.18;
-    width: min(92vw, 680px);
+    width: 100%;
   }
 
 }

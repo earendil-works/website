@@ -1,298 +1,7 @@
-// Overlay animation handling
+// Shared UI runtime namespace, populated by the IIFEs below.
 window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
-(function() {
-  // Invariant: each rendered page contains at most one .updates-overlay.
-  function shouldUseCustomOverlayScrollbar() {
-    return /Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg\//.test(navigator.userAgent);
-  }
-
-  function getOverlayScroller(overlay) {
-    return overlay.querySelector('.updates-scroll-content') || overlay.querySelector('.updates-letter .letter-body');
-  }
-
-  function getOverlay() {
-    return document.querySelector('.updates-overlay');
-  }
-
-  function getActiveOverlay() {
-    return document.querySelector('.updates-overlay.is-open');
-  }
-
-  const uiRuntime = window.__earendilUiRuntime;
-  const overlayRuntime = uiRuntime.overlay || (uiRuntime.overlay = {});
-
-  const shouldUseCustomOverlayIndicator = shouldUseCustomOverlayScrollbar();
-  document.documentElement.classList.toggle('overlay-scrollbar-mode-custom', shouldUseCustomOverlayIndicator);
-  const customScrollbarController = (function() {
-    let state = null;
-
-    function detach() {
-      if (!state) return;
-
-      state.listenerController.abort();
-
-      if (state.syncRafId !== null && typeof window.cancelAnimationFrame === 'function') {
-        window.cancelAnimationFrame(state.syncRafId);
-      }
-      if (state.syncTimeoutId !== null) {
-        clearTimeout(state.syncTimeoutId);
-      }
-
-      if (state.indicator && state.indicator.parentNode) {
-        state.indicator.parentNode.removeChild(state.indicator);
-      }
-
-      if (state.letter) {
-        state.letter.classList.remove('has-custom-scrollbar');
-      }
-
-      state = null;
-    }
-
-    function sync() {
-      if (!state) return;
-
-      const overlay = state.overlay;
-      if (!overlay.isConnected || !state.letter.isConnected || !state.scroller.isConnected) {
-        detach();
-        return;
-      }
-
-      const letterRect = state.letter.getBoundingClientRect();
-      const scrollRect = state.scroller.getBoundingClientRect();
-      state.indicator.style.top = Math.max(0, scrollRect.top - letterRect.top) + 'px';
-      state.indicator.style.height = Math.max(0, scrollRect.height) + 'px';
-
-      const scrollHeight = state.scroller.scrollHeight;
-      const clientHeight = state.scroller.clientHeight;
-      if (scrollHeight <= clientHeight + 1) {
-        state.indicator.style.opacity = '0';
-        return;
-      }
-
-      state.indicator.style.opacity = '1';
-      const minThumb = 24;
-      const thumbHeight = Math.max(minThumb, (clientHeight / scrollHeight) * scrollRect.height);
-      const maxThumbTop = Math.max(0, scrollRect.height - thumbHeight);
-      const maxScrollable = Math.max(1, scrollHeight - clientHeight);
-      let progress = state.scroller.scrollTop / maxScrollable;
-      progress = Math.max(0, Math.min(1, progress));
-
-      state.thumb.style.height = thumbHeight + 'px';
-      state.thumb.style.transform = 'translateY(' + (maxThumbTop * progress) + 'px)';
-    }
-
-    function scheduleSync() {
-      if (!state) return;
-
-      if (typeof window.requestAnimationFrame === 'function') {
-        if (state.syncRafId !== null) return;
-        const scheduledState = state;
-        scheduledState.syncRafId = window.requestAnimationFrame(function() {
-          if (!state || state !== scheduledState) return;
-          state.syncRafId = null;
-          sync();
-        });
-        return;
-      }
-
-      if (state.syncTimeoutId !== null) return;
-      const scheduledState = state;
-      scheduledState.syncTimeoutId = setTimeout(function() {
-        if (!state || state !== scheduledState) return;
-        state.syncTimeoutId = null;
-        sync();
-      }, 0);
-    }
-
-    function attach(overlay) {
-      detach();
-      if (!shouldUseCustomOverlayIndicator) return;
-
-      const letter = overlay.querySelector('.updates-letter');
-      const scroller = getOverlayScroller(overlay);
-      if (!letter || !scroller) return;
-
-      letter.classList.add('has-custom-scrollbar');
-
-      const indicator = document.createElement('div');
-      indicator.className = 'updates-scrollbar-indicator';
-      indicator.setAttribute('aria-hidden', 'true');
-      const thumb = document.createElement('div');
-      thumb.className = 'updates-scrollbar-indicator-thumb';
-      indicator.appendChild(thumb);
-      letter.appendChild(indicator);
-
-      const onResize = function() {
-        scheduleSync();
-      };
-      const onScroll = function() {
-        scheduleSync();
-      };
-      const listenerController = new AbortController();
-      const defaultListenerOptions = { signal: listenerController.signal };
-      const passiveListenerOptions = { passive: true, signal: listenerController.signal };
-
-      state = {
-        overlay: overlay,
-        letter: letter,
-        scroller: scroller,
-        indicator: indicator,
-        thumb: thumb,
-        onResize: onResize,
-        onScroll: onScroll,
-        listenerController: listenerController,
-        syncRafId: null,
-        syncTimeoutId: null,
-      };
-
-      scroller.addEventListener('scroll', onScroll, passiveListenerOptions);
-      window.addEventListener('resize', onResize, defaultListenerOptions);
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', onResize, defaultListenerOptions);
-        window.visualViewport.addEventListener('scroll', onResize, passiveListenerOptions);
-      }
-
-      sync();
-      scheduleSync();
-    }
-
-    return {
-      attach: attach,
-      detach: detach,
-      scheduleSync: scheduleSync,
-    };
-  })();
-
-  function initOverlay() {
-    const overlay = getOverlay();
-    const hasOverlay = !!overlay;
-    document.body.classList.toggle('has-overlay', hasOverlay);
-
-    if (!overlay) {
-      customScrollbarController.detach();
-      return;
-    }
-
-    // Intentional reflow: reset transition state before re-applying the open class.
-    void overlay.offsetWidth;
-    overlay.classList.remove('is-closing');
-    overlay.classList.add('is-open');
-    overlay.setAttribute('aria-hidden', 'false');
-    customScrollbarController.attach(overlay);
-
-    window.scrollTo(0, 0);
-  }
-
-  function teardownOverlay() {
-    customScrollbarController.detach();
-  }
-
-  overlayRuntime.scheduleCustomScrollbarSync = function() {
-    customScrollbarController.scheduleSync();
-  };
-  initOverlay();
-
-  // Only add listeners once
-  if (overlayRuntime.listenersAdded) return;
-  overlayRuntime.listenersAdded = true;
-
-  document.body.addEventListener('htmx:beforeSwap', teardownOverlay);
-  document.body.addEventListener('htmx:afterSettle', initOverlay);
-
-  // Keep this slightly above the 350ms CSS transition to guarantee cleanup.
-  const OVERLAY_CLOSE_FALLBACK_MS = 450;
-
-  function closeOverlayWithAnimation(overlay, callback) {
-    let hasFinished = false;
-    let fallbackTimer = null;
-
-    function finish() {
-      if (hasFinished) return;
-      hasFinished = true;
-      if (fallbackTimer !== null) {
-        clearTimeout(fallbackTimer);
-      }
-      overlay.removeEventListener('transitionend', onTransitionEnd);
-      callback();
-    }
-
-    function onTransitionEnd(event) {
-      if (event.target !== overlay || event.propertyName !== 'opacity') return;
-      finish();
-    }
-
-    teardownOverlay();
-    overlay.addEventListener('transitionend', onTransitionEnd);
-    overlay.classList.add('is-closing');
-    overlay.classList.remove('is-open');
-    overlay.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('has-overlay');
-
-    fallbackTimer = setTimeout(finish, OVERLAY_CLOSE_FALLBACK_MS);
-  }
-
-  function navigateTo(url) {
-    htmx.ajax('GET', url, {target: 'div.page', swap: 'outerHTML'}).then(function() {
-      history.pushState({}, '', url);
-    });
-  }
-
-  // Handle dismiss link clicks - animate then navigate
-  document.body.addEventListener('click', function(event) {
-    const dismissLink = event.target.closest('.updates-dismiss');
-    if (dismissLink) {
-      event.preventDefault();
-      event.stopPropagation();
-      const overlay = getActiveOverlay() || dismissLink.closest('.updates-overlay');
-      if (overlay) {
-        const dismissUrl = dismissLink.getAttribute('data-dismiss-url') || '/';
-        closeOverlayWithAnimation(overlay, function() {
-          navigateTo(dismissUrl);
-        });
-      }
-    }
-  }, true);
-
-  // Handle background clicks while allowing underlying links
-  document.body.addEventListener('click', function(event) {
-    const overlay = getActiveOverlay();
-    if (!overlay) return;
-    if (event.target.closest('.updates-letter')) return;
-    if (event.target.closest('.updates-dismiss')) return;
-    if (event.target.closest('a')) return;
-    // Ignore clicks on chrome elements (controls, nav, footer)
-    if (event.target.closest('.bottom-controls')) return;
-    if (event.target.closest('#lang-picker')) return;
-    if (event.target.closest('#lang-toggle')) return;
-    if (event.target.closest('.top-nav')) return;
-    if (event.target.closest('#site-footer')) return;
-    if (event.target.closest('.lang-menu')) return;
-    if (event.target.closest('.center-logo')) return;
-    const dismissLink = overlay.querySelector('.updates-dismiss');
-    const dismissUrl = (dismissLink && dismissLink.getAttribute('data-dismiss-url')) || '/';
-    closeOverlayWithAnimation(overlay, function() {
-      navigateTo(dismissUrl);
-    });
-  });
-
-  // Handle Escape key to close overlay
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-      const overlay = getActiveOverlay();
-      if (!overlay) return;
-      event.preventDefault();
-      const dismissLink = overlay.querySelector('.updates-dismiss');
-      const dismissUrl = (dismissLink && dismissLink.getAttribute('data-dismiss-url')) || '/';
-      closeOverlayWithAnimation(overlay, function() {
-        navigateTo(dismissUrl);
-      });
-    }
-  });
-})();
-
-// Dynamic overlay vertical band: 2% below ABOUT row and 2% above footer/control row
+// Dynamic overlay vertical band: 2% below the menu row and 2% above the footer/control row
 (function() {
   var uiRuntime = window.__earendilUiRuntime;
   var overlayRuntime = uiRuntime.overlay || (uiRuntime.overlay = {});
@@ -359,7 +68,7 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
   document.body.addEventListener('htmx:afterSettle', updateOverlayVerticalBand);
 })();
 
-// Chevron menu toggle (top-right navigation)
+// Site menu toggle (top-right navigation)
 (function() {
   var uiRuntime = window.__earendilUiRuntime;
   var layoutRuntime = uiRuntime.layout || (uiRuntime.layout = {});
@@ -382,14 +91,14 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
       return;
     }
 
-    var overlayCard = document.querySelector('.updates-overlay.is-open .updates-letter');
-    if (!overlayCard) {
+    var pageSurface = document.querySelector('.content-page .content-surface');
+    if (!pageSurface) {
       menu.classList.remove('has-overlap-backdrop');
       return;
     }
 
     var menuRect = menu.getBoundingClientRect();
-    var overlayRect = overlayCard.getBoundingClientRect();
+    var overlayRect = pageSurface.getBoundingClientRect();
     var shouldShowBackdrop = rectanglesOverlap(menuRect, overlayRect, 1);
     menu.classList.toggle('has-overlap-backdrop', shouldShowBackdrop);
   }
@@ -407,16 +116,47 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     }
   }
 
+  function syncMobileMenuState(menu) {
+    var isMobile = window.matchMedia('(max-width: 800px)').matches;
+    var isOpen = !!(menu && menu.classList.contains('is-open'));
+    document.body.classList.toggle('mobile-menu-open', isMobile && isOpen);
+  }
+
   function setMenuExpanded(menu, isOpen) {
     if (!menu) return;
     var links = menu.querySelector('.menu-links');
     var triggerButton = menu.querySelector('.menu-trigger-toggle');
-    if (links) links.hidden = !isOpen;
-    menu.classList.toggle('is-open', !!isOpen);
+    var isMobile = window.matchMedia('(max-width: 800px)').matches;
+
+    if (menu._closeTimer) {
+      clearTimeout(menu._closeTimer);
+      menu._closeTimer = null;
+    }
+
+    if (isOpen) {
+      menu.classList.remove('is-closing');
+      if (links) links.hidden = false;
+      menu.classList.add('is-open');
+    } else {
+      menu.classList.remove('is-open');
+      if (links && !links.hidden && isMobile) {
+        menu.classList.add('is-closing');
+        menu._closeTimer = setTimeout(function() {
+          links.hidden = true;
+          menu.classList.remove('is-closing');
+          menu._closeTimer = null;
+        }, 180);
+      } else {
+        if (links) links.hidden = true;
+        menu.classList.remove('is-closing');
+      }
+    }
+
     if (triggerButton) {
       triggerButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       triggerButton.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
     }
+    syncMobileMenuState(menu);
     if (layoutRuntime.updateOverlayVerticalBand) {
       layoutRuntime.updateOverlayVerticalBand();
     }
@@ -431,8 +171,8 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     }
   }
 
-  function initChevronMenu() {
-    var menu = document.querySelector('[data-chevron-menu]');
+  function initSiteMenu() {
+    var menu = document.querySelector('[data-site-menu]');
     if (!menu) return;
 
     var triggerButton = menu.querySelector('.menu-trigger-toggle');
@@ -453,34 +193,64 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
       triggerButton.addEventListener('click', toggleMenu);
 
+      var menuPanel = menu.querySelector('.menu-links');
+      if (menuPanel && !menuPanel.dataset.initialized) {
+        menuPanel.dataset.initialized = 'true';
+        menuPanel.addEventListener('click', function(event) {
+          if (event.target !== menuPanel) return;
+          setMenuExpanded(menu, false);
+          triggerButton.focus();
+        });
+      }
+
       menu.querySelectorAll('.menu-links a').forEach(function(link) {
         if (link.dataset.mobileCloseBound) return;
         link.dataset.mobileCloseBound = 'true';
         link.addEventListener('click', closeMenuOnMobile);
       });
 
-      if (!menuRuntime.mobileMenuCollapseBound) {
-        menuRuntime.mobileMenuCollapseBound = true;
-        document.body.addEventListener('pointerdown', function(event) {
+      if (!menuRuntime.mobileMenuKeyboardBound) {
+        menuRuntime.mobileMenuKeyboardBound = true;
+        document.addEventListener('keydown', function(event) {
           if (!window.matchMedia('(max-width: 800px)').matches) return;
-          var navMenu = document.querySelector('[data-chevron-menu]');
+          var navMenu = document.querySelector('[data-site-menu].is-open');
           if (!navMenu) return;
-          var linksEl = navMenu.querySelector('.menu-links');
-          var isOpen = navMenu.classList.contains('is-open') || (linksEl && !linksEl.hidden);
-          if (!isOpen) return;
-          if (event.target.closest('[data-chevron-menu]')) return;
-          if (event.target.closest('.updates-overlay')) {
+
+          var navTrigger = navMenu.querySelector('.menu-trigger-toggle');
+          if (event.key === 'Escape') {
+            event.preventDefault();
             setMenuExpanded(navMenu, false);
+            if (navTrigger) navTrigger.focus();
+            return;
           }
-        }, true);
+
+          if (event.key !== 'Tab') return;
+          var focusable = Array.prototype.slice.call(
+            navMenu.querySelectorAll('.menu-trigger-toggle, .menu-links a')
+          ).filter(function(element) {
+            return !element.hidden && element.getClientRects().length > 0;
+          });
+          if (!focusable.length) return;
+
+          var first = focusable[0];
+          var last = focusable[focusable.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        });
       }
 
       if (!menuRuntime.overlapBackdropBound) {
         menuRuntime.overlapBackdropBound = true;
 
         function refreshMenuOverlapBackdrop() {
-          var navMenu = document.querySelector('[data-chevron-menu]');
+          var navMenu = document.querySelector('[data-site-menu]');
           if (!navMenu) return;
+          syncMobileMenuState(navMenu);
           updateMenuOverlapBackdrop(navMenu);
           scheduleMenuOverlapBackdropUpdate(navMenu);
         }
@@ -499,113 +269,8 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     scheduleMenuOverlapBackdropUpdate(menu);
   }
 
-  initChevronMenu();
-  document.body.addEventListener('htmx:afterSettle', initChevronMenu);
-})();
-
-// Values chevron pulse synchronization (global phase + per-item offset)
-(function() {
-  var VALUES_CHEVRON_CYCLE_MS = 1100;
-  var VALUES_CHEVRON_INDEX_PHASE_OFFSET = 0.07;
-  var chevronSummaries = [];
-  var animationFrameId = null;
-  var reduceMotionQuery = null;
-
-  function getValuesChevronSummaries() {
-    return Array.prototype.slice.call(
-      document.querySelectorAll('.updates-overlay.overlay--values .disclosure-summary')
-    );
-  }
-
-  function setChevronIndices() {
-    chevronSummaries = getValuesChevronSummaries();
-    chevronSummaries.forEach(function(summary, index) {
-      summary.style.setProperty('--values-chevron-index', String(index));
-    });
-  }
-
-  function isReducedMotionEnabled() {
-    return !!(reduceMotionQuery && reduceMotionQuery.matches);
-  }
-
-  function shouldAnimate() {
-    return chevronSummaries.length > 0 && !isReducedMotionEnabled();
-  }
-
-  function normalizedPulse(phase) {
-    return 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
-  }
-
-  function stopAnimation() {
-    if (animationFrameId === null) return;
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
-  }
-
-  function resetChevronGlow() {
-    chevronSummaries.forEach(function(summary) {
-      if (!summary || !summary.isConnected) return;
-      summary.style.setProperty('--values-chevron-glow', '0');
-    });
-  }
-
-  function renderChevrons(now) {
-    if (animationFrameId === null) return;
-
-    var globalPhase = (now % VALUES_CHEVRON_CYCLE_MS) / VALUES_CHEVRON_CYCLE_MS;
-
-    chevronSummaries.forEach(function(summary, index) {
-      if (!summary || !summary.isConnected) return;
-
-      var indexValue = Number(summary.style.getPropertyValue('--values-chevron-index'));
-      if (!Number.isFinite(indexValue)) {
-        indexValue = index;
-      }
-
-      var phase = globalPhase + indexValue * VALUES_CHEVRON_INDEX_PHASE_OFFSET;
-      phase = phase - Math.floor(phase);
-
-      var glow = normalizedPulse(phase);
-      summary.style.setProperty('--values-chevron-glow', glow.toFixed(4));
-    });
-
-    animationFrameId = requestAnimationFrame(renderChevrons);
-  }
-
-  function startAnimation() {
-    if (animationFrameId !== null || !shouldAnimate()) return;
-    animationFrameId = requestAnimationFrame(renderChevrons);
-  }
-
-  function refreshValuesChevronSync() {
-    setChevronIndices();
-    if (shouldAnimate()) {
-      startAnimation();
-      return;
-    }
-    stopAnimation();
-    resetChevronGlow();
-  }
-
-  if (window.matchMedia) {
-    reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (typeof reduceMotionQuery.addEventListener === 'function') {
-      reduceMotionQuery.addEventListener('change', refreshValuesChevronSync);
-    } else if (typeof reduceMotionQuery.addListener === 'function') {
-      reduceMotionQuery.addListener(refreshValuesChevronSync);
-    }
-  }
-
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-      stopAnimation();
-      return;
-    }
-    refreshValuesChevronSync();
-  });
-
-  refreshValuesChevronSync();
-  document.body.addEventListener('htmx:afterSettle', refreshValuesChevronSync);
+  initSiteMenu();
+  document.body.addEventListener('htmx:afterSettle', initSiteMenu);
 })();
 
 // Subscribe form handling (updates page email flow)
@@ -814,12 +479,6 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 if (window.__earendilInitialized) return;
 window.__earendilInitialized = true;
 
-// Show FPS counter only if ?fps is in URL
-var fpsDisplay = document.getElementById('fps');
-if (new URLSearchParams(window.location.search).has('fps')) {
-  fpsDisplay.classList.add('visible');
-}
-
 const canvas = document.getElementById('canvas');
 const logo = document.getElementById('logo');
 const themeToggle = document.getElementById('theme-toggle');
@@ -953,6 +612,12 @@ window.addEventListener('languagechange', updateThemeToggle);
 // Initial update (with fallback labels)
 updateThemeToggle();
 
+// Enable CSS theme interpolation only after the initial preference is applied,
+// so a stored dark preference does not animate on first paint.
+requestAnimationFrame(() => {
+  document.body.classList.add('theme-transition-ready');
+});
+
 // Update again once i18n is ready (with translated labels)
 if (window.i18n) {
   window.i18n.onReady(updateThemeToggle);
@@ -960,6 +625,7 @@ if (window.i18n) {
 
 
 
+// Keep in sync with --theme-transition-duration in styles.css.
 const THEME_FADE_DURATION = 900;
 let nightBlend = getNightPreference() ? 1.0 : 0.0;
 let nightFadeStart = null;
@@ -1118,8 +784,8 @@ const ditherFragmentShaderSource = `
     gray = clamp(gray, 0.0, 1.0);
     
     // Map to color palette
-    vec3 dark = mix(vec3(0.235), vec3(0.02), u_night);   // #3c3c3c -> #050505
-    vec3 light = mix(vec3(0.836), vec3(1.0), u_night);   // #d5d5d5 -> #ffffff
+    vec3 dark = mix(vec3(0.62), vec3(0.05), u_night);    // #9e9e9e -> #0d0d0d
+    vec3 light = mix(vec3(0.97), vec3(1.0), u_night);    // #f7f7f7 -> #ffffff
     gl_FragColor = vec4(mix(dark, light, gray), 1.0);
   }
 `;
@@ -2220,12 +1886,11 @@ function markShaderReady() {
 }
 
 function render(time) {
-  // Update FPS counter
+  // Measure FPS for adaptive quality.
   frameCount++;
   if (time - lastFpsUpdate >= 1000) {
     const fps = frameCount;
-    fpsDisplay.textContent = `FPS: ${fps} | ${canvas.width}x${canvas.height} | Quality: ${currentQuality}`;
-    
+
     // Update auto quality based on measured FPS
     updateAutoQuality(time, fps);
     
