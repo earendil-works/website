@@ -1,5 +1,5 @@
 {
-  "join.hiring": "We're hiring Members of our Technical Staff and Founder's Office",
+  "join.hiring": "我们正在招聘技术团队成员和创始人办公室成员",
   "page.home.title": "Welcome",
   "page.join.title": "Join",
   "page.purpose.title": "Purpose",
@@ -13,7 +13,7 @@
   "post.invitation.body": "Hello,\n\nWe believe in building in the open, sharing what we learn, what we craft, and where we're headed. If you're curious about software that strengthens human agency and bridges understanding, we'd love to have you along for the journey.\n\n<a href=\"/posts/subscribe/\">[Leave us your email]</a> to receive posts from us. Honest reflections on what we're building, why it matters, and what we're shaping together. Written by humans, not machines. We welcome your comments.\n\nWe work out of <span class=\"mono-bold\">Vienna, Austria</span>, a city of coffee, culture, and good conversation. If you're passing through and want to say hello, drop us a line at <a href=\"mailto:rfc@earendil.com\">rfc@earendil.com</a>. The door is open.\n\nWith care,\nArmin and Colin",
   "post.invitation.title": "An Invitation to Begin a Correspondence",
   "post.pressrelease-april-8.body": "<a href=\"https://www.earendil.com\" target=\"_blank\" rel=\"noopener noreferrer\">Earendil Inc</a>是一家由Armin Ronacher和Colin Daymond Hanna于2025年创立的公益企业。Earendil的使命是通过打造软件和开放协议来增强人类的能动性，这些软件和协议能够弥合分歧与无知，培养持久的快乐与理解。\n\n为实现上述目标，Earendil今日自豪地宣布以下几项重要消息：\n\n<ul><li>收购<a href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a>开源项目。Pi由Mario Zechner编写，是当今软件工艺和品味的杰出典范。Pi是<a href=\"https://lucumr.pocoo.org/2026/1/31/pi/\" target=\"_blank\" rel=\"noopener noreferrer\">OpenClaw中的最小代理</a>，也是一个广泛采用的开源编码代理和框架。Mario对开放性和工艺的承诺与Earendil的创立宗旨高度契合。与收购同时，Mario Zechner成为Earendil的主要股东和团队成员。</li><li><a href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a>今日开始公开Alpha测试。Lefos是我们构建既有最大能力又值得信赖的机器实体这一旅程的第一步。Lefos通过电子邮件与你和你的合作者沟通，这是一个你可以控制并与他人协作的技术栈。Lefos帮助你的收件箱成为深度工作和沟通的命令行。用户现在可以在<a href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos.com</a>加入候补名单。</li><li>Earendil自豪地宣布我们的早期支持者：Accel（Daniel Levine）、Balderton（Daniel Waterhouse）以及n8n（Jan Oberhauser）、OpenClaw（Peter Steinberger）、Revolut（Vlad Yatsenko）、Sentry（David Cramer）和Slack（Cal Henderson）等公司的创始人。我们感谢他们的信任和支持。</li></ul>",
-  "post.pressrelease-april-8.title": "Announcing Pi & Lefos",
+  "post.pressrelease-april-8.title": "宣布 Pi 和 Lefos",
   "purpose.agency.body": "In a world hurtling towards AI, we believe humans are the best agents. AI is possibly the most powerful tool humanity has ever seen, but we wield the hammer, the hammer does not wield us.",
   "purpose.agency.title": "Strengthen human agency",
   "purpose.bridge.body": "Humanity is a community. We choose to look to our commonalities rather than our differences. We look to ground ourselves in truth and share truth with one another.",

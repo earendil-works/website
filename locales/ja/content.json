@@ -1,5 +1,5 @@
 {
-  "join.hiring": "We're hiring Members of our Technical Staff and Founder's Office",
+  "join.hiring": "技術スタッフと創業者オフィスのメンバーを募集しています",
   "page.home.title": "Welcome",
   "page.join.title": "Join",
   "page.purpose.title": "Purpose",
@@ -13,7 +13,7 @@
   "post.invitation.body": "こんにちは、\n\n私たちはオープンに構築し、学んだこと、作ったもの、向かっている先を共有することを信じています。人間の主体性を強化し、理解を橋渡しするソフトウェアに興味があるなら、この旅に一緒に参加していただければ嬉しいです。\n\n<a href=\"/posts/subscribe/\">[メールアドレスを残してください]</a>私たちの投稿を受け取るために。私たちが構築しているもの、なぜそれが重要なのか、一緒に形作っているものについての正直な考察。人間によって書かれ、機械ではありません。コメントを歓迎します。\n\n私たちは<span class=\"mono-bold\">オーストリア、ウィーン</span>で働いています。コーヒー、文化、良い会話の街です。通りがかりに挨拶したい場合は、<a href=\"mailto:rfc@earendil.com\">rfc@earendil.com</a>にメールをください。ドアは開いています。\n\n心を込めて、\nアルミンとコリン",
   "post.invitation.title": "文通を始めるための招待",
   "post.pressrelease-april-8.body": "<a href=\"https://www.earendil.com\" target=\"_blank\" rel=\"noopener noreferrer\">Earendil Inc</a>は、Armin RonacherとColin Daymond Hannaによって2025年に設立された公益法人です。Earendilの目的は、分裂と無知を橋渡しし、永続的な喜びと理解を育むソフトウェアとオープンプロトコルを作ることで、人類のエージェンシーを強化することです。\n\n上記の目標に向けて、Earendilは本日いくつかの発表を誇りを持って行います：\n\n<ul><li><a href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a>オープンソースプロジェクトの買収。Mario Zechnerによって書かれたPiは、今日のソフトウェアにおける技術と美意識の優れた例です。Piは<a href=\"https://lucumr.pocoo.org/2026/1/31/pi/\" target=\"_blank\" rel=\"noopener noreferrer\">OpenClaw内の最小エージェント</a>であり、広く採用されているオープンソースのコーディングエージェント兼ハーネスです。Marioのオープン性と技術への取り組みは、Earendilの設立目的と強く共鳴しています。買収と並行して、Mario ZechnerはEarendilの主要ステークホルダー兼チームメンバーとなります。</li><li><a href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a>が本日パブリックアルファ版として利用可能になります。Lefosは、最大限に有能で信頼できる機械エンティティの構築に向けた私たちの旅の第一歩です。Lefosは、あなたがコントロールし、他の人と協力できるスタック上で、あなたとあなたの共同制作者とメールでコミュニケーションを取ります。Lefosは、あなたの受信箱を思慮深い作業とコミュニケーションのためのコマンドラインにするお手伝いをします。ユーザーは<a href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos.com</a>でウェイティングリストに参加できます。</li><li>Earendilは初期支援者を誇りを持って発表します：Accel（Daniel Levine）、Balderton（Daniel Waterhouse）、そしてn8n（Jan Oberhauser）、OpenClaw（Peter Steinberger）、Revolut（Vlad Yatsenko）、Sentry（David Cramer）、Slack（Cal Henderson）の創設者をはじめとする多くの方々です。彼らの信頼とサポートに感謝しています。</li></ul>",
-  "post.pressrelease-april-8.title": "Announcing Pi & Lefos",
+  "post.pressrelease-april-8.title": "Pi と Lefos を発表します",
   "purpose.agency.body": "AIに向かって突き進む世界で、私たちは人間が最良のエージェントだと信じています。AIはおそらく人類がこれまで見た中で最も強力なツールですが、私たちがハンマーを振るうのであって、ハンマーが私たちを振るうのではありません。",
   "purpose.agency.title": "人間の主体性を強化する",
   "purpose.bridge.body": "人類はコミュニティです。私たちは違いよりも共通点を見ることを選びます。私たちは真実に根ざし、お互いに真実を共有することを目指しています。",
