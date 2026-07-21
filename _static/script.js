@@ -646,6 +646,12 @@ let nightFadeStart = null;
 let nightFadeFrom = nightBlend;
 let nightFadeTo = nightBlend;
 
+// Camera projection values are shared by the shader, pointer projection, and
+// DOM horizon tracking. Keeping one source of truth prevents the hero from
+// drifting away from the rendered horizon.
+const CAMERA_PROJECTION_DEPTH = 1.5;
+const BASE_CAMERA_TILT = 0.14;
+
 // 404 page camera animation
 const CAMERA_404_DURATION = 3000; // 3 seconds
 const CAMERA_404_Y_OFFSET = 1.0;  // Move camera up
@@ -689,7 +695,7 @@ function check404PageState() {
 function updateCamera404(time) {
   // Already at target
   if (cameraYOffset === camera404AnimTo.y && cameraZOffset === camera404AnimTo.z && cameraTiltOffset === camera404AnimTo.tilt) {
-    return;
+    return false;
   }
 
   if (camera404AnimStart === null) {
@@ -710,10 +716,90 @@ function updateCamera404(time) {
     cameraZOffset = camera404AnimTo.z;
     cameraTiltOffset = camera404AnimTo.tilt;
   }
+
+  return true;
 }
 
-// Listen for HTMX navigation to update 404 state
-document.body.addEventListener('htmx:afterSettle', check404PageState);
+let lastSceneHorizonFromBottom = null;
+let sceneHorizonGeometry = null;
+let observedSceneHorizonHero = null;
+
+const sceneHorizonResizeObserver = typeof ResizeObserver === 'function'
+  ? new ResizeObserver(function() {
+      syncSceneHorizonPosition(true);
+    })
+  : null;
+
+if (sceneHorizonResizeObserver) {
+  sceneHorizonResizeObserver.observe(canvas);
+}
+
+function measureSceneHorizonGeometry() {
+  const hero = document.querySelector('.home-hero');
+
+  if (sceneHorizonResizeObserver && hero !== observedSceneHorizonHero) {
+    if (observedSceneHorizonHero) {
+      sceneHorizonResizeObserver.unobserve(observedSceneHorizonHero);
+    }
+    if (hero) {
+      sceneHorizonResizeObserver.observe(hero);
+    }
+    observedSceneHorizonHero = hero;
+  }
+
+  if (!hero) {
+    sceneHorizonGeometry = null;
+    return;
+  }
+
+  const canvasRect = canvas.getBoundingClientRect();
+  const heroRect = hero.getBoundingClientRect();
+  if (!canvasRect.height || !heroRect.height) {
+    sceneHorizonGeometry = null;
+    return;
+  }
+
+  sceneHorizonGeometry = {
+    canvasBottom: canvasRect.bottom,
+    canvasHeight: canvasRect.height,
+    heroBottom: heroRect.bottom
+  };
+}
+
+function syncSceneHorizonPosition(refreshGeometry) {
+  if (refreshGeometry || !sceneHorizonGeometry) {
+    measureSceneHorizonGeometry();
+  }
+  if (!sceneHorizonGeometry) return;
+
+  // getRay() changes from water to sky when its rotated Y component reaches
+  // zero. Solve that same projection here, then express the horizon relative
+  // to the hero's bottom edge for CSS bottom positioning.
+  const tilt = BASE_CAMERA_TILT + cameraTiltOffset;
+  const horizonFromCanvasBottomRatio =
+    (1 - CAMERA_PROJECTION_DEPTH * Math.tan(tilt)) / 2;
+  const horizonY = sceneHorizonGeometry.canvasBottom -
+    sceneHorizonGeometry.canvasHeight * horizonFromCanvasBottomRatio;
+  const horizonFromHeroBottom = sceneHorizonGeometry.heroBottom - horizonY;
+
+  if (lastSceneHorizonFromBottom === null ||
+      Math.abs(horizonFromHeroBottom - lastSceneHorizonFromBottom) >= 0.1) {
+    document.documentElement.style.setProperty(
+      '--scene-horizon-from-bottom',
+      horizonFromHeroBottom.toFixed(2) + 'px'
+    );
+    lastSceneHorizonFromBottom = horizonFromHeroBottom;
+  }
+}
+
+// Re-measure after HTMX replaces the page; if the camera is transitioning
+// back from the 404 scene, render() updates only the projection value per frame.
+document.body.addEventListener('htmx:afterSettle', function() {
+  check404PageState();
+  requestAnimationFrame(function() {
+    syncSceneHorizonPosition(true);
+  });
+});
 
 function updateNightBlend(time) {
   const desired = getNightPreference() ? 1.0 : 0.0;
@@ -947,9 +1033,9 @@ function buildFragmentShader(quality) {
   mat3 createRotationMatrixAxisAngle(vec3 axis, float angle);
 
   vec2 dirToScreenUV(vec3 dir) {
-    vec3 unrotated = createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), -(0.14 + u_cameraTiltOffset)) * dir;
+    vec3 unrotated = createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), -(${BASE_CAMERA_TILT} + u_cameraTiltOffset)) * dir;
     if (unrotated.z <= 0.0) return vec2(-1.0);
-    vec2 uv = (unrotated.xy / unrotated.z) * 1.5;
+    vec2 uv = (unrotated.xy / unrotated.z) * ${CAMERA_PROJECTION_DEPTH};
     vec2 ndc = uv / vec2(iResolution.x / iResolution.y, 1.0);
     return ndc * 0.5 + 0.5;
   }
@@ -1084,11 +1170,11 @@ function buildFragmentShader(quality) {
 
   vec3 getRay(vec2 fragCoord) {
     vec2 uv = ((fragCoord.xy / iResolution.xy) * 2.0 - 1.0) * vec2(iResolution.x / iResolution.y, 1.0);
-    vec3 proj = normalize(vec3(uv.x, uv.y, 1.5));
+    vec3 proj = normalize(vec3(uv.x, uv.y, ${CAMERA_PROJECTION_DEPTH}));
     // Fixed camera angle (no mouse movement) - tilted up to show more sky
     // u_cameraTiltOffset adds additional tilt (negative = look down more)
     return createRotationMatrixAxisAngle(vec3(0.0, -1.0, 0.0), 0.0)
-      * createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), 0.14 + u_cameraTiltOffset)
+      * createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), ${BASE_CAMERA_TILT} + u_cameraTiltOffset)
       * proj;
   }
 
@@ -1551,11 +1637,15 @@ function resize() {
   setupFramebuffer(canvas.width, canvas.height);
   setupLightFramebuffers(canvas.width, canvas.height);
   updateLogoPlacement();
+  syncSceneHorizonPosition(true);
 }
 
 window.addEventListener('resize', resize);
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', resize);
+  window.visualViewport.addEventListener('scroll', function() {
+    syncSceneHorizonPosition(true);
+  }, { passive: true });
 }
 resize();
 setupLogoTexture();
@@ -1585,15 +1675,14 @@ function screenToWaterHit(clientX, clientY, time) {
   const aspect = canvas.width / canvas.height;
   let rayX = ndcX * aspect;
   let rayY = ndcY;
-  let rayZ = 1.5;
+  let rayZ = CAMERA_PROJECTION_DEPTH;
   const len = Math.hypot(rayX, rayY, rayZ);
   rayX /= len; rayY /= len; rayZ /= len;
   
-  // Apply camera tilt (0.08 + cameraTiltOffset radians around X axis)
-  // Rotation matrix formula (matches GLSL shader):
+  // Apply camera tilt around the X axis (matches the GLSL shader):
   // newY = cos(a)*y + sin(a)*z
   // newZ = -sin(a)*y + cos(a)*z
-  const tiltAngle = 0.14 + cameraTiltOffset;
+  const tiltAngle = BASE_CAMERA_TILT + cameraTiltOffset;
   const cosTilt = Math.cos(tiltAngle);
   const sinTilt = Math.sin(tiltAngle);
   const newY = rayY * cosTilt + rayZ * sinTilt;
@@ -1644,15 +1733,15 @@ function screenPosToSkyUV(screenX, screenY, aspect) {
   const uvY = screenY * 2 - 1;
   const projX = uvX * aspect;
   const projY = uvY;
-  const projZ = 1.5;
+  const projZ = CAMERA_PROJECTION_DEPTH;
 
   const projLen = Math.hypot(projX, projY, projZ);
   let rayX = projX / projLen;
   let rayY = projY / projLen;
   let rayZ = projZ / projLen;
 
-  // Apply camera tilt (0.08 + cameraTiltOffset radians around X axis)
-  const tiltAngle = 0.14 + cameraTiltOffset;
+  // Apply camera tilt around the X axis (matches the GLSL shader)
+  const tiltAngle = BASE_CAMERA_TILT + cameraTiltOffset;
   const cosTilt = Math.cos(tiltAngle);
   const sinTilt = Math.sin(tiltAngle);
   const rotatedY = rayY * cosTilt + rayZ * sinTilt;
@@ -1921,7 +2010,10 @@ function render(time) {
   const logoFade = logoProgress * LOGO_FADE_TARGET;
   const nightValue = updateNightBlend(time);
   const ambientIntensity = 1.0 + (0.28 - 1.0) * nightValue;
-  updateCamera404(time);
+  const cameraChanged = updateCamera404(time);
+  if (cameraChanged && sceneHorizonGeometry) {
+    syncSceneHorizonPosition(false);
+  }
 
   // Pass 1: Render ocean waves to framebuffer
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);

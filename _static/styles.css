@@ -47,6 +47,13 @@
   --overlay-card-chrome: 150px;
   --overlay-close-clearance: 0px;
   --overlay-border-gap: 2px;
+
+  /* The shader's home camera puts the horizon 39.4309% of the canvas height
+     above its bottom edge. JavaScript replaces this fallback with the exact
+     rendered pixel position and keeps it in sync while the camera moves. */
+  --scene-horizon-from-bottom: 39.4309vh;
+  --hero-horizon-gap: 2.5rem;
+
   --theme-transition-duration: 900ms;
   /* Exactly matches the shader's smoothstep easing. */
   --theme-transition-easing: cubic-bezier(0.333333, 0, 0.666667, 1);
@@ -83,6 +90,7 @@
 @supports (height: 100dvh) {
   :root {
     --viewport-height: 100dvh;
+    --scene-horizon-from-bottom: 39.4309dvh;
   }
 }
 
@@ -475,16 +483,17 @@ body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-lin
 .home-hero {
   position: relative;
   min-height: var(--viewport-height);
-  display: grid;
-  place-items: center;
   box-sizing: border-box;
-  padding-top: 4vh;
-  padding-inline: var(--frame-inline);
   text-align: center;
   color: rgba(255, 255, 255, 0.95);
 }
 
 .home-hero-text {
+  position: absolute;
+  inset-inline: var(--frame-inline);
+  /* Anchor the text's lower edge above the WebGL horizon. As translations or
+     type sizes change, the text grows upward without changing this distance. */
+  bottom: calc(var(--scene-horizon-from-bottom) + var(--hero-horizon-gap));
   margin: 0;
   font-family: var(--serif-font);
   font-size: var(--text-hero);
@@ -1885,6 +1894,7 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 @media (max-width: 800px) {
   :root {
     --text-hero: var(--font-size-xl);
+    --hero-horizon-gap: 2rem;
     --overlay-top-safe-zone: 58px;
     --overlay-bottom-safe-zone: 140px;
     --overlay-card-chrome: 56px;
@@ -2156,6 +2166,7 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     --overlay-mobile-top-gap: 46px;
     --frame-inline: 28px;
     --frame-block: 28px;
+    --hero-horizon-gap: 1.5rem;
   }
 
   .content-page::before {
@@ -2186,10 +2197,6 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
   .posts-list .post-name {
     display: block;
     margin-inline-start: 0;
-  }
-
-  .home-hero-text {
-    width: 100%;
   }
 
 }
