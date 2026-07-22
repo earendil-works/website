@@ -63,16 +63,16 @@ def render_markdown(text: str) -> str:
     return md_lib.markdown(text, extensions=["extra"])
 
 
-def format_day_from_date(date_str: str) -> str:
+def parse_post_date(date_str: str) -> datetime | None:
     if not date_str:
-        return ""
+        return None
     try:
         parsed = parsedate_to_datetime(date_str)
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=timezone.utc)
-        return parsed.strftime("%a, %d %b %Y")
+        return parsed
     except (TypeError, ValueError):
-        return date_str
+        return None
 
 
 def linkify_email_header(value: str) -> str:
@@ -145,21 +145,15 @@ def collect_update_entries() -> list[dict[str, Any]]:
         slug = slug_for_path(md_path)
         base_name = md_path.stem  # e.g., "memorandum"
         date_str = frontmatter.get("date", "")
-        date_prefix = ""
-        parsed_date = None
-        if date_str:
-            try:
-                parsed_date = parsedate_to_datetime(date_str)
-                if parsed_date.tzinfo is None:
-                    parsed_date = parsed_date.replace(tzinfo=timezone.utc)
-                date_prefix = parsed_date.strftime("%Y%m%d-")
-            except (ValueError, TypeError):
-                parsed_date = None
+        parsed_date = parse_post_date(date_str)
+        date_prefix = parsed_date.strftime("%Y%m%d-") if parsed_date else ""
         updates.append({
             "name": date_prefix + base_name,
             "slug": slug,
             "title": frontmatter.get("title", base_name),
-            "date": frontmatter.get("date", ""),
+            "date": date_str,
+            "date_day": parsed_date.strftime("%a, %d %b %Y") if parsed_date else date_str,
+            "date_iso": parsed_date.date().isoformat() if parsed_date else "",
             "parsed_date": parsed_date,
             "subject": frontmatter.get("subject", ""),
             "i18n_key": frontmatter.get("i18n_key", ""),
@@ -308,6 +302,8 @@ def build_to(build_dir: Path) -> None:
             "slug": update["slug"],
             "title": update["title"],
             "date": update["date"],
+            "date_day": update["date_day"],
+            "date_iso": update["date_iso"],
             "parsed_date": update["parsed_date"],
             "subject": update["subject"],
             "i18n_key": update["i18n_key"],
@@ -338,7 +334,10 @@ def build_to(build_dir: Path) -> None:
             page_classes.extend(str(value) for value in extra_page_classes if value)
         page = dict(frontmatter)
         if "date" in page:
-            page["date_day"] = format_day_from_date(page.get("date", ""))
+            parsed_page_date = parse_post_date(page.get("date", ""))
+            if parsed_page_date:
+                page["date_day"] = parsed_page_date.strftime("%a, %d %b %Y")
+                page["date_iso"] = parsed_page_date.date().isoformat()
         page["from_html"] = safe(linkify_email_header(str(page.get("from", ""))))
         page["to_html"] = safe(linkify_email_header(str(page.get("to", ""))))
         rendered = env.render_template(
