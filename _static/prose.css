@@ -318,7 +318,7 @@
 .prose code {
   color: var(--prose-code);
   font-weight: 600;
-  font-size: 0.875em;
+  font-size: var(--text-meta, 0.9375rem);
   font-family: var(--mono-font);
 }
 
@@ -353,7 +353,7 @@
   background-color: var(--prose-pre-bg);
   overflow-x: auto;
   font-weight: 400;
-  font-size: 0.875em;
+  font-size: var(--text-meta, 0.9375rem);
   line-height: 1.7142857;
   font-family: var(--mono-font);
   margin-top: 1.7142857em;
