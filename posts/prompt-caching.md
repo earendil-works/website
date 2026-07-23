@@ -242,7 +242,7 @@ active, the inference provider sees a sequence of isolated requests:
 
 ```text
 ◊model request ◊--> run tests for 7 minutes ◊--> model request
-◊                 no cache traffic here
+◊                  no cache traffic here
 ```
 
 A long build, a test suite, lunch, a meeting, or simply stopping to review a
@@ -368,22 +368,22 @@ a fuller view: total cached and uncached input, cumulative hit rate, cost, and
 an estimate of tokens and dollars re-billed by [significant cache misses](https://github.com/earendil-works/pi/blob/34f3719a942ecbf3e6d23e67098f47ba2867de0a/packages/coding-agent/src/core/cache-stats.ts#L50-L90).
 
 ```
-◊ Messages
-◊ Total: 178
-◊ User: 6
-◊ Assistant: 58
-◊ Tools: 114 calls, 114 results
+◊Messages
+◊Total: 178
+◊User: 6
+◊Assistant: 58
+◊Tools: 114 calls, 114 results
 
-◊ Tokens
-◊ Input: 7,129,883
-◊   Cached: 6,776,832 (95.0%)
-◊   Uncached: 353,051
-◊ Output: 30,013
-◊ Total: 7,159,896
+◊Tokens
+◊Input: 7,129,883
+◊  Cached: 6,776,832 (95.0%)
+◊  Uncached: 353,051
+◊Output: 30,013
+◊Total: 7,159,896
 
-◊ Cost
-◊ Total: $6.054
-◊ Cache Re-billed: $0.728 (161,744 tokens, 2 misses)
+◊Cost
+◊Total: $6.054
+◊Cache Re-billed: $0.728 (161,744 tokens, 2 misses)
 ```
 
 Users who want misses called out as they happen can enable **Show cache miss

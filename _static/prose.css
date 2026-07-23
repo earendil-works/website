@@ -388,6 +388,7 @@
    font metrics stay identical to ordinary prose code; only the presentation
    and viewport-triggered reveal differ. */
 .prose pre.code-reveal {
+  padding-block: 1.5rem;
   padding-inline: 0;
   border-block: 1px solid var(--prose-hr);
   border-radius: 0;
@@ -414,7 +415,6 @@
 
 .code-reveal.is-reveal-ready {
   opacity: 0;
-  transform: translateY(0.35rem);
 }
 
 .code-reveal.is-reveal-ready .code-reveal__step {
@@ -423,8 +423,7 @@
 
 .code-reveal.is-reveal-ready.is-revealed {
   opacity: 1;
-  transform: none;
-  transition: opacity 540ms ease-out, transform 540ms ease-out;
+  transition: opacity 540ms ease-out;
 }
 
 /* Each ◊-delimited chunk appears as a unit. The build step assigns the delay;
@@ -438,7 +437,6 @@
   .code-reveal.is-reveal-ready,
   .code-reveal.is-reveal-ready .code-reveal__step {
     opacity: 1;
-    transform: none;
     transition: none;
   }
 }
