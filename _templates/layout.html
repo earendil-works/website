@@ -19,22 +19,27 @@
   {% set default_description = "Earendil is a public benefit corporation crafting software and open protocols to strengthen human agency, bridge division, and cultivate lasting joy." %}
   {% set meta_description = description if description else default_description %}
   {% set page_url = "https://earendil.com" ~ slug %}
-  {% set og_image = "https://earendil.com/static/favicon/android-chrome-512x512.png" %}
   <meta name="description" content="{{ meta_description }}">
 
   <!-- Open Graph -->
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="{% if is_article %}article{% else %}website{% endif %}">
   <meta property="og:site_name" content="Earendil">
   <meta property="og:title" content="{{ title }} | EARENDIL">
   <meta property="og:description" content="{{ meta_description }}">
   <meta property="og:url" content="{{ page_url }}">
   <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:alt" content="{{ title }} — Earendil">
+  {% if is_article %}
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  {% endif %}
 
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="{% if is_article %}summary_large_image{% else %}summary{% endif %}">
   <meta name="twitter:title" content="{{ title }} | EARENDIL">
   <meta name="twitter:description" content="{{ meta_description }}">
   <meta name="twitter:image" content="{{ og_image }}">
+  <meta name="twitter:image:alt" content="{{ title }} — Earendil">
   <link rel="icon" type="image/svg+xml" href="/static/favicon/square.svg">
   <link rel="icon" type="image/x-icon" href="/static/favicon/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">

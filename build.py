@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["minijinja", "pyyaml", "markdown", "watchdog"]
+# dependencies = ["minijinja", "pyyaml", "markdown", "watchdog", "pillow"]
 # ///
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from urllib.parse import urljoin, urlparse
 from xml.etree import ElementTree
 
 from minijinja import Environment, safe, load_from_path
+from PIL import Image, ImageDraw, ImageFont
 
 import yaml
 import markdown as md_lib
@@ -42,6 +43,15 @@ CODE_REVEAL_STEP_DELAY_MS = 105
 SITE_URL = "https://earendil.com/"
 UPDATES_FEED_LIMIT = 10
 UPDATE_IGNORED_FILES = {"_index.md", "subscribe.md"}
+
+OG_IMAGE_SIZE = (1200, 630)
+OG_TITLE_MAX_WIDTH = 1000
+OG_TITLE_MAX_HEIGHT = 310
+OG_TITLE_MAX_LINES = 3
+OG_TEXT_COLOR = "#353431"
+OG_PAPER_PATH = STATIC_DIR / "paper.png"
+OG_LOGO_PATH = STATIC_DIR / "og" / "earendil-logo.png"
+OG_TITLE_FONT_PATH = STATIC_DIR / "fonts" / "PlantinNowVariable-Upright.woff2"
 
 
 def parse_frontmatter(raw: str) -> Tuple[dict[str, Any], str]:
@@ -153,6 +163,167 @@ def output_path_for(path: Path, build_dir: Path, frontmatter: dict[str, Any] | N
         return build_dir / Path(*parent_parts) / "index.html"
     without_ext = rel.with_suffix("")
     return build_dir / without_ext / "index.html"
+
+
+def _og_text_width(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont) -> int:
+    bbox = draw.textbbox((0, 0), text, font=font)
+    return bbox[2] - bbox[0]
+
+
+def _wrap_og_title(draw: ImageDraw.ImageDraw, title: str, font: ImageFont.FreeTypeFont) -> list[str]:
+    """Wrap a title to the available card width, including long words."""
+    lines: list[str] = []
+    current_line = ""
+    for word in title.split():
+        candidate = f"{current_line} {word}".strip()
+        if _og_text_width(draw, candidate, font) <= OG_TITLE_MAX_WIDTH:
+            current_line = candidate
+            continue
+
+        if current_line:
+            lines.append(current_line)
+            current_line = ""
+
+        while _og_text_width(draw, word, font) > OG_TITLE_MAX_WIDTH:
+            split_at = len(word)
+            while split_at > 1 and _og_text_width(draw, word[:split_at], font) > OG_TITLE_MAX_WIDTH:
+                split_at -= 1
+            lines.append(word[:split_at])
+            word = word[split_at:]
+        current_line = word
+
+    if current_line:
+        lines.append(current_line)
+    return lines
+
+
+def _avoid_og_orphan(
+    draw: ImageDraw.ImageDraw,
+    lines: list[str],
+    font: ImageFont.FreeTypeFont,
+) -> list[str]:
+    """Move a word from the previous line when the final line is an orphan."""
+    balanced = list(lines)
+    if len(balanced) < 2 or len(balanced[-1].split()) != 1:
+        return balanced
+
+    previous_words = balanced[-2].split()
+    if len(previous_words) < 2:
+        return balanced
+
+    final_line = f"{previous_words[-1]} {balanced[-1]}"
+    if _og_text_width(draw, final_line, font) <= OG_TITLE_MAX_WIDTH:
+        balanced[-2] = " ".join(previous_words[:-1])
+        balanced[-1] = final_line
+    return balanced
+
+
+def _truncate_og_lines(
+    draw: ImageDraw.ImageDraw,
+    lines: list[str],
+    font: ImageFont.FreeTypeFont,
+) -> list[str]:
+    """Clamp wrapped title lines and mark omitted text with an ellipsis."""
+    omitted_text = len(lines) > OG_TITLE_MAX_LINES
+    truncated = _avoid_og_orphan(draw, lines[:OG_TITLE_MAX_LINES], font)
+
+    # If two words cannot share the final line, omit the orphan rather than
+    # allowing it to sit by itself.
+    if len(truncated) > 1 and len(truncated[-1].split()) == 1:
+        truncated.pop()
+        omitted_text = True
+
+    if not omitted_text:
+        return truncated
+
+    last_line = truncated[-1].rstrip()
+    ellipsis = "…"
+    while last_line and _og_text_width(draw, last_line + ellipsis, font) > OG_TITLE_MAX_WIDTH:
+        last_line = last_line[:-1].rstrip()
+    truncated[-1] = last_line + ellipsis
+    return truncated
+
+
+def generate_og_image(title: str, output_path: Path) -> None:
+    """Generate a simple paper, logo, and article-title social card."""
+    width, height = OG_IMAGE_SIZE
+    paper = Image.open(OG_PAPER_PATH).convert("RGB")
+    image = Image.new("RGB", OG_IMAGE_SIZE, "#faf9f6")
+    for y in range(0, height, paper.height):
+        for x in range(0, width, paper.width):
+            image.paste(paper, (x, y))
+
+    logo = Image.open(OG_LOGO_PATH).convert("RGBA")
+    logo.thumbnail((180, 137), Image.Resampling.LANCZOS)
+    image.paste(logo, ((width - logo.width) // 2, 48), logo)
+
+    draw = ImageDraw.Draw(image)
+    title_lines: list[str] = []
+    title_font = None
+    title_spacing = 0
+    title_bbox = (0, 0, 0, 0)
+    for font_size in range(80, 41, -2):
+        candidate_font = ImageFont.truetype(str(OG_TITLE_FONT_PATH), font_size)
+        candidate_lines = _avoid_og_orphan(
+            draw,
+            _wrap_og_title(draw, title, candidate_font),
+            candidate_font,
+        )
+        candidate_spacing = round(font_size * 0.18)
+        candidate_text = "\n".join(candidate_lines)
+        candidate_bbox = draw.multiline_textbbox(
+            (0, 0),
+            candidate_text,
+            font=candidate_font,
+            spacing=candidate_spacing,
+            align="center",
+        )
+        candidate_height = candidate_bbox[3] - candidate_bbox[1]
+        has_orphan = len(candidate_lines) > 1 and len(candidate_lines[-1].split()) == 1
+        if (
+            len(candidate_lines) <= OG_TITLE_MAX_LINES
+            and candidate_height <= OG_TITLE_MAX_HEIGHT
+            and not has_orphan
+        ):
+            title_lines = candidate_lines
+            title_font = candidate_font
+            title_spacing = candidate_spacing
+            title_bbox = candidate_bbox
+            break
+
+    if title_font is None:
+        title_font = ImageFont.truetype(str(OG_TITLE_FONT_PATH), 40)
+        title_lines = _truncate_og_lines(
+            draw,
+            _wrap_og_title(draw, title, title_font),
+            title_font,
+        )
+        title_spacing = 7
+        title_bbox = draw.multiline_textbbox(
+            (0, 0),
+            "\n".join(title_lines),
+            font=title_font,
+            spacing=title_spacing,
+            align="center",
+        )
+
+    title_text = "\n".join(title_lines)
+    text_width = title_bbox[2] - title_bbox[0]
+    text_height = title_bbox[3] - title_bbox[1]
+    title_area_top = 240
+    title_x = (width - text_width) // 2 - title_bbox[0]
+    title_y = title_area_top + (OG_TITLE_MAX_HEIGHT - text_height) // 2 - title_bbox[1]
+    draw.multiline_text(
+        (title_x, title_y),
+        title_text,
+        fill=OG_TEXT_COLOR,
+        font=title_font,
+        spacing=title_spacing,
+        align="center",
+    )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output_path, "PNG", optimize=True)
 
 
 def iter_markdown_files() -> list[Path]:
@@ -408,6 +579,22 @@ def build_to(build_dir: Path) -> None:
                 page["date_iso"] = parsed_page_date.date().isoformat()
         page["from_html"] = safe(linkify_email_header(str(page.get("from", ""))))
         page["to_html"] = safe(linkify_email_header(str(page.get("to", ""))))
+        is_article = template_key == "updates"
+        og_image_path = str(frontmatter.get("og_image", ""))
+        if is_article and not og_image_path:
+            og_image_path = f"/static/og{slug.rstrip('/')}.png"
+            generate_og_image(
+                str(frontmatter.get("title", "Earendil")),
+                build_dir / og_image_path.lstrip("/"),
+            )
+        if og_image_path:
+            if og_image_path.startswith(("http://", "https://")):
+                og_image_url = og_image_path
+            else:
+                og_image_url = SITE_URL.rstrip("/") + "/" + og_image_path.lstrip("/")
+        else:
+            og_image_url = SITE_URL.rstrip("/") + "/static/favicon/android-chrome-512x512.png"
+
         rendered = env.render_template(
             template_name,
             title=frontmatter.get("title", "Earendil"),
@@ -417,6 +604,8 @@ def build_to(build_dir: Path) -> None:
             slug=slug,
             posts=updates,
             is_posts_section=slug.startswith("/posts/"),
+            is_article=is_article,
+            og_image=og_image_url,
             page_classes=" ".join(page_classes),
         )
         output_path.write_text(rendered)
