@@ -51,19 +51,19 @@ retained state is the **KV cache**.
 Conceptually, a request looks like this:
 
 ```text
-request 1:
+◊request 1:
 
-[system][tools][user][assistant][tool result][user]
-<--------------------- prefill -------------------->
-                       |
-                       K and V tensors per token and layer
+◊[system]◊[tools]◊[user]◊[assistant]◊[tool result]◊[user]
+◊<--------------------- prefill -------------------->
+◊                       |
+◊                       K and V tensors per token and layer
 
-request 2:
+◊request 2:
 
-[system][tools][user][assistant][tool result][user][new]
-<---------------- reusable prefix ----------------><--->
-                                                    |
-                                                    new work
+◊[system]◊[tools]◊[user]◊[assistant]◊[tool result]◊[user]◊[new]
+◊<---------------- reusable prefix ---------------->◊<--->
+◊                                                    |
+◊                                                    new work
 ```
 
 The real representations are more complicated, model-specific, and "quite"
@@ -90,8 +90,8 @@ you can potentially even deal with this problem on the HTTP load balancer level
 without having to look into the payload.
 
 ```text
-request(session-42) --> router --> worker 7 --> GPU 7 KV cache
-next(session-42)    --> router --> worker 7 --> GPU 7 KV cache
+◊request(session-42) ◊--> router ◊--> worker 7 ◊--> GPU 7 KV cache
+◊next(session-42)    ◊--> router ◊--> worker 7 ◊--> GPU 7 KV cache
 ```
 
 This avoids moving a very large cache over the network.  It is fast when it
@@ -106,13 +106,13 @@ another memory tier or made available across workers, so a request is not tied
 as tightly to one GPU.
 
 ```text
-                         +--------------------+
-request --> scheduler -->| worker 3 / GPU 3   |
-             |           +--------------------+
-             |
-             +----------> distributed KV blocks
-             |
-             +----------> worker 9 / GPU 9
+◊                         +--------------------+
+◊request ◊--> scheduler ◊-->| worker 3 / GPU 3   |
+◊             |           +--------------------+
+◊             |
+◊             +----------> distributed KV blocks
+◊             |
+◊             +----------> worker 9 / GPU 9
 ```
 
 That improves scheduling flexibility and recovery, but moving, indexing, and
@@ -135,11 +135,11 @@ conceptually similar.  Even if you do not represent the session as a tree,
 it's not uncommon for agents to have some form of rewinding.
 
 ```text
-                             +-- E -- F  another branch
-                             |
-session S: root -- A -- B -- C -- D  current branch
-                   |
-                   +-- Z  branch near the start
+◊                             +-- E -- F  another branch
+◊                             |
+◊session S: root ◊-- A ◊-- B ◊-- C ◊-- D  current branch
+◊                   |
+◊                   +-- Z  branch near the start
 ```
 
 All three branches can have the same Pi session ID.  From the router's
@@ -187,11 +187,11 @@ changing its schema, or even serializing the tools in a different order can move
 the first mismatch close to the start of the prompt.
 
 ```text
-turn 1: [system][read][write][bash][conversation...........]
-turn 2: [system][read][write][bash][deploy][conversation...]
-                                   |
-                                   old conversation is now
-                                   after a mismatch
+◊turn 1: ◊[system]◊[read]◊[write]◊[bash]◊[conversation...........]
+◊turn 2: ◊[system]◊[read]◊[write]◊[bash]◊[deploy]◊[conversation...]
+◊                                   |
+◊                                   old conversation is now
+◊                                   after a mismatch
 ```
 
 This is a common surprise with plugin systems and MCP-style tool catalogs.
@@ -205,8 +205,8 @@ available at a specific tool result inside the transcript instead of being
 inserted into the original tool list.  The old prefix remains unchanged:
 
 ```text
-[system][initial tools][conversation][new tool][next turn]
-<--------- cached prefix ----------->
+◊[system]◊[initial tools]◊[conversation]◊[new tool]◊[next turn]
+◊<--------- cached prefix ----------->
 ```
 
 Pi nowadays supports this for models with native deferred-tool mechanisms.  When
@@ -241,8 +241,8 @@ That's because while the user may think of a coding session as continuously
 active, the inference provider sees a sequence of isolated requests:
 
 ```text
-model request --> run tests for 7 minutes --> model request
-                 no cache traffic here
+◊model request ◊--> run tests for 7 minutes ◊--> model request
+◊                 no cache traffic here
 ```
 
 A long build, a test suite, lunch, a meeting, or simply stopping to review a
@@ -321,11 +321,11 @@ removing a small number of cheaply cached tokens.
 A rough break-even comparison is:
 
 ```text
-one-time rewrite cost
-    ~= surviving tokens after the edit * (uncached price - cache-read price)
+◊one-time rewrite cost
+◊    ~= surviving tokens after the edit * (uncached price - cache-read price)
 
-future savings per turn
-    ~= pruned tokens * cache-read price
+◊future savings per turn
+◊    ~= pruned tokens * cache-read price
 ```
 
 This is not only an accounting question as old tool results often contain the
@@ -368,22 +368,22 @@ a fuller view: total cached and uncached input, cumulative hit rate, cost, and
 an estimate of tokens and dollars re-billed by [significant cache misses](https://github.com/earendil-works/pi/blob/34f3719a942ecbf3e6d23e67098f47ba2867de0a/packages/coding-agent/src/core/cache-stats.ts#L50-L90).
 
 ```
- Messages
- Total: 178
- User: 6
- Assistant: 58
- Tools: 114 calls, 114 results
+◊ Messages
+◊ Total: 178
+◊ User: 6
+◊ Assistant: 58
+◊ Tools: 114 calls, 114 results
 
- Tokens
- Input: 7,129,883
-   Cached: 6,776,832 (95.0%)
-   Uncached: 353,051
- Output: 30,013
- Total: 7,159,896
+◊ Tokens
+◊ Input: 7,129,883
+◊   Cached: 6,776,832 (95.0%)
+◊   Uncached: 353,051
+◊ Output: 30,013
+◊ Total: 7,159,896
 
- Cost
- Total: $6.054
- Cache Re-billed: $0.728 (161,744 tokens, 2 misses)
+◊ Cost
+◊ Total: $6.054
+◊ Cache Re-billed: $0.728 (161,744 tokens, 2 misses)
 ```
 
 Users who want misses called out as they happen can enable **Show cache miss
