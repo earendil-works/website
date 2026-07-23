@@ -68,9 +68,9 @@ request 2:
 
 The real representations are more complicated, model-specific, and "quite"
 large.  The important property is that they correspond to a particular token
-prefix.  Two prompts that mean the same thing but tokenize differently do share
-a KV cache.  If a token changes in the middle, everything after that token is a
-different continuation.
+prefix.  Two prompts that mean the same thing but tokenize differently do not
+share a KV cache.  If a token changes in the middle, everything after that token
+is a different continuation.
 
 Prompt caching extends the lifetime of this state beyond one generation.  When
 the next API request from the coding agent begins with the same tokens, the
@@ -80,7 +80,7 @@ only the new suffix.  So far, the theory.
 ## Where the Cache Lives
 
 In order for a cache to work it needs to be stored somewhere, and it needs to be
-addressible.  There are two broad ways inference systems make KV caches
+addressable.  There are two broad ways inference systems make KV caches
 available to a later request.
 
 The simpler approach is **session affinity**.  It works by keeping the KV cache
@@ -147,7 +147,7 @@ perspective they are one session.  From the prompt cache's perspective they are
 three token sequences with only partial prefix overlap.
 
 If the cache keeps reusable prefix blocks, jumping from `D` to `F` may still
-reuse `root -> B`.  If it only retains the hottest continuation, if the shared
+reuse `root -> C`.  If it only retains the hottest continuation, if the shared
 blocks were evicted, or if the request is routed elsewhere, the hit can be much
 smaller.  Jumping to `Z` may preserve only the system prompt and initial tool
 definitions even though it starts from `A`.  The precise cache management
@@ -170,7 +170,7 @@ client marks boundaries after stable parts of the request, such as the system
 prompt, tool definitions, or the latest cacheable conversation content.  The
 server can then write or look up the prefix ending at those points.  The boundary
 is explicit, but reuse still requires the content before it to match.  Not only
-are the cache points explicit, so the pricing.  You pay for cache writes, and
+are the cache points explicit, so is the pricing.  You pay for cache writes, and
 you get to chose for how long which comes at different price points.
 
 Other APIs use automatic prefix caching.  The client sends the request normally,
@@ -247,7 +247,7 @@ model request --> run tests for 7 minutes --> model request
 
 A long build, a test suite, lunch, a meeting, or simply stopping to review a
 diff can outlive the cache.  The next request contains the same prompt, but the
-stored KV state is gone and the prefix is billed again.
+stored KV state is gone and the prefix is billed again as input.
 
 Since Pi is currently not a permitted harness on Anthropic's subscription we're
 following the 5 minute default that Anthropic recommends for API users.  However
@@ -296,7 +296,7 @@ while the party billing the user earns more revenue when they happen.
 
 That does not mean providers sabotage caches but it means cache performance
 should be observable.  Users should not have to infer that only from a
-surprisingly large bill.  Understanding if somethign odd is going on with caches
+surprisingly large bill.  Understanding if something odd is going on with caches
 can be important insights.
 
 Strict cache adherence also means less flexibilility for a gateway to route you to
@@ -365,7 +365,7 @@ What it can do is make cache health visible.
 The interactive footer shows cumulative cache reads and writes as `R` and `W`,
 plus `CH` for the latest request's cache-hit rate.  The `/session` command gives
 a fuller view: total cached and uncached input, cumulative hit rate, cost, and
-an estimate of tokens and dollars re-billed by significant cache misses.
+an estimate of tokens and dollars re-billed by [significant cache misses](https://github.com/earendil-works/pi/blob/34f3719a942ecbf3e6d23e67098f47ba2867de0a/packages/coding-agent/src/core/cache-stats.ts#L50-L90).
 
 ```
  Messages
