@@ -36,7 +36,7 @@ reads the input tokens and computes attention state for them.  During **decode**
 it produces new tokens one at a time.
 
 At each attention layer, every processed token produces a key and a value. These
-are not quite like key–value lookups in a hash table: both are arrays of
+are not quite like key-value lookups in a hash table: both are arrays of
 numbers, usually floats or lower-precision quantized values.  When processing a
 new token, the model compares that token's **query** with the earlier **keys**
 to determine how relevant each earlier token is.  It then uses those relevance
