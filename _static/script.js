@@ -1,77 +1,9 @@
 // Shared UI runtime namespace, populated by the IIFEs below.
 window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
-// Dynamic overlay vertical band: 2% below the menu row and 2% above the footer/control row
-(function() {
-  var uiRuntime = window.__earendilUiRuntime;
-  var overlayRuntime = uiRuntime.overlay || (uiRuntime.overlay = {});
-  var layoutRuntime = uiRuntime.layout || (uiRuntime.layout = {});
-
-  function getViewportHeight() {
-    return window.visualViewport ? window.visualViewport.height : (window.innerHeight || document.documentElement.clientHeight);
-  }
-
-  function updateOverlayVerticalBand() {
-    var guide = document.getElementById('overlay-guide-line');
-    var rootStyle = document.documentElement.style;
-    var viewportHeight = Math.max(1, Math.round(getViewportHeight()));
-
-    // Keep viewport-height in sync for mobile Safari dynamic bars
-    rootStyle.setProperty('--viewport-height', viewportHeight + 'px');
-
-    if (!document.body.classList.contains('has-overlay')) {
-      rootStyle.removeProperty('--overlay-top-safe-zone');
-      rootStyle.removeProperty('--overlay-bottom-safe-zone');
-      if (guide) guide.style.display = 'none';
-      return;
-    }
-
-    var trigger = document.querySelector('.menu-trigger');
-    var footer = document.getElementById('site-footer');
-    var controls = document.querySelector('.bottom-controls');
-    if (!trigger || !footer || !controls) return;
-
-    var topGap = Math.round(viewportHeight * 0.02);
-    var bottomGap = Math.round(viewportHeight * 0.02);
-
-    var topEdge = Math.max(0, Math.ceil(trigger.getBoundingClientRect().bottom + topGap));
-    var bottomChromeTop = Math.min(footer.getBoundingClientRect().top, controls.getBoundingClientRect().top);
-    var bottomEdge = Math.min(viewportHeight, Math.floor(bottomChromeTop - bottomGap));
-
-    if (bottomEdge <= topEdge + 40) {
-      bottomEdge = topEdge + 40;
-    }
-
-    var bottomSafe = Math.max(0, viewportHeight - bottomEdge);
-
-    rootStyle.setProperty('--overlay-top-safe-zone', topEdge + 'px');
-    rootStyle.setProperty('--overlay-bottom-safe-zone', bottomSafe + 'px');
-
-    if (guide) {
-      guide.style.display = 'block';
-      guide.style.top = topEdge + 'px';
-      guide.style.bottom = bottomSafe + 'px';
-    }
-
-    if (typeof overlayRuntime.scheduleCustomScrollbarSync === 'function') {
-      overlayRuntime.scheduleCustomScrollbarSync();
-    }
-  }
-
-  layoutRuntime.updateOverlayVerticalBand = updateOverlayVerticalBand;
-  updateOverlayVerticalBand();
-  window.addEventListener('resize', updateOverlayVerticalBand);
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', updateOverlayVerticalBand);
-    window.visualViewport.addEventListener('scroll', updateOverlayVerticalBand, { passive: true });
-  }
-  document.body.addEventListener('htmx:afterSettle', updateOverlayVerticalBand);
-})();
-
 // Site menu toggle (top-right navigation)
 (function() {
   var uiRuntime = window.__earendilUiRuntime;
-  var layoutRuntime = uiRuntime.layout || (uiRuntime.layout = {});
   var menuRuntime = uiRuntime.menu || (uiRuntime.menu = {});
 
   function rectanglesOverlap(a, b, epsilon) {
@@ -98,8 +30,8 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     }
 
     var menuRect = menu.getBoundingClientRect();
-    var overlayRect = pageSurface.getBoundingClientRect();
-    var shouldShowBackdrop = rectanglesOverlap(menuRect, overlayRect, 1);
+    var surfaceRect = pageSurface.getBoundingClientRect();
+    var shouldShowBackdrop = rectanglesOverlap(menuRect, surfaceRect, 1);
     menu.classList.toggle('has-overlap-backdrop', shouldShowBackdrop);
   }
 
@@ -158,18 +90,8 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
       triggerButton.setAttribute('aria-label', window.i18n.t(menuKey));
     }
     syncMobileMenuState(menu);
-    if (layoutRuntime.updateOverlayVerticalBand) {
-      layoutRuntime.updateOverlayVerticalBand();
-    }
     updateMenuOverlapBackdrop(menu);
     scheduleMenuOverlapBackdropUpdate(menu);
-  }
-
-  function collapseMenuIfOverlayOpen(menu) {
-    if (!menu) return;
-    if (document.body.classList.contains('has-overlay')) {
-      setMenuExpanded(menu, false);
-    }
   }
 
   function initSiteMenu() {
@@ -257,15 +179,10 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
         }
 
         window.addEventListener('resize', refreshMenuOverlapBackdrop);
-        if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', refreshMenuOverlapBackdrop);
-          window.visualViewport.addEventListener('scroll', refreshMenuOverlapBackdrop, { passive: true });
-        }
         document.body.addEventListener('htmx:afterSettle', refreshMenuOverlapBackdrop);
       }
     }
 
-    collapseMenuIfOverlayOpen(menu);
     updateMenuOverlapBackdrop(menu);
     scheduleMenuOverlapBackdropUpdate(menu);
   }
@@ -1668,8 +1585,8 @@ function setupLogoTexture() {
 }
 
 function resize() {
-  // Use the canvas's CSS layout size (set by 100vw × 100dvh in CSS)
-  // This is immune to pinch/browser zoom unlike visualViewport dimensions
+  // Use the canvas's CSS layout size (set by 100vw × 100dvh in CSS),
+  // which remains stable during pinch/browser zoom.
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
   if (!width || !height) return;
@@ -1687,12 +1604,6 @@ function resize() {
 }
 
 window.addEventListener('resize', resize);
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', resize);
-  window.visualViewport.addEventListener('scroll', function() {
-    syncSceneHorizonPosition(true);
-  }, { passive: true });
-}
 resize();
 setupLogoTexture();
 // Recalculate logo reflection placement once the logo image has its intrinsic dimensions
@@ -1925,19 +1836,8 @@ function queueLightPoints(event) {
   }
 }
 
-function isUpdateOverlayOpen() {
-  return !!document.querySelector('.updates-overlay.is-open');
-}
-
-function isInteractiveUiTarget(event) {
-  return !!event.target.closest('.logo-links a, #theme-toggle, .updates-overlay, .updates-dismiss');
-}
-
 // Light painting disabled — clouds render too pixelated at reduced canvas resolution.
 // window.addEventListener('pointerdown', (event) => {
-//   if (isUpdateOverlayOpen() || isInteractiveUiTarget(event)) {
-//     return;
-//   }
 //   isDrawing = true;
 //   queueLightPoints(event);
 // });
@@ -1954,9 +1854,6 @@ function isInteractiveUiTarget(event) {
 
 // Ripple on click
 canvas.addEventListener('click', (e) => {
-  if (isUpdateOverlayOpen()) {
-    return;
-  }
   const time = performance.now() * 0.001;
   const hit = screenToWaterHit(e.clientX, e.clientY, time);
   if (hit) {

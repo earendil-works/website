@@ -62,7 +62,7 @@
 </head>
 <body hx-boost="true" hx-ext="head-support" hx-select="div.page" hx-target="div.page" hx-swap="outerHTML swap:220ms" class="{% if slug != "/" %}skip-intro{% endif %}">
   <!-- Paint the white source logo with the shared light-theme text color. -->
-  <svg width="0" height="0" aria-hidden="true" focusable="false">
+  <svg class="svg-definitions" width="0" height="0" aria-hidden="true" focusable="false">
     <defs>
       <filter id="logo-day-color" color-interpolation-filters="sRGB">
         <feFlood flood-color="var(--color-text-day)" result="day-color"></feFlood>
@@ -73,7 +73,6 @@
 
   <!-- Background layer -->
   <canvas id="canvas"></canvas>
-  <div id="overlay-guide-line" aria-hidden="true"></div>
   
   <!-- Shared frame for page content and the four pieces of site chrome. -->
   <div class="site-frame">

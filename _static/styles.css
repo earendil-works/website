@@ -4,8 +4,8 @@
 /* ==========================================================================
    Z-INDEX LAYERS
    0   - Canvas background
-   10  - Center logo (behind overlays)
-   100 - Page content / overlays
+   10  - Center logo (behind page content)
+   100 - Page content
    200 - Chrome (nav, footer, controls)
    210 - Dropdowns (lang menu)
    ========================================================================== */
@@ -40,13 +40,6 @@
   --leading-ui: 1.25;
   --leading-body: 1.6;
   --leading-tight: 1.15;
-
-  --viewport-height: 100vh;
-  --overlay-top-safe-zone: 30px;
-  --overlay-bottom-safe-zone: 170px;
-  --overlay-card-chrome: 150px;
-  --overlay-close-clearance: 0px;
-  --overlay-border-gap: 2px;
 
   /* The shader's home camera puts the horizon 39.4309% of the canvas height
      above its bottom edge. JavaScript replaces this fallback with the exact
@@ -89,7 +82,6 @@
 
 @supports (height: 100dvh) {
   :root {
-    --viewport-height: 100dvh;
     --scene-horizon-from-bottom: 39.4309dvh;
   }
 }
@@ -108,20 +100,17 @@ html, body {
 html {
   font-size: 100%;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
-  min-height: var(--viewport-height);
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
+  overflow-x: clip;
   font-family: var(--mono-font);
   font-size: var(--text-body);
   line-height: var(--leading-body);
-}
-
-body:has(.page[data-page-type="home"]),
-body:has(.page[data-page-type="404"]) {
-  height: var(--viewport-height);
-  overflow: hidden;
 }
 
 .theme-night, .theme-night body {
@@ -129,6 +118,12 @@ body:has(.page[data-page-type="404"]) {
 }
 
 * { cursor: inherit; }
+
+.svg-definitions {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
 
 a {
   cursor: var(--cursor-light), pointer;
@@ -173,17 +168,6 @@ canvas.shader-ready {
   opacity: 1; 
 }
 
-#overlay-guide-line {
-  position: fixed;
-  left: 10px;
-  width: 1px;
-  top: var(--overlay-top-safe-zone);
-  bottom: var(--overlay-bottom-safe-zone);
-  pointer-events: none;
-  opacity: 0;
-  z-index: 1;
-}
-
 /* ==========================================================================
    SHARED SITE FRAME
    The page and both chrome rows share one parent and one set of gutters.
@@ -191,14 +175,14 @@ canvas.shader-ready {
 
 .site-frame {
   position: relative;
-  min-height: var(--viewport-height);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 .site-header,
 .site-footer-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
   direction: ltr;
   z-index: 200;
   box-sizing: border-box;
@@ -208,13 +192,21 @@ canvas.shader-ready {
 }
 
 .site-header {
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   align-items: flex-start;
   padding: var(--frame-block) var(--frame-inline) 0;
 }
 
 .site-footer-bar {
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  flex: 0 0 auto;
   align-items: center;
   padding: 0 var(--frame-inline) var(--frame-block);
 }
@@ -273,14 +265,20 @@ body:has(.page[data-page-type="corner-logo"]) .main-logo {
 }
 
 /* ==========================================================================
-   LAYER 100: Page Content / Overlays
+   LAYER 100: Page Content
    ========================================================================== */
 
 .page {
   position: relative;
   z-index: 100;
+  flex: 1 0 auto;
   opacity: 1;
   transition: opacity 0.52s ease;
+}
+
+.page[data-page-type="home"] {
+  display: flex;
+  flex-direction: column;
 }
 
 .page.is-leaving {
@@ -342,7 +340,6 @@ body.content-page-swap .page.htmx-settling .content-surface {
   --page-veil: var(--page-veil-r), var(--page-veil-g), var(--page-veil-b);
   position: relative;
   isolation: isolate;
-  min-height: var(--viewport-height);
   box-sizing: border-box;
   padding: var(--frame-content-top) var(--frame-inline) var(--frame-content-bottom);
   color: var(--color-text-day);
@@ -482,7 +479,7 @@ body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-lin
 
 .home-hero {
   position: relative;
-  min-height: var(--viewport-height);
+  flex: 1 0 auto;
   box-sizing: border-box;
   text-align: center;
   color: rgba(255, 255, 255, 0.95);
@@ -603,187 +600,6 @@ body:not(.theme-night) .home-hero-open::after {
   .home-hero-open:hover::after {
     animation: none;
   }
-}
-
-
-.updates-overlay {
-  position: relative;
-  min-height: var(--viewport-height);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: var(--overlay-top-safe-zone) 30px var(--overlay-bottom-safe-zone);
-  background: transparent;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s ease;
-  clip-path: none;
-}
-
-.updates-overlay:target,
-.updates-overlay.is-open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.updates-overlay.is-closing {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.updates-letter {
-  --letter-inline-padding: 70px;
-  --overlay-scrollbar-inset: 18px;
-  position: relative;
-  width: min(1000px, 92vw);
-  margin: 0;
-  max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-border-gap));
-  overflow: hidden;
-  padding: 78px var(--letter-inline-padding) 72px;
-  box-sizing: border-box;
-  pointer-events: auto;
-  background: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), url('/static/paper.png') center/256px 256px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(25, 20, 12, 0.2);
-  font-family: var(--mono-font);
-  font-size: var(--text-body);
-  line-height: 1.5;
-  color: var(--color-text-day);
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
-  cursor: var(--cursor-dark), auto;
-}
-
-.updates-letter::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(25, 20, 12, 0.14), inset 0 -2px 4px rgba(25, 20, 12, 0.18);
-}
-
-.theme-night .updates-letter {
-  background: url('/static/paper-dark.png') center/256px 256px;
-  color: rgba(240, 240, 240, 0.8);
-  cursor: var(--cursor-light), auto;
-}
-
-.theme-night .updates-letter::after {
-  box-shadow: inset 0 0 0 1px rgba(240, 240, 240, 0.14), inset 0 -2px 4px rgba(0, 0, 0, 0.28);
-}
-
-.updates-overlay:target .updates-letter,
-.updates-overlay.is-open .updates-letter {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.updates-overlay.is-closing .updates-letter {
-  opacity: 0;
-  transform: translateY(12px);
-}
-
-.updates-dismiss {
-  position: absolute;
-  top: 18px;
-  inset-inline-end: 18px;
-  z-index: 5;
-  text-decoration: none;
-  text-transform: uppercase;
-  color: rgba(25, 24, 22, 0.7);
-  font-size: 1.5em;
-  line-height: 1;
-  cursor: var(--cursor-dark), pointer;
-}
-
-.theme-night .updates-dismiss {
-  color: rgba(240, 240, 240, 0.8);
-  cursor: var(--cursor-light), pointer;
-}
-
-.updates-dismiss:hover,
-.theme-night .updates-dismiss:hover {
-  color: #fff;
-}
-
-.updates-letter :is(.letter-body, .updates-scroll-content) {
-  --overlay-scrollbar-shift: max(0px, calc(var(--letter-inline-padding) - var(--overlay-scrollbar-inset)));
-  margin-inline-end: calc(-1 * var(--overlay-scrollbar-shift));
-  padding-inline-end: var(--overlay-scrollbar-shift);
-  max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.95) transparent;
-}
-
-/* Individual post pages: keep [back] fixed, scroll meta+body+footer together */
-.updates-overlay.overlay--post-detail .updates-dismiss {
-  position: absolute;
-  top: 18px;
-  inset-inline-end: 18px;
-  z-index: 6;
-}
-
-.updates-overlay.overlay--post-detail .updates-scroll-content {
-  margin-top: var(--overlay-close-clearance);
-}
-
-.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar {
-  width: 8px;
-  background: transparent;
-  -webkit-appearance: none;
-}
-
-.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-track,
-.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-track-piece,
-.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-corner {
-  background: transparent;
-  box-shadow: none;
-}
-
-.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-button {
-  width: 0;
-  height: 0;
-  display: none;
-}
-
-.updates-letter :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.95);
-  background-image: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.98) 0 2px, rgba(255, 255, 255, 0.72) 2px 4px);
-  border-radius: 0;
-  border: 0;
-}
-
-.overlay-scrollbar-mode-custom .updates-letter.has-custom-scrollbar :is(.letter-body, .updates-scroll-content) {
-  scrollbar-width: none;
-}
-
-.overlay-scrollbar-mode-custom .updates-letter.has-custom-scrollbar :is(.letter-body, .updates-scroll-content)::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.updates-scrollbar-indicator {
-  position: absolute;
-  inset-inline-end: var(--overlay-scrollbar-inset);
-  width: 6px;
-  pointer-events: none;
-  z-index: 4;
-  opacity: 0;
-}
-
-.updates-scrollbar-indicator-thumb {
-  width: 100%;
-  min-height: 24px;
-  background-color: rgba(255, 255, 255, 0.95);
-  border-radius: 999px;
-}
-
-.updates-overlay.overlay--post-detail .updates-letter .letter-body {
-  max-height: none;
-  overflow: visible;
 }
 
 /* ==========================================================================
@@ -1856,6 +1672,12 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
   .menu-trigger-toggle {
     padding-inline-end: 21px;
   }
+
+  /* Keep fixed footer controls outside the centered reading column on
+     intermediate widths, then ease them back to the shared desktop gutter. */
+  .site-footer-bar {
+    padding-inline: clamp(28px, calc(50vw - 520px), var(--frame-inline));
+  }
 }
 
 @media (min-width: 801px) and (max-width: 1100px) {
@@ -1895,17 +1717,12 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
   :root {
     --text-hero: var(--font-size-xl);
     --hero-horizon-gap: 2rem;
-    --overlay-top-safe-zone: 58px;
-    --overlay-bottom-safe-zone: 140px;
-    --overlay-card-chrome: 56px;
-    --overlay-close-clearance: 26px;
-    --overlay-mobile-top-gap: 58px;
     --frame-inline: 40px;
     --frame-block: 40px;
     --frame-chrome-fade: 64px;
     --frame-chrome-clearance: 20px;
     --frame-content-top: calc(var(--frame-block) + 88px);
-    --frame-content-bottom: calc(var(--frame-block) + 92px);
+    --frame-content-bottom: var(--frame-block);
   }
 
   body.mobile-menu-open {
@@ -1914,6 +1731,13 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 
   .site-header {
     z-index: 220;
+  }
+
+  .site-footer-bar {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
   }
 
   .top-nav {
@@ -2027,23 +1851,13 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     outline-offset: 2px;
   }
 
-  /* On scrolling pages, the fixed chrome gets an opaque-to-transparent veil.
-     Content remains visible as it passes underneath, without colliding with
-     the logo, menu, footer, or controls. */
+  /* On scrolling pages, the fixed header gets an opaque-to-transparent veil.
+     Content remains visible as it passes underneath without colliding with
+     the logo or menu. */
   body:has(.content-page) .site-header {
     padding-bottom: calc(var(--frame-chrome-fade) + var(--frame-chrome-clearance));
     background: linear-gradient(
       to bottom,
-      rgba(var(--chrome-surface), 1) 0%,
-      rgba(var(--chrome-surface), 1) calc(100% - var(--frame-chrome-fade)),
-      rgba(var(--chrome-surface), 0) 100%
-    );
-  }
-
-  body:has(.content-page) .site-footer-bar {
-    padding-top: calc(var(--frame-chrome-fade) + var(--frame-chrome-clearance));
-    background: linear-gradient(
-      to top,
       rgba(var(--chrome-surface), 1) 0%,
       rgba(var(--chrome-surface), 1) calc(100% - var(--frame-chrome-fade)),
       rgba(var(--chrome-surface), 0) 100%
@@ -2070,39 +1884,6 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
   .page--prose .content-surface,
   .page--post-detail .content-surface {
     width: min(100%, 680px);
-  }
-
-  .updates-overlay {
-    align-items: flex-start;
-    padding-inline: 8px;
-  }
-
-  .updates-overlay .updates-letter {
-    width: 98vw;
-    max-width: 98vw;
-    margin-top: 0;
-    max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-border-gap));
-    transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.22s ease;
-  }
-
-  .updates-overlay .updates-letter {
-    --letter-inline-padding: 12px;
-    --overlay-scrollbar-inset: 12px;
-    padding: 16px var(--letter-inline-padding) 12px;
-  }
-
-  .updates-overlay .updates-dismiss {
-    font-size: 21px;
-    line-height: 1;
-  }
-
-  .updates-overlay .updates-letter .letter-body {
-    margin-top: var(--overlay-close-clearance);
-  }
-
-  .updates-overlay .updates-letter :is(.letter-body, .updates-scroll-content) {
-    max-height: calc(var(--viewport-height) - var(--overlay-top-safe-zone) - var(--overlay-bottom-safe-zone) - var(--overlay-card-chrome) - var(--overlay-close-clearance) - var(--overlay-border-gap));
-    transition: max-height 0.22s ease;
   }
 
 
@@ -2159,11 +1940,6 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 
 @media (max-width: 520px) {
   :root {
-    --overlay-top-safe-zone: 46px;
-    --overlay-bottom-safe-zone: 120px;
-    --overlay-card-chrome: 44px;
-    --overlay-close-clearance: 22px;
-    --overlay-mobile-top-gap: 46px;
     --frame-inline: 28px;
     --frame-block: 28px;
     --hero-horizon-gap: 1.5rem;
