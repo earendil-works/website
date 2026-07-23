@@ -31,6 +31,13 @@ LOCALES_DIR = ROOT / "locales"
 BUILD_DIR = ROOT / "_build"
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
+CODE_BLOCK_RE = re.compile(
+    r"<pre><code(?P<attrs>[^>]*)>(?P<body>.*?)</code></pre>",
+    re.DOTALL,
+)
+CODE_REVEAL_MARKER = "◊"
+CODE_REVEAL_INITIAL_DELAY_MS = 120
+CODE_REVEAL_STEP_DELAY_MS = 105
 
 SITE_URL = "https://earendil.com/"
 UPDATES_FEED_LIMIT = 10
@@ -57,11 +64,45 @@ def parse_frontmatter(raw: str) -> Tuple[dict[str, Any], str]:
     return data, body
 
 
+def _render_code_reveals(html: str) -> str:
+    """Turn ◊-delimited code chunks into viewport-reveal steps.
+
+    The marker only has meaning inside a fenced code block. Text before the
+    first marker stays visible; each marked chunk becomes the next reveal.
+    Without the site CSS or JavaScript all chunks remain ordinary code text.
+    """
+    def replace_code_block(match: re.Match[str]) -> str:
+        body = match.group("body")
+        if CODE_REVEAL_MARKER not in body:
+            return match.group(0)
+
+        chunks = body.split(CODE_REVEAL_MARKER)
+        rendered_chunks = [chunks[0]]
+        reveal_index = 0
+        for chunk in chunks[1:]:
+            if not chunk:
+                continue
+            delay = CODE_REVEAL_INITIAL_DELAY_MS + reveal_index * CODE_REVEAL_STEP_DELAY_MS
+            rendered_chunks.append(
+                f'<span class="code-reveal__step" style="--reveal-delay: {delay}ms">{chunk}</span>'
+            )
+            reveal_index += 1
+
+        attrs = match.group("attrs")
+        return (
+            f'<pre class="code-reveal" data-code-reveal data-reveal-steps="{reveal_index}">'
+            f"<code{attrs}>{''.join(rendered_chunks)}</code></pre>"
+        )
+
+    return CODE_BLOCK_RE.sub(replace_code_block, html)
+
+
 def render_markdown(text: str) -> str:
     text = text.strip()
     if not text:
         return ""
-    return md_lib.markdown(text, extensions=["extra"])
+    html = md_lib.markdown(text, extensions=["extra"])
+    return _render_code_reveals(html)
 
 
 def parse_post_date(date_str: str) -> datetime | None:

@@ -488,6 +488,52 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
   document.body.addEventListener('htmx:afterSettle', initUpdatesForm);
 })();
 
+// Reveal ◊-delimited chunks in marked code blocks as each block enters the
+// viewport. CSS owns the fade and stagger; JavaScript only toggles visibility.
+(function() {
+  var codeRevealObserver = null;
+
+  function revealCodeBlock(codeBlock) {
+    codeBlock.classList.add('is-revealed');
+    if (codeRevealObserver) codeRevealObserver.unobserve(codeBlock);
+  }
+
+  function getCodeRevealObserver() {
+    if (codeRevealObserver || typeof IntersectionObserver !== 'function') {
+      return codeRevealObserver;
+    }
+
+    codeRevealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) revealCodeBlock(entry.target);
+      });
+    }, {
+      threshold: 0.2,
+      rootMargin: '0px 0px -8% 0px'
+    });
+
+    return codeRevealObserver;
+  }
+
+  function initCodeReveals() {
+    document.querySelectorAll('[data-code-reveal]').forEach(function(codeBlock) {
+      if (codeBlock.dataset.revealInitialized) return;
+      codeBlock.dataset.revealInitialized = 'true';
+      codeBlock.classList.add('is-reveal-ready');
+
+      var observer = getCodeRevealObserver();
+      if (observer) {
+        observer.observe(codeBlock);
+      } else {
+        revealCodeBlock(codeBlock);
+      }
+    });
+  }
+
+  initCodeReveals();
+  document.body.addEventListener('htmx:afterSettle', initCodeReveals);
+})();
+
 // WebGL ocean rendering (runs once)
 (function() {
 if (window.__earendilInitialized) return;

@@ -382,6 +382,65 @@
   content: none;
 }
 
+/* --- Marked code reveals ------------------------------------------------- */
+
+/* A fenced code block containing ◊ markers is rendered with this class. The
+   font metrics stay identical to ordinary prose code; only the presentation
+   and viewport-triggered reveal differ. */
+.prose pre.code-reveal {
+  padding-block: 1.5rem;
+  padding-inline: 0;
+  border-block: 1px solid var(--prose-hr);
+  border-radius: 0;
+  background: transparent;
+  color: var(--prose-body);
+  scrollbar-width: thin;
+}
+
+.prose pre.code-reveal::-webkit-scrollbar {
+  height: 4px;
+}
+
+.prose pre.code-reveal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prose pre.code-reveal::-webkit-scrollbar-thumb {
+  background: var(--prose-hr);
+}
+
+.code-reveal__step {
+  opacity: 1;
+}
+
+.code-reveal.is-reveal-ready {
+  opacity: 0;
+}
+
+.code-reveal.is-reveal-ready .code-reveal__step {
+  opacity: 0;
+}
+
+.code-reveal.is-reveal-ready.is-revealed {
+  opacity: 1;
+  transition: opacity 540ms ease-out;
+}
+
+/* Each ◊-delimited chunk appears as a unit. The build step assigns the delay;
+   there is no typewriter timer mutating the code one character at a time. */
+.code-reveal.is-revealed .code-reveal__step {
+  opacity: 1;
+  transition: opacity 1ms steps(1, end) var(--reveal-delay);
+}
+
+@media print, (prefers-reduced-motion: reduce) {
+  .code-reveal.is-reveal-ready,
+  .code-reveal.is-reveal-ready .code-reveal__step {
+    opacity: 1;
+    transition: none;
+  }
+}
+
 /* --- Tables -------------------------------------------------------------- */
 
 .prose table {
