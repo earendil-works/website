@@ -1,5 +1,6 @@
 ---
 title: Announcing Pi & Lefos
+description: Earendil announces the acquisition of Pi, the public alpha of Lefos, Mario Zechner joining the team, and the company's early backers.
 template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>

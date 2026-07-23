@@ -1,5 +1,6 @@
 ---
 title: An Invitation to Begin a Correspondence
+description: An invitation to follow what we are building, what we learn, and where we are headed, and to begin a thoughtful correspondence with us.
 template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>

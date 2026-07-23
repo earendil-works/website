@@ -1,5 +1,6 @@
 ---
 title: A Reflection on our Announcement Today
+description: A reflection on Earendil's beginnings, the relationships behind Pi, Lefos, and our early backers, and our commitment to building trust over time.
 template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>

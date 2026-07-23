@@ -1,5 +1,6 @@
 ---
 title: The High Ground
+description: A view of where the high ground in software will be as AI spreads, and why capable, personal, trustworthy systems should belong to their users.
 template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>

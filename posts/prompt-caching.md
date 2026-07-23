@@ -1,5 +1,6 @@
 ---
 title: Prompt Caching In Agents
+description: How prompt caching shapes the cost, latency, tools, and architecture of coding agents, and what Pi does to keep cache behavior visible.
 template: updates
 aria_label: Earendil posts
 from: Earendil Engineering <rfc@earendil.com>
