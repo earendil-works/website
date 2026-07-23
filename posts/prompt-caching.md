@@ -24,7 +24,7 @@ fragile.  A changed tool definition, a model switch or a provider routing
 decision can turn what one would expect to be a cheap incremental request into a
 full replay of the context.
 
-For coding agents, cache behavior is therefore not an implementation detail or
+For coding agents, cache behavior is therefore not just an implementation detail or
 optimization.  It affects latency, cost, tool design, session design, and even
 which product features should be made available.
 
@@ -84,7 +84,7 @@ addressable.  There are two broad ways inference systems make KV caches
 available to a later request.
 
 The simpler approach is **session affinity**.  It works by keeping the KV cache
-on or near the GPU that computed it, and route the next request back to the same
+on or near the GPU that computed it, and routing the next request back to the same
 worker.  A session ID or prompt-cache key becomes a trivial routing hint and so
 you can potentially even deal with this problem on the HTTP load balancer level
 without having to look into the payload.
@@ -131,7 +131,7 @@ to an earlier point and continue along another branch.  A rewind can discard the
 active suffix without deleting it from the session file.  A new branch can share
 most of the old context, a little of it, or effectively none of it.  This design
 is not unique to Pi, quite a few coding agents have something at least
-conceptionally similar.  Even if you do not represent the session as a tree,
+conceptually similar.  Even if you do not represent the session as a tree,
 it's not uncommon for agents to have some form of rewinding.
 
 ```text
@@ -159,7 +159,7 @@ that isolates caches by session key may fail to notice that useful overlap.
 
 The reusable prefix determines what work can be cached.  Session identity merely
 helps the infrastructure find likely content.  On some systems the routing key
-is crucial to manage caches, on others it's merly an optimization.
+is crucial to manage caches, on others it's merely an optimization.
 
 ## Explicit vs Automatic Prefix Caching
 
@@ -171,7 +171,7 @@ prompt, tool definitions, or the latest cacheable conversation content.  The
 server can then write or look up the prefix ending at those points.  The boundary
 is explicit, but reuse still requires the content before it to match.  Not only
 are the cache points explicit, so is the pricing.  You pay for cache writes, and
-you get to chose for how long which comes at different price points.
+you get to choose for how long which comes at different price points.
 
 Other APIs use automatic prefix caching.  The client sends the request normally,
 and the provider finds a reusable prefix without client-placed breakpoints.  A
@@ -226,7 +226,7 @@ session.
 Extensibility means Pi cannot guarantee cache stability on behalf of every
 extension.  We can provide cache-friendly mechanisms; extensions still have to
 use them and from what we have seen, for many extensions cache efficiency is an
-afterthought.  This is in part, because when you pay on a fixed subscription the
+afterthought.  This is, in part, because when you pay on a fixed subscription the
 associated cost with cache misses is not quite as obvious.
 
 ## Interruptions and TTLs
@@ -238,7 +238,7 @@ come back 10 minutes later, a single "say hi" message will cost you more money
 than you expect.
 
 That's because while the user may think of a coding session as continuously
-active while the inference provider sees a sequence of isolated requests:
+active, the inference provider sees a sequence of isolated requests:
 
 ```text
 model request --> run tests for 7 minutes --> model request
@@ -297,9 +297,9 @@ while the party billing the user earns more revenue when they happen.
 That does not mean providers sabotage caches but it means cache performance
 should be observable.  Users should not have to infer that only from a
 surprisingly large bill.  Understanding if something odd is going on with caches
-can be important insights.
+can be an important insight.
 
-Strict cache adherence also means less flexibilility for a gateway to route you to
+Strict cache adherence also means less flexibility for a gateway to route you to
 the best option in-between turns.  You might want to take a cache hit to continue
 with a different model which from that point onwards might be more economical,
 or it might be the case that you might be better off load balancing to another
@@ -307,7 +307,7 @@ provider.
 
 ## Why Pi Does Not Prune Aggressively
 
-Now that you made it that far, you probably have an idea why Pi does not prune
+Now that you've made it this far, you probably have an idea why Pi does not prune
 tool calls.  It is tempting to control cost by continuously deleting old tool
 results or rewriting history and sometimes that is necessary, especially near
 the context-window limit.  But as we have learned, pruning has a cache cost of
@@ -341,11 +341,11 @@ reset rather than a cache failure in its session statistics.
 The goal is not the smallest possible prompt but the best trade-off among model
 context, cache reuse, latency, and price.
 
-Simultaniously there can be a case for pruning too.  If you are working with
+Simultaneously there can be a case for pruning too.  If you are working with
 providers that do not discount you for good cache usage, or it's for whatever
-reason not possible to get high cache rates, it might be preferrable to prune.
+reason not possible to get high cache rates, it might be preferable to prune.
 It definitely improves the opportunity for the router to balance between
-different backends as caches are not transferrable.
+different backends as caches are not transferable.
 
 ## What Pi Can and Cannot Do
 
@@ -401,7 +401,7 @@ When a session's cache-hit rate looks wrong, the usual causes are:
 2. **Model or provider switches.** KV state is model-specific and generally does not move across providers.
 3. **Branch navigation.** `/tree`, rewinds, forks, and alternate branches can change the active token sequence even when the session ID remains the same.
 4. **Compaction or manual history rewriting.** These intentionally replace part of the prompt and establish a new prefix.
-5. **Tool and reasoning level changes.** Adding, removing, reordering, or editing tool definitions changes an early part of the request unless the model supports message-anchored loading and the change is purely additive. Reasoning level change usually have the same effect.
+5. **Tool and reasoning level changes.** Adding, removing, reordering, or editing tool definitions changes an early part of the request unless the model supports message-anchored loading and the change is purely additive. Reasoning level changes usually have the same effect.
 6. **Dynamic system prompts.** Timestamps, random values, changing project context, and extension-provided prompt snippets can invalidate everything after them.
 7. **Extension context transforms.** An extension that modifies old messages or provider payloads can make an apparently stable Pi transcript unstable on the wire.
 8. **Provider routing and eviction.** The prompt can be identical and still miss because the relevant KV blocks are no longer available where the request lands.
