@@ -20,6 +20,11 @@
   var currentLang = FALLBACK_LANG;
   var ready = false;
   var readyCallbacks = [];
+  var dateFormatters = {};
+
+  // Keep the site's existing day-month English style. Other languages use
+  // their native Intl conventions.
+  var DATE_LOCALES = { en: 'en-GB' };
 
   // Extract message from English format { message: "...", context: "..." } or plain string
   function extractMessage(value) {
@@ -129,6 +134,61 @@
     document.documentElement.lang = lang;
   }
 
+  function getDateFormatter(lang) {
+    if (typeof Intl === 'undefined' || !Intl.DateTimeFormat) return null;
+
+    var locale = DATE_LOCALES[lang] || lang;
+    if (!(locale in dateFormatters)) {
+      try {
+        dateFormatters[locale] = new Intl.DateTimeFormat(locale, {
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          calendar: 'gregory',
+          timeZone: 'UTC'
+        });
+      } catch (err) {
+        dateFormatters[locale] = null;
+      }
+    }
+    return dateFormatters[locale];
+  }
+
+  function parseISODate(value) {
+    var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+    if (!match) return null;
+
+    var year = Number(match[1]);
+    var month = Number(match[2]);
+    var day = Number(match[3]);
+    var date = new Date(Date.UTC(year, month - 1, day));
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      return null;
+    }
+    return date;
+  }
+
+  // Dates are data, not translated strings. Format them for the active
+  // language while retaining the server-rendered English fallback when Intl
+  // is unavailable.
+  function updateDates() {
+    var formatter = getDateFormatter(currentLang);
+    if (!formatter) return;
+
+    var dateElements = document.querySelectorAll('[data-i18n-date]');
+    dateElements.forEach(function(el) {
+      var date = parseISODate(el.getAttribute('datetime'));
+      if (date) {
+        el.textContent = formatter.format(date);
+      }
+    });
+  }
+
   // Update all elements with data-i18n attribute
   function updateDOM() {
     var elements = document.querySelectorAll('[data-i18n]');
@@ -183,6 +243,8 @@
         el.setAttribute('title', text);
       }
     });
+
+    updateDates();
 
     // Update document title (browser tab)
     // Format string from data-i18n-doc-title is interpolated with the

@@ -8,10 +8,10 @@
       <h1 class="visually-hidden"{% if page.i18n_key %} data-i18n="content.{{ page.i18n_key }}.title"{% endif %}>{{ title }}</h1>
       <div class="updates-scroll-content">
         <div class="email-meta">
-          <p><span class="email-meta-key" data-i18n="posts.email.date">Date:</span><span class="email-meta-value" data-i18n="posts.email.date.{{ page.i18n_key }}">{{ page.date_day or page.date }}</span></p>
+          <p><span class="email-meta-key" data-i18n="posts.email.date">Date:</span>{% if page.date_iso %}<time class="email-meta-value" datetime="{{ page.date_iso }}" data-i18n-date>{{ page.date_day }}</time>{% else %}<span class="email-meta-value">{{ page.date }}</span>{% endif %}</p>
           <p><span class="email-meta-key" data-i18n="posts.email.from">From:</span><span class="email-meta-value">{{ page.from_html if page.from_html else page.from }}</span></p>
           <p><span class="email-meta-key" data-i18n="posts.email.to">To:</span><span class="email-meta-value" data-i18n="posts.email.to.value">You</span></p>
-          <p><span class="email-meta-key" data-i18n="posts.email.subject">Subject:</span><span class="email-meta-value" data-i18n="content.{{ page.i18n_key }}.title" data-i18n-fallback="{{ page.title }}">{{ page.title }}</span></p>
+          <p><span class="email-meta-key" data-i18n="posts.email.subject">Subject:</span><span class="email-meta-value"{% if page.i18n_key %} data-i18n="content.{{ page.i18n_key }}.title"{% endif %}>{{ page.title }}</span></p>
         </div>
         <div class="letter-body prose">
           {{ content }}

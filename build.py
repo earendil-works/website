@@ -16,7 +16,8 @@ from email.utils import parsedate_to_datetime
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import Any, Callable, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
+from xml.etree import ElementTree
 
 from minijinja import Environment, safe, load_from_path
 
@@ -104,16 +105,16 @@ def render_markdown(text: str) -> str:
     return _render_code_reveals(html)
 
 
-def format_day_from_date(date_str: str) -> str:
+def parse_post_date(date_str: str) -> datetime | None:
     if not date_str:
-        return ""
+        return None
     try:
         parsed = parsedate_to_datetime(date_str)
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=timezone.utc)
-        return parsed.strftime("%a, %d %b %Y")
+        return parsed
     except (TypeError, ValueError):
-        return date_str
+        return None
 
 
 def linkify_email_header(value: str) -> str:
@@ -186,21 +187,15 @@ def collect_update_entries() -> list[dict[str, Any]]:
         slug = slug_for_path(md_path)
         base_name = md_path.stem  # e.g., "memorandum"
         date_str = frontmatter.get("date", "")
-        date_prefix = ""
-        parsed_date = None
-        if date_str:
-            try:
-                parsed_date = parsedate_to_datetime(date_str)
-                if parsed_date.tzinfo is None:
-                    parsed_date = parsed_date.replace(tzinfo=timezone.utc)
-                date_prefix = parsed_date.strftime("%Y%m%d-")
-            except (ValueError, TypeError):
-                parsed_date = None
+        parsed_date = parse_post_date(date_str)
+        date_prefix = parsed_date.strftime("%Y%m%d-") if parsed_date else ""
         updates.append({
             "name": date_prefix + base_name,
             "slug": slug,
             "title": frontmatter.get("title", base_name),
-            "date": frontmatter.get("date", ""),
+            "date": date_str,
+            "date_day": parsed_date.strftime("%a, %d %b %Y") if parsed_date else date_str,
+            "date_iso": parsed_date.date().isoformat() if parsed_date else "",
             "parsed_date": parsed_date,
             "subject": frontmatter.get("subject", ""),
             "i18n_key": frontmatter.get("i18n_key", ""),
@@ -218,77 +213,103 @@ def _format_rss_date(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
 
 
+def _absolutize_html_urls(content: str, base_url: str) -> str:
+    """Make links in feed content independent of the feed reader's base URL."""
+    url_attr_re = re.compile(
+        r"(?P<prefix>\b(?:href|src)\s*=\s*)(?P<quote>['\"])(?P<url>[^'\"]+)(?P=quote)",
+        re.IGNORECASE,
+    )
+
+    def replace_url(match: re.Match[str]) -> str:
+        return (
+            f"{match.group('prefix')}{match.group('quote')}"
+            f"{urljoin(base_url, match.group('url'))}{match.group('quote')}"
+        )
+
+    return url_attr_re.sub(replace_url, content)
+
+
+def _serialize_xml(root: ElementTree.Element) -> str:
+    ElementTree.indent(root, space="  ")
+    return ElementTree.tostring(root, encoding="unicode", xml_declaration=True)
+
+
 def _generate_atom_feed(title: str, feed_url: str, subtitle: str, updates):
-    now = datetime.now(timezone.utc).isoformat()
-    entries = []
+    atom_namespace = "http://www.w3.org/2005/Atom"
+    xml_namespace = "http://www.w3.org/XML/1998/namespace"
+    ElementTree.register_namespace("", atom_namespace)
+
+    def atom_element(name: str) -> str:
+        return f"{{{atom_namespace}}}{name}"
+
+    feed = ElementTree.Element(
+        atom_element("feed"),
+        {f"{{{xml_namespace}}}lang": "en"},
+    )
+    ElementTree.SubElement(feed, atom_element("id")).text = feed_url
+    ElementTree.SubElement(feed, atom_element("title")).text = title
+    ElementTree.SubElement(feed, atom_element("link"), {"href": SITE_URL})
+    ElementTree.SubElement(
+        feed,
+        atom_element("link"),
+        {"href": feed_url, "rel": "self"},
+    )
+    ElementTree.SubElement(feed, atom_element("subtitle")).text = subtitle
+    ElementTree.SubElement(feed, atom_element("updated")).text = (
+        datetime.now(timezone.utc).isoformat()
+    )
+    author = ElementTree.SubElement(feed, atom_element("author"))
+    ElementTree.SubElement(author, atom_element("name")).text = "Earendil"
+
     for update in updates:
         if not update["parsed_date"]:
             continue
         entry_date = update["parsed_date"].astimezone(timezone.utc).isoformat()
         update_url = SITE_URL.rstrip("/") + update["slug"]
-        content = update["content"]
-        entry_xml = f"""  <entry>
-    <id>{update_url}</id>
-    <title>{update['title']}</title>
-    <link href=\"{update_url}\" />
-    <published>{entry_date}</published>
-    <updated>{entry_date}</updated>
-    <author>
-      <name>Earendil</name>
-    </author>
-    <content type=\"html\"><![CDATA[{content}]]></content>
-  </entry>"""
-        entries.append(entry_xml)
+        entry = ElementTree.SubElement(feed, atom_element("entry"))
+        ElementTree.SubElement(entry, atom_element("id")).text = update_url
+        ElementTree.SubElement(entry, atom_element("title")).text = update["title"]
+        ElementTree.SubElement(entry, atom_element("link"), {"href": update_url})
+        ElementTree.SubElement(entry, atom_element("published")).text = entry_date
+        ElementTree.SubElement(entry, atom_element("updated")).text = entry_date
+        author = ElementTree.SubElement(entry, atom_element("author"))
+        ElementTree.SubElement(author, atom_element("name")).text = "Earendil"
+        content = ElementTree.SubElement(entry, atom_element("content"), {"type": "html"})
+        content.text = _absolutize_html_urls(update["content"], update_url)
 
-    feed_xml = f"""<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<feed xmlns=\"http://www.w3.org/2005/Atom\">
-  <id>{feed_url}</id>
-  <title>{title}</title>
-  <link href=\"{SITE_URL}\" />
-  <link href=\"{feed_url}\" rel=\"self\" />
-  <description>{subtitle}</description>
-  <language>en</language>
-  <updated>{now}</updated>
-  <author>
-    <name>Earendil</name>
-  </author>
-{chr(10).join(entries)}
-</feed>"""
-    return feed_xml
+    return _serialize_xml(feed)
 
 
 def _generate_rss_feed(title: str, feed_url: str, subtitle: str, updates):
-    now = datetime.now(timezone.utc)
-    rss_date_format = _format_rss_date(now)
+    atom_namespace = "http://www.w3.org/2005/Atom"
+    ElementTree.register_namespace("atom", atom_namespace)
 
-    items = []
+    rss = ElementTree.Element("rss", {"version": "2.0"})
+    channel = ElementTree.SubElement(rss, "channel")
+    ElementTree.SubElement(channel, "title").text = title
+    ElementTree.SubElement(channel, "link").text = SITE_URL
+    ElementTree.SubElement(
+        channel,
+        f"{{{atom_namespace}}}link",
+        {"href": feed_url, "rel": "self", "type": "application/rss+xml"},
+    )
+    ElementTree.SubElement(channel, "description").text = subtitle
+    ElementTree.SubElement(channel, "language").text = "en"
+    ElementTree.SubElement(channel, "lastBuildDate").text = _format_rss_date(datetime.now(timezone.utc))
+
     for update in updates:
         if not update["parsed_date"]:
             continue
         update_url = SITE_URL.rstrip("/") + update["slug"]
-        pub_date = _format_rss_date(update["parsed_date"])
-        content = update["content"]
-        item_xml = f"""    <item>
-      <title>{update['title']}</title>
-      <link>{update_url}</link>
-      <guid isPermaLink=\"true\">{update_url}</guid>
-      <pubDate>{pub_date}</pubDate>
-      <description><![CDATA[{content}]]></description>
-    </item>"""
-        items.append(item_xml)
+        item = ElementTree.SubElement(channel, "item")
+        ElementTree.SubElement(item, "title").text = update["title"]
+        ElementTree.SubElement(item, "link").text = update_url
+        ElementTree.SubElement(item, "guid", {"isPermaLink": "true"}).text = update_url
+        ElementTree.SubElement(item, "pubDate").text = _format_rss_date(update["parsed_date"])
+        description = ElementTree.SubElement(item, "description")
+        description.text = _absolutize_html_urls(update["content"], update_url)
 
-    rss_xml = f"""<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<rss version=\"2.0\">
-  <channel>
-    <title>{title}</title>
-    <link>{SITE_URL}</link>
-    <description>{subtitle}</description>
-    <language>en</language>
-    <lastBuildDate>{rss_date_format}</lastBuildDate>
-{chr(10).join(items)}
-  </channel>
-</rss>"""
-    return rss_xml
+    return _serialize_xml(rss)
 
 
 def build_update_feeds(updates, build_dir: Path) -> None:
@@ -349,6 +370,8 @@ def build_to(build_dir: Path) -> None:
             "slug": update["slug"],
             "title": update["title"],
             "date": update["date"],
+            "date_day": update["date_day"],
+            "date_iso": update["date_iso"],
             "parsed_date": update["parsed_date"],
             "subject": update["subject"],
             "i18n_key": update["i18n_key"],
@@ -379,7 +402,10 @@ def build_to(build_dir: Path) -> None:
             page_classes.extend(str(value) for value in extra_page_classes if value)
         page = dict(frontmatter)
         if "date" in page:
-            page["date_day"] = format_day_from_date(page.get("date", ""))
+            parsed_page_date = parse_post_date(page.get("date", ""))
+            if parsed_page_date:
+                page["date_day"] = parsed_page_date.strftime("%a, %d %b %Y")
+                page["date_iso"] = parsed_page_date.date().isoformat()
         page["from_html"] = safe(linkify_email_header(str(page.get("from", ""))))
         page["to_html"] = safe(linkify_email_header(str(page.get("to", ""))))
         rendered = env.render_template(
