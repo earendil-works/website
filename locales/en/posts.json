@@ -4,11 +4,11 @@
     "context": "Title of the posts/blog listing page"
   },
   "posts.hearFromUs": {
-    "message": "[Hear from us]",
+    "message": "Hear from us",
     "context": "Link to subscribe to posts"
   },
   "posts.feedAtom": {
-    "message": "Atom",
+    "message": "ATOM",
     "context": "Link to Atom feed"
   },
   "posts.feedRss": {

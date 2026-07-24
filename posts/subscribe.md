@@ -34,4 +34,4 @@ aria_i18n_key: subscribe
   <span id="updates-message" class="updates-message" hidden></span>
 </div>
 
-<a href="/posts/feed.atom" hx-boost="false" data-i18n="posts.posts.feedAtom">Atom</a> · <a href="/posts/feed.rss" hx-boost="false" data-i18n="posts.posts.feedRss">RSS</a>
+<a class="posts-action-link" href="/posts/feed.atom" hx-boost="false" data-i18n="posts.posts.feedAtom">ATOM</a> · <a class="posts-action-link" href="/posts/feed.rss" hx-boost="false" data-i18n="posts.posts.feedRss">RSS</a>
