@@ -509,6 +509,25 @@ const LOW_DPI_NOISE_SCALE = 1.7;
 
 let currentQuality = 'high';
 
+// Reduced motion keeps the ocean alive as a quiet ambient surface rather than
+// freezing it. Apply the same treatment automatically whenever a content-page
+// background is present so the ocean is less distracting while reading. Film
+// grain is only slowed slightly because it does not create the same sense of
+// spatial movement as the waves.
+const motionPreferenceQuery = window.matchMedia
+  ? window.matchMedia('(prefers-reduced-motion: reduce)')
+  : null;
+const REDUCED_MOTION_WAVE_SPEED = 0.2;
+const REDUCED_MOTION_GRAIN_SPEED = 0.75;
+const AMBIENT_MOTION_SPEED_TRANSITION_DURATION = 3.0;
+
+function shouldReduceAmbientMotion() {
+  const userPrefersReducedMotion = motionPreferenceQuery
+    ? motionPreferenceQuery.matches
+    : false;
+  return userPrefersReducedMotion || !!document.querySelector('.content-page');
+}
+
 // Adaptive quality settings
 const AUTO_QUALITY_FPS_LOW = 28;      // Drop quality if FPS below this
 const AUTO_QUALITY_FPS_HIGH = 55;     // Increase quality if FPS above this
@@ -939,6 +958,7 @@ function buildFragmentShader(quality) {
   precision highp float;
   uniform vec2 iResolution;
   uniform float iTime;
+  uniform float u_waveTime;
   uniform sampler2D u_light;
   uniform sampler2D u_logo;
   uniform vec2 u_logoCenter;
@@ -1037,7 +1057,7 @@ function buildFragmentShader(quality) {
       float birthTime = ripple.z;
       float amplitude = ripple.w;
       
-      float age = iTime - birthTime;
+      float age = u_waveTime - birthTime;
       if (age < 0.0 || age > 12.0) continue;
       
       float dist = length(position - ripplePos);
@@ -1070,7 +1090,7 @@ function buildFragmentShader(quality) {
     for(int i=0; i < 16; i++) {
       if(i >= iterations) break;
       vec2 p = normalize(mix(vec2(sin(iter), cos(iter)), swellDir, swellBias));
-      vec2 res = wavedx(position, p, frequency, iTime * timeMultiplier + wavePhaseShift);
+      vec2 res = wavedx(position, p, frequency, u_waveTime * timeMultiplier + wavePhaseShift);
       position += p * res.y * weight * DRAG_MULT;
       sumOfValues += res.x * weight;
       sumOfWeights += weight;
@@ -1081,10 +1101,10 @@ function buildFragmentShader(quality) {
     }
     float baseWaves = sumOfValues / sumOfWeights;
 
-    float swellPhase = dot(position, swellDir) * 0.18 - iTime * 0.08;
+    float swellPhase = dot(position, swellDir) * 0.18 - u_waveTime * 0.08;
     // Center swell around 0 so it adds and subtracts from the surface.
     float swell = sin(swellPhase);
-    vec2 cameraPos = vec2(iTime * 0.2, 1.0);
+    vec2 cameraPos = vec2(u_waveTime * 0.2, 1.0);
     float swellFade = smoothstep(28.0, 4.0, length(position - cameraPos));
 
     return baseWaves + swell * swellFade * 0.35;
@@ -1261,7 +1281,7 @@ function buildFragmentShader(quality) {
 
     vec3 waterPlaneHigh = vec3(0.0, 0.0, 0.0);
     vec3 waterPlaneLow = vec3(0.0, -WATER_DEPTH, 0.0);
-    vec3 origin = vec3(iTime * 0.2, CAMERA_HEIGHT + u_cameraYOffset, 1.0 + u_cameraZOffset);
+    vec3 origin = vec3(u_waveTime * 0.2, CAMERA_HEIGHT + u_cameraYOffset, 1.0 + u_cameraZOffset);
 
     float highPlaneHit = intersectPlane(origin, ray, waterPlaneHigh, vec3(0.0, 1.0, 0.0));
     float lowPlaneHit = intersectPlane(origin, ray, waterPlaneLow, vec3(0.0, 1.0, 0.0));
@@ -1362,6 +1382,7 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
 let positionLocation = gl.getAttribLocation(program, 'position');
 let resolutionLocation = gl.getUniformLocation(program, 'iResolution');
 let timeLocation = gl.getUniformLocation(program, 'iTime');
+let waveTimeLocation = gl.getUniformLocation(program, 'u_waveTime');
 let lightTextureLocation = gl.getUniformLocation(program, 'u_light');
 let logoTextureLocation = gl.getUniformLocation(program, 'u_logo');
 let logoCenterLocation = gl.getUniformLocation(program, 'u_logoCenter');
@@ -1386,6 +1407,7 @@ function rebuildOceanProgram() {
   positionLocation = gl.getAttribLocation(program, 'position');
   resolutionLocation = gl.getUniformLocation(program, 'iResolution');
   timeLocation = gl.getUniformLocation(program, 'iTime');
+  waveTimeLocation = gl.getUniformLocation(program, 'u_waveTime');
   lightTextureLocation = gl.getUniformLocation(program, 'u_light');
   logoTextureLocation = gl.getUniformLocation(program, 'u_logo');
   logoCenterLocation = gl.getUniformLocation(program, 'u_logoCenter');
@@ -1616,6 +1638,66 @@ if (logo.complete) {
 // FPS tracking
 let frameCount = 0;
 let lastFpsUpdate = 0;
+
+// Separate accumulated clocks let the motion preference change at runtime
+// without jumping to a different point in either animation. Playback speed
+// eases between modes so leaving a content page does not abruptly accelerate
+// the ocean.
+let waveTime = 0;
+let grainTime = 0;
+let lastAmbientMotionTime = null;
+let ambientMotionIsReduced = null;
+let ambientSpeedTransitionElapsed = AMBIENT_MOTION_SPEED_TRANSITION_DURATION;
+let waveSpeed = 1.0;
+let grainSpeed = 1.0;
+let waveSpeedFrom = waveSpeed;
+let grainSpeedFrom = grainSpeed;
+let waveSpeedTo = waveSpeed;
+let grainSpeedTo = grainSpeed;
+
+function updateAmbientMotionClocks(time) {
+  const reduced = shouldReduceAmbientMotion();
+
+  if (lastAmbientMotionTime === null) {
+    waveTime = time * 0.001;
+    grainTime = time * 0.001;
+    waveSpeed = reduced ? REDUCED_MOTION_WAVE_SPEED : 1.0;
+    grainSpeed = reduced ? REDUCED_MOTION_GRAIN_SPEED : 1.0;
+    waveSpeedFrom = waveSpeedTo = waveSpeed;
+    grainSpeedFrom = grainSpeedTo = grainSpeed;
+    ambientMotionIsReduced = reduced;
+    lastAmbientMotionTime = time;
+    return;
+  }
+
+  const delta = Math.max(0, (time - lastAmbientMotionTime) * 0.001);
+  if (reduced !== ambientMotionIsReduced) {
+    ambientMotionIsReduced = reduced;
+    ambientSpeedTransitionElapsed = 0;
+    waveSpeedFrom = waveSpeed;
+    grainSpeedFrom = grainSpeed;
+    waveSpeedTo = reduced ? REDUCED_MOTION_WAVE_SPEED : 1.0;
+    grainSpeedTo = reduced ? REDUCED_MOTION_GRAIN_SPEED : 1.0;
+  }
+
+  if (ambientSpeedTransitionElapsed < AMBIENT_MOTION_SPEED_TRANSITION_DURATION) {
+    ambientSpeedTransitionElapsed = Math.min(
+      ambientSpeedTransitionElapsed + delta,
+      AMBIENT_MOTION_SPEED_TRANSITION_DURATION
+    );
+    const progress = ambientSpeedTransitionElapsed / AMBIENT_MOTION_SPEED_TRANSITION_DURATION;
+    const eased = easeInOut(progress);
+    waveSpeed = waveSpeedFrom + (waveSpeedTo - waveSpeedFrom) * eased;
+    grainSpeed = grainSpeedFrom + (grainSpeedTo - grainSpeedFrom) * eased;
+  } else {
+    waveSpeed = waveSpeedTo;
+    grainSpeed = grainSpeedTo;
+  }
+
+  waveTime += delta * waveSpeed;
+  grainTime += delta * grainSpeed;
+  lastAmbientMotionTime = time;
+}
 
 const pendingLightPoints = [];
 let isDrawing = false;
@@ -1854,10 +1936,9 @@ function queueLightPoints(event) {
 
 // Ripple on click
 canvas.addEventListener('click', (e) => {
-  const time = performance.now() * 0.001;
-  const hit = screenToWaterHit(e.clientX, e.clientY, time);
+  const hit = screenToWaterHit(e.clientX, e.clientY, waveTime);
   if (hit) {
-    addRipple(hit.x, hit.z, time, 0.18);
+    addRipple(hit.x, hit.z, waveTime, 0.18);
   }
 });
 
@@ -1932,6 +2013,8 @@ function markShaderReady() {
 }
 
 function render(time) {
+  updateAmbientMotionClocks(time);
+
   // Measure FPS for adaptive quality.
   frameCount++;
   if (time - lastFpsUpdate >= 1000) {
@@ -1967,6 +2050,7 @@ function render(time) {
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
   gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
   gl.uniform1f(timeLocation, time * 0.001);
+  gl.uniform1f(waveTimeLocation, waveTime);
   gl.uniform2f(logoCenterLocation, logoCenter[0], logoCenter[1]);
   gl.uniform2f(logoSizeLocation, logoSize[0], logoSize[1]);
   gl.uniform1f(logoFadeLocation, logoFade);
@@ -2005,7 +2089,7 @@ function render(time) {
   gl.bindTexture(gl.TEXTURE_2D, renderTexture);
   gl.uniform1i(ditherImageLocation, 0);
   gl.uniform2f(ditherResolutionLocation, canvas.width, canvas.height);
-  gl.uniform1f(ditherTimeLocation, time * 0.001);
+  gl.uniform1f(ditherTimeLocation, grainTime);
   gl.uniform1f(ditherNightLocation, nightValue);
   // Finer noise on low DPI screens
   const noiseScale = window.devicePixelRatio < LOW_DPI_THRESHOLD ? LOW_DPI_NOISE_SCALE : 1.0;
