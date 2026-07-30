@@ -162,9 +162,9 @@ A session archive can contain the blob, but another model cannot use its
 meaning:
 
 ```json
-{"type": "reasoning", "encrypted_content": "gAAAAAB..."}
-{"type": "thinking", "thinking": "", "signature": "EqQBCg..."}
-{"type": "thought", "summary": [], "signature": "EpoGCp..."}
+◊{"type": "reasoning", "encrypted_content": "gAAAAAB..."}
+◊{"type": "thinking", "thinking": "", "signature": "EqQBCg..."}
+◊{"type": "thought", "summary": [], "signature": "EpoGCp..."}
 ```
 
 ## Hidden Searches
@@ -285,7 +285,7 @@ payloads"](https://github.com/openai/codex/commit/5f4d06ef186b896d316620556e561d
 explains the flow directly:
 
 ```json
-// Parent model's tool call, as persisted by Codex
+◊// Parent model's tool call, as persisted by Codex
 {
   "name": "spawn_agent",
   "arguments": {
@@ -294,7 +294,7 @@ explains the flow directly:
   }
 }
 
-// Child model's input
+◊// Child model's input
 {
   "type": "agent_message",
   "author": "/root",
