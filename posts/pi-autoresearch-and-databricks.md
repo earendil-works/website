@@ -1,6 +1,6 @@
 ---
 title: Pi, Minimal and Performant
-description: A reflection on Earendil's beginnings, the relationships behind Pi, Lefos, and our early backers, and our commitment to building trust over time.
+description: How Pi's minimal harness improves coding-agent cost and performance, with examples from Databricks and Shopify's pi-autoresearch extension.
 template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>
@@ -9,8 +9,6 @@ date: Thu, 30 Jul 2026 01:00:00 +0200
 subject: Pi, Minimal and Performant
 i18n_key: post.pi-autoresearch-and-databricks
 ---
-
-<div data-i18n-html="content.post.pi-autoresearch-and-databricks.body">
 
 # Pi’s Minimalism Is The Advantage
 
