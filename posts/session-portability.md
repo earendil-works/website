@@ -5,7 +5,7 @@ template: updates
 aria_label: Earendil posts
 from: Earendil Engineering <rfc@earendil.com>
 to: You
-date: Fri, 31 Jul 2026 00:00:00 +0200
+date: Thu, 30 Jul 2026 00:00:00 +0200
 subject: The Session You Cannot Take With You
 ---
 
@@ -23,7 +23,7 @@ continue identically, but it could understand what happened and take over.
 
 Inference APIs are frustratingly moving away from that property, at least
 somewhat.  They increasingly return a mixture of text and provider-bound state
-that is very intentionally non portable.
+that is very intentionally non-portable.
 
 * reasoning tokens that are billed to the user but returned only as opaque,
   encrypted blobs, with useless summaries at best
@@ -33,11 +33,11 @@ that is very intentionally non portable.
   agents in the form of encrypted payloads
 * file, vector-store, container, and cache references that cannot be resolved
   anywhere else.
-* response and conversation state that is entirely keyed by IDs who are
+* response and conversation state that is entirely keyed by IDs that are
   stored fully on the provider's servers
 
 Each feature comes with a basic justification that's trivial for a provider to
-come up, along with good arguments of why this is good for the user.  Together
+come up with, along with good arguments for why this is good for the user.  Together
 all of these things change the ownership reality of an AI session: the
 transcript on your machine is no longer your session but a partial view of a
 session whose operational state belongs to an inference provider and not you.
@@ -49,9 +49,9 @@ space.
 ## A Practical Test for Session Ownership
 
 By a portable session we do not mean that switching from one model to another
-must produce the same next token.  That's a given because Models have different
+must produce the same next token.  That's a given because models have different
 capabilities, trained personalities, context windows, and ways of working with
-tools.  And well, it's all quite non deterministic anyways.  Portability means
+tools.  And well, it's all quite nondeterministic anyway.  Portability means
 something more modest:
 
 ```javascript
@@ -97,8 +97,8 @@ better than requiring server-side conversation storage, particularly for Zero
 Data Retention customers.  But, remember, there is not really anything that
 needs encryption to begin with!
 
-Most importantly this encryption does not hide the data from the inference
-provider, it hides it from you.
+Most importantly, this encryption does not hide the data from the inference
+provider; it hides it from you.
 
 ## Stored Conversations Turn a Transcript into a Pointer
 
@@ -106,7 +106,7 @@ OpenAI's Responses API stores responses by default.  Its documentation says
 response objects are retained for at least 30 days by default; items attached to
 a Conversation are not subject to that 30-day TTL.  `store: false` is available
 and should be used, as it makes it work more like completions: the data is not
-stored on OpenAIs servers.
+stored on OpenAI's servers.
 
 The new Gemini Interactions API has made a similar choice.  It defaults to
 `store: true`; on the paid tier interactions are retained for 55 days, and on
@@ -137,7 +137,7 @@ database it does not control.
 ## No Reasoning For You
 
 All major labs claim to have legitimate reasons not to expose raw chain of
-thought.  As a result, on non open weights models we typically do not see these
+thought.  As a result, on non-open-weights models we typically do not see these
 tokens.
 
 Raw reasoning is not visible via the API.  With stored responses, prior
@@ -154,7 +154,7 @@ tied to the model that produced them and should be stripped when switching
 models.  So these reasoning traces do not attempt to be portable within
 Anthropic.
 
-The same story repeats with all closed weights models.
+The same story repeats with all closed-weights models.
 
 These encryption mechanisms permit continuity *inside* an ecosystem but they do
 not create a portable transcript that can be taken to another provider's model.
@@ -170,7 +170,7 @@ meaning:
 ## Hidden Searches
 
 Server-side web search is one of the clearest examples of a transcript having
-holes in them hidden from the user.  A client-side search tool behaves like
+holes in it hidden from the user.  A client-side search tool behaves like
 any other tool:
 
 ```javascript
@@ -244,7 +244,7 @@ history = [
 ];
 ```
 
-OpenAI can continue from the compressed meaning but a different provider sees an
+OpenAI can continue from the compressed meaning, but a different provider sees an
 unreadable string plus a recent suffix (well, would see it, we never pass this
 sort of information to another provider).
 
@@ -312,7 +312,7 @@ forwards it, and the API decrypts it internally for the child.  Codex's own
 readable rollout and history.
 
 Presumably this is not merely an abstract model-switching concern.  One could
-image if the child changes the wrong file, leaks a secret, duplicates another
+imagine if the child changes the wrong file, leaks a secret, duplicates another
 agent's work, or follows a bad assumption, the user cannot answer the simple
 question of *what was that agent asked to do?*
 
@@ -325,7 +325,7 @@ remain the norm.
 
 Probably not.  Most people do not switch their operating system or phone
 provider every week either.  But even if you do not utilize that freedom, it
-matters because it changes the relationship with you have with the provider and
+matters because it changes the relationship you have with the provider and
 the provider has with you.
 
 As a user you also may need to move a session because a model is retired, a
@@ -339,7 +339,7 @@ personal assistant may accumulate session transcripts going back years
 The option to leave also creates discipline.  If a provider knows that a user
 can continue elsewhere, it has to compete on model quality, price, reliability,
 and trust.  If the user's accumulated context can only be interpreted by one
-provider it sets very unfortunate incentives.
+provider, it sets very unfortunate incentives.
 
 ## What a Portable Inference API Should Promise
 
@@ -410,7 +410,8 @@ evidence, plans, and delegated work.
 
 We do not object to providers building better stateful APIs.  We object to
 better performance being coupled to less user control.  Stateful storage should
-be optional.  Hosted tools should be observable.  Compaction should be readable.
-Agent communication should be auditable.  Opaque reasoning should have a
-portable handoff.  Distillation should be a path by which capability becomes
-more available, not a taboo used to justify ever higher walls.
+be optional, hosted tools should be observable, compaction should be readable,
+agent communication should be auditable and ideally opaque reasoning is not
+opaque or at least should have a portable handoff.  Distillation should be a
+path by which capability becomes more available, not a taboo used to justify
+ever higher walls.
