@@ -364,9 +364,6 @@ rules.
    used to create it, and enough lineage to understand what was discarded.
 7. **Artifacts are exportable.** Files, container outputs, search snapshots, and
    generated media can be downloaded into a content-addressed local archive.
-8. **Portability is testable.** Providers should publish an export schema and a
-   conformance test that continues an exported session without access to the
-   original account.
 
 ## Distillation Is Great Actually
 
