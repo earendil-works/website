@@ -824,143 +824,9 @@ const vertexShaderSource = `
   }
 `;
 
-// Dither post-process shaders
-const ditherVertexShaderSource = `
-  attribute vec2 a_position;
-  attribute vec2 a_texCoord;
-  varying vec2 v_texCoord;
-  void main() {
-    gl_Position = vec4(a_position, 0.0, 1.0);
-    v_texCoord = a_texCoord;
-  }
-`;
-
-// Film grain post-process shader based on martins upitis's film grain
-const ditherFragmentShaderSource = `
-  precision highp float;
-  uniform sampler2D u_image;
-  uniform vec2 u_resolution;
-  uniform float u_time;
-  uniform float u_night;
-  uniform float u_noiseScale;
-  varying vec2 v_texCoord;
-
-  #define INTENSITY_DAY 0.4
-  #define INTENSITY_NIGHT 0.065
-  #define SPEED 1.5
-  #define MEAN 0.0
-  #define VARIANCE_DAY 0.75
-  #define VARIANCE_NIGHT 0.6
-
-  float gaussian(float z, float u, float o) {
-    return (1.0 / (o * sqrt(2.0 * 3.1415))) * exp(-(((z - u) * (z - u)) / (2.0 * (o * o))));
-  }
-
-  void main() {
-    vec4 color = texture2D(u_image, v_texCoord);
-    
-    // Convert to grayscale
-    float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-    
-    // Film grain noise (scaled for finer grain on low DPI)
-    float t = u_time * SPEED;
-    vec2 uv = gl_FragCoord.xy * u_noiseScale / u_resolution;
-    float seed = dot(uv, vec2(12.9898, 78.233));
-    float noise = fract(sin(seed) * 43758.5453 + t);
-    float variance = mix(VARIANCE_DAY, VARIANCE_NIGHT, u_night);
-    noise = gaussian(noise, MEAN, variance * variance);
-    
-    // Apply grain (addition blend mode)
-    vec3 grain = vec3(noise) * (1.0 - vec3(gray));
-    float grainIntensity = mix(INTENSITY_DAY, INTENSITY_NIGHT, u_night);
-    gray = gray + grain.r * grainIntensity;
-    gray = clamp(gray, 0.0, 1.0);
-    
-    // Map to color palette
-    vec3 dark = mix(vec3(0.62), vec3(0.05), u_night);    // #9e9e9e -> #0d0d0d
-    vec3 light = mix(vec3(0.97), vec3(1.0), u_night);    // #f7f7f7 -> #ffffff
-    gl_FragColor = vec4(mix(dark, light, gray), 1.0);
-  }
-`;
-
-const lightDecayFragmentShaderSource = `
-  precision highp float;
-  uniform sampler2D u_light;
-  uniform float u_decay;
-  uniform float u_cutoff;
-  varying vec2 v_texCoord;
-
-  void main() {
-    vec4 color = texture2D(u_light, v_texCoord);
-    float intensity = color.r * u_decay - 0.004; // linear term breaks 8-bit quantization
-    intensity = max(0.0, intensity);
-    intensity *= step(u_cutoff, intensity);
-    gl_FragColor = vec4(vec3(intensity), intensity);
-  }
-`;
-
-const lightPointVertexShaderSource = `
-  attribute vec2 a_position;
-  attribute vec4 a_uvDeriv;  // (du/dx, dv/dx, du/dy, dv/dy)
-  attribute float a_screenRadius;  // desired radius in screen units
-  uniform vec2 u_texSize;
-  varying vec4 v_uvDeriv;
-  varying float v_screenRadius;
-  varying float v_pointSize;
-
-  void main() {
-    gl_Position = vec4(a_position * 2.0 - 1.0, 0.0, 1.0);
-    // Compute pixel radius needed to cover screen radius in UV space
-    vec2 uvDerivX = a_uvDeriv.xy;
-    vec2 uvDerivY = a_uvDeriv.zw;
-    vec2 pixelDerivX = uvDerivX * u_texSize;
-    vec2 pixelDerivY = uvDerivY * u_texSize;
-    float pixelRadiusX = length(pixelDerivX) * a_screenRadius;
-    float pixelRadiusY = length(pixelDerivY) * a_screenRadius;
-    float pixelRadius = max(pixelRadiusX, pixelRadiusY);
-    gl_PointSize = pixelRadius * 2.0 + 2.0;
-    v_pointSize = gl_PointSize;
-    v_uvDeriv = a_uvDeriv;
-    v_screenRadius = a_screenRadius;
-  }
-`;
-
-const LIGHT_INTENSITY = 1.0;
-const PAINT_INTENSITY = LIGHT_INTENSITY / 3;
 const LOGO_FADE_DELAY = 150;
 const LOGO_FADE_DURATION = 900;
 const LOGO_FADE_TARGET = 0.85;
-
-const lightPointFragmentShaderSource = `
-  precision highp float;
-  uniform vec2 u_texSize;
-  varying vec4 v_uvDeriv;
-  varying float v_screenRadius;
-  varying float v_pointSize;
-
-  void main() {
-    // Convert gl_PointCoord to UV offset
-    vec2 pixelOffset = (gl_PointCoord - 0.5) * v_pointSize;
-    vec2 uvOffset = pixelOffset / u_texSize;
-
-    // Invert Jacobian to map UV offset back to screen offset
-    float du_dx = v_uvDeriv.x;
-    float dv_dx = v_uvDeriv.y;
-    float du_dy = v_uvDeriv.z;
-    float dv_dy = v_uvDeriv.w;
-    float det = du_dx * dv_dy - du_dy * dv_dx;
-    vec2 screenOffset = uvOffset;
-    if (abs(det) > 1e-12) {
-      mat2 invJ = mat2(dv_dy, -dv_dx, -du_dy, du_dx) / det;
-      screenOffset = invJ * uvOffset;
-    }
-
-    float dist = length(screenOffset) / v_screenRadius;
-    float falloff = smoothstep(1.0, 0.0, dist);
-    float intensity = falloff * ${PAINT_INTENSITY};
-    gl_FragColor = vec4(vec3(intensity), intensity);
-  }
-`;
 
 // based on afl_ext's ocean weaves shader (MIT licensed)
 function buildFragmentShader(quality) {
@@ -970,7 +836,8 @@ function buildFragmentShader(quality) {
   uniform vec2 iResolution;
   uniform float iTime;
   uniform float u_waveTime;
-  uniform sampler2D u_light;
+  uniform float u_grainTime;
+  uniform float u_noiseScale;
   uniform sampler2D u_logo;
   uniform vec2 u_logoCenter;
   uniform vec2 u_logoSize;
@@ -978,7 +845,6 @@ function buildFragmentShader(quality) {
   uniform vec4 u_ripples[10]; // (worldX, worldZ, birthTime, amplitude)
   uniform int u_rippleCount;
   uniform float u_night;
-  uniform float u_ambientIntensity;
   uniform float u_cameraYOffset;
   uniform float u_cameraZOffset;
   uniform float u_cameraTiltOffset;
@@ -1209,11 +1075,11 @@ function buildFragmentShader(quality) {
     return vec2(u, v);
   }
 
-  vec3 getDaySky(vec3 dir, float skyLight) {
-    return getAtmosphere(dir) + vec3(1.0) * skyLight * 4.0 * u_ambientIntensity;
+  vec3 getDaySky(vec3 dir) {
+    return getAtmosphere(dir);
   }
 
-  vec3 getNightSky(vec3 dir, float skyLight) {
+  vec3 getNightSky(vec3 dir) {
     vec2 uv = skyUV(dir);
     vec3 topColor = vec3(0.015, 0.02, 0.04);
     vec3 bottomColor = vec3(0.03, 0.035, 0.05);
@@ -1242,7 +1108,6 @@ function buildFragmentShader(quality) {
 
     }
 
-    color += vec3(1.0) * skyLight * 1.4 * u_ambientIntensity;
     return color;
   }
 
@@ -1270,20 +1135,42 @@ function buildFragmentShader(quality) {
     return pow(clamp(m2 * (a / b), 0.0, 1.0), vec3(1.0 / 2.2));  
   }
 
+  // Film grain based on Martin Upitis's shader. Keeping this in the ocean
+  // pass avoids materializing and sampling a full-screen intermediate texture.
+  float gaussian(float z, float u, float o) {
+    return (1.0 / (o * sqrt(2.0 * 3.1415))) * exp(-(((z - u) * (z - u)) / (2.0 * (o * o))));
+  }
+
+  vec4 applyFilmGrain(vec3 color, vec2 fragCoord) {
+    float gray = dot(color, vec3(0.299, 0.587, 0.114));
+    vec2 uv = fragCoord * u_noiseScale / iResolution;
+    float seed = dot(uv, vec2(12.9898, 78.233));
+    float noise = fract(sin(seed) * 43758.5453 + u_grainTime * 1.5);
+    float variance = mix(0.75, 0.6, u_night);
+    noise = gaussian(noise, 0.0, variance * variance);
+
+    float grainIntensity = mix(0.4, 0.065, u_night);
+    gray += noise * (1.0 - gray) * grainIntensity;
+    gray = clamp(gray, 0.0, 1.0);
+
+    vec3 dark = mix(vec3(0.62), vec3(0.05), u_night);
+    vec3 light = mix(vec3(0.97), vec3(1.0), u_night);
+    return vec4(mix(dark, light, gray), 1.0);
+  }
+
   void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec3 ray = getRay(fragCoord);
     if(ray.y >= 0.0) {
-      float skyLight = texture2D(u_light, skyUV(ray)).r;
       vec3 C;
       float horizonFactor = smoothstep(0.02, 0.25, ray.y);
       float nightBlend = pow(u_night, mix(0.35, 1.0, horizonFactor));
       if (u_night <= NIGHT_EPS) {
-        C = getDaySky(ray, skyLight);
+        C = getDaySky(ray);
       } else if (u_night >= 1.0 - NIGHT_EPS) {
-        C = getNightSky(ray, skyLight);
+        C = getNightSky(ray);
       } else {
-        vec3 daySky = getDaySky(ray, skyLight);
-        vec3 nightSky = getNightSky(ray, skyLight);
+        vec3 daySky = getDaySky(ray);
+        vec3 nightSky = getNightSky(ray);
         C = mix(daySky, nightSky, nightBlend);
       }
       fragColor = vec4(aces_tonemap(C * 2.0), 1.0);   
@@ -1315,18 +1202,17 @@ function buildFragmentShader(quality) {
     vec3 R = normalize(reflect(ray, N));
     R.y = abs(R.y);
     
-    float reflectedLight = texture2D(u_light, skyUV(R)).r;
     float reflectedLogo = sampleLogo(skyUV(R));
     vec3 reflection;
     float reflectionHorizon = smoothstep(0.02, 0.25, R.y);
     float nightReflectionBlend = pow(u_night, mix(0.35, 1.0, reflectionHorizon));
     if (u_night <= NIGHT_EPS) {
-      reflection = getDaySky(R, reflectedLight);
+      reflection = getDaySky(R);
     } else if (u_night >= 1.0 - NIGHT_EPS) {
-      reflection = getNightSky(R, reflectedLight);
+      reflection = getNightSky(R);
     } else {
-      vec3 dayReflection = getDaySky(R, reflectedLight);
-      vec3 nightReflection = getNightSky(R, reflectedLight);
+      vec3 dayReflection = getDaySky(R);
+      vec3 nightReflection = getNightSky(R);
       reflection = mix(dayReflection, nightReflection, nightReflectionBlend);
     }
     reflection += vec3(1.0) * (reflectedLogo * LOGO_INTENSITY);
@@ -1346,7 +1232,9 @@ function buildFragmentShader(quality) {
   }
 
   void main() {
-    mainImage(gl_FragColor, gl_FragCoord.xy);
+    vec4 sceneColor;
+    mainImage(sceneColor, gl_FragCoord.xy);
+    gl_FragColor = applyFilmGrain(sceneColor.rgb, gl_FragCoord.xy);
   }
 `;
 }
@@ -1394,7 +1282,8 @@ let positionLocation = gl.getAttribLocation(program, 'position');
 let resolutionLocation = gl.getUniformLocation(program, 'iResolution');
 let timeLocation = gl.getUniformLocation(program, 'iTime');
 let waveTimeLocation = gl.getUniformLocation(program, 'u_waveTime');
-let lightTextureLocation = gl.getUniformLocation(program, 'u_light');
+let grainTimeLocation = gl.getUniformLocation(program, 'u_grainTime');
+let noiseScaleLocation = gl.getUniformLocation(program, 'u_noiseScale');
 let logoTextureLocation = gl.getUniformLocation(program, 'u_logo');
 let logoCenterLocation = gl.getUniformLocation(program, 'u_logoCenter');
 let logoSizeLocation = gl.getUniformLocation(program, 'u_logoSize');
@@ -1402,7 +1291,6 @@ let logoFadeLocation = gl.getUniformLocation(program, 'u_logoFade');
 let ripplesLocation = gl.getUniformLocation(program, 'u_ripples');
 let rippleCountLocation = gl.getUniformLocation(program, 'u_rippleCount');
 let nightLocation = gl.getUniformLocation(program, 'u_night');
-let ambientLocation = gl.getUniformLocation(program, 'u_ambientIntensity');
 let cameraYOffsetLocation = gl.getUniformLocation(program, 'u_cameraYOffset');
 let cameraZOffsetLocation = gl.getUniformLocation(program, 'u_cameraZOffset');
 let cameraTiltOffsetLocation = gl.getUniformLocation(program, 'u_cameraTiltOffset');
@@ -1419,7 +1307,8 @@ function rebuildOceanProgram() {
   resolutionLocation = gl.getUniformLocation(program, 'iResolution');
   timeLocation = gl.getUniformLocation(program, 'iTime');
   waveTimeLocation = gl.getUniformLocation(program, 'u_waveTime');
-  lightTextureLocation = gl.getUniformLocation(program, 'u_light');
+  grainTimeLocation = gl.getUniformLocation(program, 'u_grainTime');
+  noiseScaleLocation = gl.getUniformLocation(program, 'u_noiseScale');
   logoTextureLocation = gl.getUniformLocation(program, 'u_logo');
   logoCenterLocation = gl.getUniformLocation(program, 'u_logoCenter');
   logoSizeLocation = gl.getUniformLocation(program, 'u_logoSize');
@@ -1427,7 +1316,6 @@ function rebuildOceanProgram() {
   ripplesLocation = gl.getUniformLocation(program, 'u_ripples');
   rippleCountLocation = gl.getUniformLocation(program, 'u_rippleCount');
   nightLocation = gl.getUniformLocation(program, 'u_night');
-  ambientLocation = gl.getUniformLocation(program, 'u_ambientIntensity');
   cameraYOffsetLocation = gl.getUniformLocation(program, 'u_cameraYOffset');
   cameraZOffsetLocation = gl.getUniformLocation(program, 'u_cameraZOffset');
   cameraTiltOffsetLocation = gl.getUniformLocation(program, 'u_cameraTiltOffset');
@@ -1472,57 +1360,6 @@ function updateAutoQuality(time, fps) {
   }
 }
 
-// Dither post-process program
-const ditherVertexShader = createShader(gl, gl.VERTEX_SHADER, ditherVertexShaderSource);
-const ditherFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, ditherFragmentShaderSource);
-const ditherProgram = createProgram(gl, ditherVertexShader, ditherFragmentShader);
-
-const lightDecayFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, lightDecayFragmentShaderSource);
-const lightDecayProgram = createProgram(gl, ditherVertexShader, lightDecayFragmentShader);
-
-const lightPointVertexShader = createShader(gl, gl.VERTEX_SHADER, lightPointVertexShaderSource);
-const lightPointFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, lightPointFragmentShaderSource);
-const lightPointProgram = createProgram(gl, lightPointVertexShader, lightPointFragmentShader);
-
-const ditherPositionBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, ditherPositionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-const ditherPositionLocation = gl.getAttribLocation(ditherProgram, 'a_position');
-const lightDecayPositionLocation = gl.getAttribLocation(lightDecayProgram, 'a_position');
-
-const ditherTexCoordBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, ditherTexCoordBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0,0, 1,0, 0,1, 1,1]), gl.STATIC_DRAW);
-const ditherTexCoordLocation = gl.getAttribLocation(ditherProgram, 'a_texCoord');
-const lightDecayTexCoordLocation = gl.getAttribLocation(lightDecayProgram, 'a_texCoord');
-
-const ditherResolutionLocation = gl.getUniformLocation(ditherProgram, 'u_resolution');
-const ditherImageLocation = gl.getUniformLocation(ditherProgram, 'u_image');
-const ditherTimeLocation = gl.getUniformLocation(ditherProgram, 'u_time');
-const ditherNightLocation = gl.getUniformLocation(ditherProgram, 'u_night');
-const ditherNoiseScaleLocation = gl.getUniformLocation(ditherProgram, 'u_noiseScale');
-
-const lightDecayImageLocation = gl.getUniformLocation(lightDecayProgram, 'u_light');
-const lightDecayFactorLocation = gl.getUniformLocation(lightDecayProgram, 'u_decay');
-const lightDecayCutoffLocation = gl.getUniformLocation(lightDecayProgram, 'u_cutoff');
-
-const lightPointPositionLocation = gl.getAttribLocation(lightPointProgram, 'a_position');
-const lightPointUvDerivLocation = gl.getAttribLocation(lightPointProgram, 'a_uvDeriv');
-const lightPointScreenRadiusLocation = gl.getAttribLocation(lightPointProgram, 'a_screenRadius');
-const lightPointTexSizeLocation = gl.getUniformLocation(lightPointProgram, 'u_texSize');
-const lightPointBuffer = gl.createBuffer();
-
-// Framebuffer for render-to-texture
-let framebuffer = null;
-let renderTexture = null;
-let fbWidth = 0;
-let fbHeight = 0;
-
-let lightFramebuffers = [null, null];
-let lightTextures = [null, null];
-let lightWriteIndex = 0;
-let lastLightTime = 0;
-
 const logoCenter = [0.53, 0.72];
 let logoSize = [0.18, 0.18 / 1.32];
 let logoFadeStart = null;
@@ -1533,59 +1370,6 @@ gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-function setupFramebuffer(width, height) {
-  if (framebuffer && fbWidth === width && fbHeight === height) return;
-  
-  if (framebuffer) {
-    gl.deleteFramebuffer(framebuffer);
-    gl.deleteTexture(renderTexture);
-  }
-
-  fbWidth = width;
-  fbHeight = height;
-
-  renderTexture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-  framebuffer = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-}
-
-function createLightTexture(width, height) {
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  return texture;
-}
-
-function setupLightFramebuffers(width, height) {
-  for (let i = 0; i < 2; i++) {
-    if (lightFramebuffers[i]) {
-      gl.deleteFramebuffer(lightFramebuffers[i]);
-      gl.deleteTexture(lightTextures[i]);
-    }
-    lightTextures[i] = createLightTexture(width, height);
-    lightFramebuffers[i] = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, lightFramebuffers[i]);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, lightTextures[i], 0);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-  }
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  lightWriteIndex = 0;
-}
 
 function setupLogoTexture() {
   const img = new Image();
@@ -1634,8 +1418,6 @@ function resize() {
   const scale = qualityScale * resolutionScale;
   canvas.width = Math.round(width * window.devicePixelRatio * scale);
   canvas.height = Math.round(height * window.devicePixelRatio * scale);
-  setupFramebuffer(canvas.width, canvas.height);
-  setupLightFramebuffers(canvas.width, canvas.height);
   updateLogoPlacement();
   syncSceneHorizonPosition(true);
 }
@@ -1751,12 +1533,11 @@ function shouldRenderAmbientFrame(time, contentPage) {
   return true;
 }
 
-const pendingLightPoints = [];
-let isDrawing = false;
-
 // Ripple system
 const MAX_RIPPLES = 10;
+const RIPPLE_LIFETIME = 12;
 const ripples = []; // Array of {x, z, time, amplitude}
+const rippleUniformData = new Float32Array(MAX_RIPPLES * 4);
 
 function screenToWaterHit(clientX, clientY, time) {
   const rect = canvas.getBoundingClientRect();
@@ -1800,16 +1581,22 @@ function addRipple(worldX, worldZ, time, amplitude = 0.22) {
   }
 }
 
-function getRippleUniforms() {
-  const data = new Float32Array(MAX_RIPPLES * 4);
+function getRippleUniforms(time) {
+  // Expired ripples used to remain in the shader's dynamic loop forever.
+  // Birth times are ordered, so pruning is cheap and keeps the common idle
+  // path at zero iterations. Reuse the upload buffer to avoid per-frame GC.
+  while (ripples.length && time - ripples[0].time > RIPPLE_LIFETIME) {
+    ripples.shift();
+  }
+
   for (let i = 0; i < ripples.length; i++) {
     const r = ripples[i];
-    data[i * 4 + 0] = r.x;
-    data[i * 4 + 1] = r.z;
-    data[i * 4 + 2] = r.time;
-    data[i * 4 + 3] = r.amplitude;
+    rippleUniformData[i * 4 + 0] = r.x;
+    rippleUniformData[i * 4 + 1] = r.z;
+    rippleUniformData[i * 4 + 2] = r.time;
+    rippleUniformData[i * 4 + 3] = r.amplitude;
   }
-  return data;
+  return rippleUniformData;
 }
 
 function wrapUVDelta(a, b) {
@@ -1845,61 +1632,6 @@ function screenPosToSkyUV(screenX, screenY, aspect) {
   const u = ((Math.atan2(rayZ, rayX) / (2 * Math.PI)) + 0.5) % 1;
   const v = Math.min(1, Math.max(0, rayY * 0.5 + 0.5));
   return { u, v };
-}
-
-function screenToSkyUV(event) {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const xPx = (event.clientX - rect.left) * scaleX;
-  const yPx = (rect.height - (event.clientY - rect.top)) * scaleY;
-  const x = xPx / canvas.width;
-  const y = yPx / canvas.height;
-  if (x < 0 || x > 1 || y < 0 || y > 1) return null;
-
-  const aspect = canvas.width / canvas.height;
-  const result = screenPosToSkyUV(x, y, aspect);
-  if (!result) return null;
-
-  // Compute Jacobian: how much u and v change per device pixel
-  const epsPx = 1;
-  const rightX = (xPx + epsPx) / canvas.width;
-  const leftX = (xPx - epsPx) / canvas.width;
-  const upY = (yPx + epsPx) / canvas.height;
-  const downY = (yPx - epsPx) / canvas.height;
-  const uvRight = screenPosToSkyUV(rightX, y, aspect);
-  const uvLeft = screenPosToSkyUV(leftX, y, aspect);
-  const uvUp = screenPosToSkyUV(x, upY, aspect);
-  const uvDown = screenPosToSkyUV(x, downY, aspect);
-
-  let du_dx = 0.001;
-  let dv_dx = 0.0;
-  let du_dy = 0.0;
-  let dv_dy = 0.001;
-
-  if (uvRight && uvLeft) {
-    du_dx = wrapUVDelta(uvRight.u, uvLeft.u) / (2 * epsPx);
-    dv_dx = (uvRight.v - uvLeft.v) / (2 * epsPx);
-  } else if (uvRight) {
-    du_dx = wrapUVDelta(uvRight.u, result.u) / epsPx;
-    dv_dx = (uvRight.v - result.v) / epsPx;
-  } else if (uvLeft) {
-    du_dx = wrapUVDelta(result.u, uvLeft.u) / epsPx;
-    dv_dx = (result.v - uvLeft.v) / epsPx;
-  }
-
-  if (uvUp && uvDown) {
-    du_dy = wrapUVDelta(uvUp.u, uvDown.u) / (2 * epsPx);
-    dv_dy = (uvUp.v - uvDown.v) / (2 * epsPx);
-  } else if (uvUp) {
-    du_dy = wrapUVDelta(uvUp.u, result.u) / epsPx;
-    dv_dy = (uvUp.v - result.v) / epsPx;
-  } else if (uvDown) {
-    du_dy = wrapUVDelta(result.u, uvDown.u) / epsPx;
-    dv_dy = (result.v - uvDown.v) / epsPx;
-  }
-
-  return { u: result.u, v: result.v, du_dx, dv_dx, du_dy, dv_dy };
 }
 
 function updateLogoPlacement() {
@@ -1939,53 +1671,6 @@ function updateLogoPlacement() {
   logoSize[1] = sizeV;
 }
 
-function queueLightPoints(event) {
-  const skyUV = screenToSkyUV(event);
-  if (!skyUV) return;
-
-  // Use actual canvas scale (devicePixelRatio * quality scale) for proper sizing
-  const rect = canvas.getBoundingClientRect();
-  const canvasScale = canvas.width / rect.width * 2;
-
-  const sprinkleCount = 10;
-  for (let i = 0; i < sprinkleCount; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const radius = (Math.random() * 10 + 6) * canvasScale;
-    const offsetX = Math.cos(angle) * radius;
-    const offsetY = Math.sin(angle) * radius;
-
-    const jitterU = skyUV.du_dx * offsetX + skyUV.du_dy * offsetY;
-    const jitterV = skyUV.dv_dx * offsetX + skyUV.dv_dy * offsetY;
-
-    // Radius in canvas pixels (matches Jacobian units)
-    const screenRadius = (Math.random() * 6 + 4) * canvasScale;
-    const px = (skyUV.u + jitterU + 1) % 1;
-    const py = Math.min(1, Math.max(0, skyUV.v + jitterV));
-    // 7 floats per point: x, y, du_dx, dv_dx, du_dy, dv_dy, screenRadius
-    pendingLightPoints.push(px, py, skyUV.du_dx, skyUV.dv_dx, skyUV.du_dy, skyUV.dv_dy, screenRadius);
-  }
-
-  if (pendingLightPoints.length > 4200) {
-    pendingLightPoints.splice(0, pendingLightPoints.length - 4200);
-  }
-}
-
-// Light painting disabled — clouds render too pixelated at reduced canvas resolution.
-// window.addEventListener('pointerdown', (event) => {
-//   isDrawing = true;
-//   queueLightPoints(event);
-// });
-//
-// window.addEventListener('pointermove', (event) => {
-//   if (isDrawing) {
-//     queueLightPoints(event);
-//   }
-// });
-//
-// window.addEventListener('pointerup', () => {
-//   isDrawing = false;
-// });
-
 // Ripple on click
 canvas.addEventListener('click', (e) => {
   const hit = screenToWaterHit(e.clientX, e.clientY, waveTime);
@@ -1993,67 +1678,6 @@ canvas.addEventListener('click', (e) => {
     addRipple(hit.x, hit.z, waveTime, 0.18);
   }
 });
-
-function updateLightTexture(time) {
-  if (!lastLightTime) {
-    lastLightTime = time;
-  }
-  const delta = Math.max(0, (time - lastLightTime) * 0.001);
-  lastLightTime = time;
-  const fadeDuration = 240;
-  const targetIntensity = LIGHT_INTENSITY;
-  const decayCutoff = 1 / 255;
-  const decayFloor = (1 / 255) / targetIntensity;
-  const decay = Math.pow(decayFloor, delta / fadeDuration);
-  const readIndex = lightWriteIndex;
-  const writeIndex = 1 - lightWriteIndex;
-
-  gl.bindFramebuffer(gl.FRAMEBUFFER, lightFramebuffers[writeIndex]);
-  gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.useProgram(lightDecayProgram);
-
-  gl.enableVertexAttribArray(lightDecayPositionLocation);
-  gl.bindBuffer(gl.ARRAY_BUFFER, ditherPositionBuffer);
-  gl.vertexAttribPointer(lightDecayPositionLocation, 2, gl.FLOAT, false, 0, 0);
-
-  gl.enableVertexAttribArray(lightDecayTexCoordLocation);
-  gl.bindBuffer(gl.ARRAY_BUFFER, ditherTexCoordBuffer);
-  gl.vertexAttribPointer(lightDecayTexCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, lightTextures[readIndex]);
-  gl.uniform1i(lightDecayImageLocation, 0);
-  gl.uniform1f(lightDecayFactorLocation, decay);
-  gl.uniform1f(lightDecayCutoffLocation, decayCutoff);
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-  if (pendingLightPoints.length > 0) {
-    gl.useProgram(lightPointProgram);
-    gl.uniform2f(lightPointTexSizeLocation, canvas.width, canvas.height);
-    gl.bindBuffer(gl.ARRAY_BUFFER, lightPointBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pendingLightPoints), gl.DYNAMIC_DRAW);
-
-    // 7 floats per vertex: x, y, du_dx, dv_dx, du_dy, dv_dy, screenRadius (28 bytes)
-    gl.enableVertexAttribArray(lightPointPositionLocation);
-    gl.vertexAttribPointer(lightPointPositionLocation, 2, gl.FLOAT, false, 28, 0);
-
-    gl.enableVertexAttribArray(lightPointUvDerivLocation);
-    gl.vertexAttribPointer(lightPointUvDerivLocation, 4, gl.FLOAT, false, 28, 8);
-
-    gl.enableVertexAttribArray(lightPointScreenRadiusLocation);
-    gl.vertexAttribPointer(lightPointScreenRadiusLocation, 1, gl.FLOAT, false, 28, 24);
-
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE);
-    gl.drawArrays(gl.POINTS, 0, pendingLightPoints.length / 7);
-    gl.disable(gl.BLEND);
-
-    pendingLightPoints.length = 0;
-  }
-
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  lightWriteIndex = writeIndex;
-}
 
 // Mark shader as ready after first successful frame
 let shaderReady = false;
@@ -2091,22 +1715,21 @@ function render(time) {
     }
   }
 
-  updateLightTexture(time);
-
   if (logoFadeStart === null) {
     logoFadeStart = time + LOGO_FADE_DELAY;
   }
   const logoProgress = Math.min(Math.max((time - logoFadeStart) / LOGO_FADE_DURATION, 0), 1);
   const logoFade = logoProgress * LOGO_FADE_TARGET;
   const nightValue = updateNightBlend(time);
-  const ambientIntensity = 1.0 + (0.28 - 1.0) * nightValue;
   const cameraChanged = updateCamera404(time);
   if (cameraChanged && sceneHorizonGeometry) {
     syncSceneHorizonPosition(false);
   }
 
-  // Pass 1: Render ocean waves to framebuffer
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  // Render the ocean and film grain directly to the canvas. The former
+  // three-pass pipeline performed two redundant full-screen draws and forced
+  // a tile-store/texture-load round trip on mobile and Apple GPUs.
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.useProgram(program);
   gl.enableVertexAttribArray(positionLocation);
@@ -2115,52 +1738,24 @@ function render(time) {
   gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
   gl.uniform1f(timeLocation, time * 0.001);
   gl.uniform1f(waveTimeLocation, waveTime);
+  gl.uniform1f(grainTimeLocation, grainTime);
+  const noiseScale = window.devicePixelRatio < LOW_DPI_THRESHOLD ? LOW_DPI_NOISE_SCALE : 1.0;
+  gl.uniform1f(noiseScaleLocation, noiseScale);
   gl.uniform2f(logoCenterLocation, logoCenter[0], logoCenter[1]);
   gl.uniform2f(logoSizeLocation, logoSize[0], logoSize[1]);
   gl.uniform1f(logoFadeLocation, logoFade);
   gl.uniform1f(nightLocation, nightValue);
-  gl.uniform1f(ambientLocation, ambientIntensity);
   gl.uniform1f(cameraYOffsetLocation, cameraYOffset);
   gl.uniform1f(cameraZOffsetLocation, cameraZOffset);
   gl.uniform1f(cameraTiltOffsetLocation, cameraTiltOffset);
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, lightTextures[lightWriteIndex]);
-  gl.uniform1i(lightTextureLocation, 1);
-  gl.activeTexture(gl.TEXTURE2);
-  gl.bindTexture(gl.TEXTURE_2D, logoTexture);
-  gl.uniform1i(logoTextureLocation, 2);
-  
-  // Pass ripple uniforms
-  gl.uniform4fv(ripplesLocation, getRippleUniforms());
-  gl.uniform1i(rippleCountLocation, ripples.length);
-  
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-  // Pass 2: Apply dither post-processing to screen
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.useProgram(ditherProgram);
-
-  gl.enableVertexAttribArray(ditherPositionLocation);
-  gl.bindBuffer(gl.ARRAY_BUFFER, ditherPositionBuffer);
-  gl.vertexAttribPointer(ditherPositionLocation, 2, gl.FLOAT, false, 0, 0);
-
-  gl.enableVertexAttribArray(ditherTexCoordLocation);
-  gl.bindBuffer(gl.ARRAY_BUFFER, ditherTexCoordBuffer);
-  gl.vertexAttribPointer(ditherTexCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-  gl.uniform1i(ditherImageLocation, 0);
-  gl.uniform2f(ditherResolutionLocation, canvas.width, canvas.height);
-  gl.uniform1f(ditherTimeLocation, grainTime);
-  gl.uniform1f(ditherNightLocation, nightValue);
-  // Finer noise on low DPI screens
-  const noiseScale = window.devicePixelRatio < LOW_DPI_THRESHOLD ? LOW_DPI_NOISE_SCALE : 1.0;
-  gl.uniform1f(ditherNoiseScaleLocation, noiseScale);
+  gl.bindTexture(gl.TEXTURE_2D, logoTexture);
+  gl.uniform1i(logoTextureLocation, 0);
 
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  gl.uniform4fv(ripplesLocation, getRippleUniforms(waveTime));
+  gl.uniform1i(rippleCountLocation, ripples.length);
 
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
   markShaderReady();
   requestAnimationFrame(render);
 }
