@@ -237,8 +237,10 @@ canvas.shader-ready {
 
 .main-logo {
   display: block;
-  width: 300px;
-  max-width: 65vw;
+  /* The centered lockup used to be wider than the emblem. Preserve roughly
+     the same visual height now that every page uses the emblem-only asset. */
+  width: 125px;
+  max-width: 27vw;
   opacity: 0;
   transition: opacity 0.35s ease, filter 0.48s ease;
 }
@@ -1892,8 +1894,8 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 
 
   .main-logo {
-    width: 210px;
-    max-width: calc(65vw * 0.7);
+    width: 88px;
+    max-width: 19vw;
   }
 
   body:has(.page[data-page-type="home"]) .center-logo,
