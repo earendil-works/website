@@ -356,7 +356,7 @@ rules.
    compaction, and tool signatures may be included for same-provider quality,
    but each has a readable, provider-neutral handoff representation.
 4. **Hosted tools have full-fidelity logs.** Record exact inputs, outputs,
-   evidence, filtering, provenance, timestamps, and content hashes—not only a
+   evidence, filtering, provenance, timestamps, and content hashes — not only a
    polished answer and citations.
 5. **Subagent communication is auditable.** Persist the exact readable task,
    messages, results, lineage, model, and tool permissions for every agent.
@@ -389,7 +389,7 @@ using outputs from a stronger OpenAI model to fine-tune a smaller OpenAI model.
 
 The moral asymmetry is still hard to miss.  The labs ask society to accept that
 machines may learn from the enormous body of work humans placed on the
-internet—often without advance, individual permission—while insisting that other
+internet — often without advance, individual permission — while insisting that other
 machines must not learn from outputs the labs generate.  The broadest version of
 that principle conveniently allows learning to flow into closed models but not
 back out of them.
