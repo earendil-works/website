@@ -13,7 +13,7 @@ The original promise of an inference API was wonderfully simple: send some
 input, receive some output.  If you kept both, you had the conversation.  You
 could inspect it, archive it, replay it, or give it to a different model.
 
-That abstraction was never completely true.  [Prompt caches
+That abstraction was never completely true.  For instance [prompt caches
 live](/posts/prompt-caching/) on somebody else's GPUs, tokenization differs
 between models, and sampling is not reproducible (and quite intentionally so).
 But the *semantic record* of a session in the form of a transcript could still
@@ -76,9 +76,8 @@ This gives us five useful tests:
 5. **Deletion:** Can the user identify and remove every server-side copy on which
    the session depends?
 
-A response ID is not a transcript, a ciphertext the user cannot decrypt is not
-user-controlled state, a list of citations is not the evidence that was placed
-in the model's context by a search result.
+A response ID is not a transcript (as the data is stored on the server), a ciphertext is not user-controlled stated (as the user cannot decrypt it), a list of citations is not the evidence that was placed
+in the model's context by a search result (as you cannot typically fetch the same data as the model did).
 
 ## Encryption for Whom?
 
@@ -97,19 +96,18 @@ better than requiring server-side conversation storage, particularly for Zero
 Data Retention customers.  But, remember, there is not really anything that
 needs encryption to begin with!
 
-Most importantly, this encryption does not hide the data from the inference
-provider; it hides it from you.
+This encryption does not hide the data from the inference
+provider but it hides it from you.
 
 ## Stored Conversations Turn a Transcript into a Pointer
 
 OpenAI's Responses API stores responses by default.  Its documentation says
-response objects are retained for at least 30 days by default; items attached to
-a Conversation are not subject to that 30-day TTL.  `store: false` is available
+response objects are retained for at least 30 days by default.  `store: false` is available
 and should be used, as it makes it work more like completions: the data is not
 stored on OpenAI's servers.
 
 The new Gemini Interactions API has made a similar choice.  It defaults to
-`store: true`; on the paid tier interactions are retained for 55 days, and on
+`store: true`.  On the paid tier interactions are retained for 55 days, and on
 the free tier for one day.
 
 And obviously, the idea of storing state on the server is quite attractive:
@@ -193,8 +191,8 @@ or provide the same evidence to another model.
 With hosted search, the provider performs a private tool loop.  OpenAI, Google
 and Anthropic expose search actions, citations, and optionally a list of source
 URLs, but not the complete text context used to produce an answer.  A URL is not
-a stable replay: its contents can change, disappear, become personalized, or
-have been reduced to a provider-specific snippet before the model saw it.
+a stable replay, instead its contents can change or
+have been reduced to a much shorter snippet before the model saw it.
 
 The final answer may be perfectly good.  The problem appears on the next turn:
 
@@ -204,11 +202,10 @@ The final answer may be perfectly good.  The problem appears on the next turn:
 The new model receives an answer and a few URLs.  It does not receive the result
 ranking, extracted passages, filtered-out material, or exact evidence the first
 model used.  The old provider is still part of the session even if the next
-request goes elsewhere.
+request goes elsewhere.  Even if you have the citations and you were to re-fetch you cannot reproduce the precise data. 
 
 Hosted search should have a full-fidelity export mode containing queries,
-result metadata, retrieved passages, timestamps, content hashes, and filtering
-steps.  Concise citations can remain the user interface; they should not be the
+result metadata, retrieved passages, timestamps and retained contents.  Concise citations can remain the user interface but they should not be the
 only record.
 
 ## Opaque Compaction
@@ -256,7 +253,7 @@ provider.
 
 OpenAI's sealed artifact may preserve more model-specific state than a plain
 summary and may perform better on the original model.  That is a reasonable
-optional optimization.  It should be accompanied by a readable handoff summary,
+optional optimization but it should be accompanied by a readable handoff summary,
 not replace one.  But again, a lot of this has the added benefit of further
 locking you into one ecosystem.
 
@@ -272,7 +269,7 @@ OpenAI's hosted Responses Multi-agent beta returns three new item types:
 for `spawn_agent` contains an encrypted `message` argument, and inter-agent
 messages contain only `encrypted_content`.  Automatic server-side compaction is
 implicitly enabled for every agent when Multi-agent is enabled, even if the
-client did not request it.  Reasoning summaries are not supported.  The API also
+client did not request it.  Reasoning summaries are not supported and the API also
 injects root and subagent instructions that the developer cannot edit or remove.
 
 This is a bundle of non-transferable state: sealed delegation, sealed agent
