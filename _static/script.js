@@ -517,15 +517,26 @@ let currentQuality = 'high';
 const motionPreferenceQuery = window.matchMedia
   ? window.matchMedia('(prefers-reduced-motion: reduce)')
   : null;
-const REDUCED_MOTION_WAVE_SPEED = 0.2;
+const REDUCED_MOTION_WAVE_SPEED = 0.15;
 const REDUCED_MOTION_GRAIN_SPEED = 0.75;
 const AMBIENT_MOTION_SPEED_TRANSITION_DURATION = 3.0;
+const CONTENT_PAGE_RENDER_FPS = 15;
+const CONTENT_PAGE_RENDER_INTERVAL = 1000 / CONTENT_PAGE_RENDER_FPS;
+const CONTENT_PAGE_RESOLUTION_SCALE = 0.5;
 
-function shouldReduceAmbientMotion() {
+function isContentPage() {
+  return !!document.querySelector('.content-page');
+}
+
+// Direct content-page loads begin with slow ambient motion, so they can use the
+// reduced resolution from the first frame.
+let contentPageResolutionReduced = isContentPage();
+
+function shouldReduceAmbientMotion(contentPage) {
   const userPrefersReducedMotion = motionPreferenceQuery
     ? motionPreferenceQuery.matches
     : false;
-  return userPrefersReducedMotion || !!document.querySelector('.content-page');
+  return userPrefersReducedMotion || contentPage;
 }
 
 // Adaptive quality settings
@@ -1616,7 +1627,11 @@ function resize() {
   // Use higher scale on low DPI screens for sharper rendering
   const isLowDpi = window.devicePixelRatio < LOW_DPI_THRESHOLD;
   const settings = QUALITY_SETTINGS[currentQuality];
-  const scale = isLowDpi ? settings.lowDpiScale : settings.scale;
+  const qualityScale = isLowDpi ? settings.lowDpiScale : settings.scale;
+  const resolutionScale = contentPageResolutionReduced
+    ? CONTENT_PAGE_RESOLUTION_SCALE
+    : 1.0;
+  const scale = qualityScale * resolutionScale;
   canvas.width = Math.round(width * window.devicePixelRatio * scale);
   canvas.height = Math.round(height * window.devicePixelRatio * scale);
   setupFramebuffer(canvas.width, canvas.height);
@@ -1654,9 +1669,11 @@ let waveSpeedFrom = waveSpeed;
 let grainSpeedFrom = grainSpeed;
 let waveSpeedTo = waveSpeed;
 let grainSpeedTo = grainSpeed;
+let contentFrameRateCapActive = false;
+let nextContentRenderTime = null;
 
-function updateAmbientMotionClocks(time) {
-  const reduced = shouldReduceAmbientMotion();
+function updateAmbientMotionClocks(time, contentPage) {
+  const reduced = shouldReduceAmbientMotion(contentPage);
 
   if (lastAmbientMotionTime === null) {
     waveTime = time * 0.001;
@@ -1697,6 +1714,41 @@ function updateAmbientMotionClocks(time) {
   waveTime += delta * waveSpeed;
   grainTime += delta * grainSpeed;
   lastAmbientMotionTime = time;
+}
+
+// Keep the transition smooth at the display's native refresh rate and full
+// resolution, then reduce GPU work once a content page has settled into its
+// slower ambient motion.
+function shouldRenderAmbientFrame(time, contentPage) {
+  const shouldReduceContentResources = contentPage &&
+    ambientMotionIsReduced &&
+    ambientSpeedTransitionElapsed >= AMBIENT_MOTION_SPEED_TRANSITION_DURATION;
+
+  if (contentPageResolutionReduced !== shouldReduceContentResources) {
+    contentPageResolutionReduced = shouldReduceContentResources;
+    resize();
+  }
+
+  if (!shouldReduceContentResources) {
+    contentFrameRateCapActive = false;
+    nextContentRenderTime = null;
+    return true;
+  }
+
+  if (!contentFrameRateCapActive || nextContentRenderTime === null) {
+    contentFrameRateCapActive = true;
+    nextContentRenderTime = time + CONTENT_PAGE_RENDER_INTERVAL;
+    return true;
+  }
+
+  // Allow a small tolerance for requestAnimationFrame timestamp rounding.
+  if (time + 0.5 < nextContentRenderTime) return false;
+
+  const elapsedIntervals = Math.floor(
+    (time + 0.5 - nextContentRenderTime) / CONTENT_PAGE_RENDER_INTERVAL
+  ) + 1;
+  nextContentRenderTime += elapsedIntervals * CONTENT_PAGE_RENDER_INTERVAL;
+  return true;
 }
 
 const pendingLightPoints = [];
@@ -2013,18 +2065,30 @@ function markShaderReady() {
 }
 
 function render(time) {
-  updateAmbientMotionClocks(time);
+  const contentPage = isContentPage();
+  updateAmbientMotionClocks(time, contentPage);
 
-  // Measure FPS for adaptive quality.
-  frameCount++;
-  if (time - lastFpsUpdate >= 1000) {
-    const fps = frameCount;
+  if (!shouldRenderAmbientFrame(time, contentPage)) {
+    requestAnimationFrame(render);
+    return;
+  }
 
-    // Update auto quality based on measured FPS
-    updateAutoQuality(time, fps);
-    
+  // Measure FPS for adaptive quality. Ignore the intentional content-page cap
+  // so it is not mistaken for a performance problem.
+  if (contentFrameRateCapActive) {
     frameCount = 0;
     lastFpsUpdate = time;
+  } else {
+    frameCount++;
+    if (time - lastFpsUpdate >= 1000) {
+      const fps = frameCount;
+
+      // Update auto quality based on measured FPS
+      updateAutoQuality(time, fps);
+
+      frameCount = 0;
+      lastFpsUpdate = time;
+    }
   }
 
   updateLightTexture(time);
