@@ -66,8 +66,8 @@ decrypt a blob, remember a search result, or reconstruct a summary.
 
 This gives us five useful tests:
 
-1. **Inspection:** Can the user see what the model saw, what tools did, and what
-   agents told each other?
+1. **Inspection:** Can the user see what the model saw, what tool calls it did,
+   and what agents told each other?
 2. **Export:** Is the session self-contained, apart from ordinary artifacts that
    can also be downloaded?
 3. **Replay:** Can another implementation reconstruct a semantically equivalent
@@ -76,8 +76,10 @@ This gives us five useful tests:
 5. **Deletion:** Can the user identify and remove every server-side copy on which
    the session depends?
 
-A response ID is not a transcript (as the data is stored on the server), a ciphertext is not user-controlled stated (as the user cannot decrypt it), a list of citations is not the evidence that was placed
-in the model's context by a search result (as you cannot typically fetch the same data as the model did).
+A response ID is not a transcript (as the data is stored on the server),
+a ciphertext is not user-controlled stated (as the user cannot decrypt it),
+and a list of citations is not the evidence that was placed in the model's context by a search result
+(as you cannot typically fetch the same data as the model did).
 
 ## Encryption for Whom?
 
@@ -167,6 +169,7 @@ meaning:
 
 ## Hidden Searches
 
+As an analogy, consider web search.
 Server-side web search is one of the clearest examples of a transcript having
 holes in it hidden from the user.  A client-side search tool behaves like
 any other tool:
@@ -242,7 +245,7 @@ history = [
 ```
 
 OpenAI can continue from the compressed meaning, but a different provider sees an
-unreadable string plus a recent suffix (well, would see it, we never pass this
+unreadable string plus a recent suffix (well, would see it, Pi never passes this
 sort of information to another provider).
 
 This is not technically necessary.  Anthropic's server-side compaction returns
@@ -327,7 +330,7 @@ the provider has with you.
 
 As a user you also may need to move a session because a model is retired, a
 service is down, a price changes, a policy blocks the next request (hello
-fable), a confidential phase must run locally, or an auditor needs to
+Fable), a confidential phase must run locally, or an auditor needs to
 reconstruct what happened.  Agents are also making sessions much longer.  A
 coding or research session can accumulate days of decisions and evidence and a
 personal assistant may accumulate session transcripts going back years
@@ -362,7 +365,7 @@ rules.
 7. **Artifacts are exportable.** Files, container outputs, search snapshots, and
    generated media can be downloaded into a content-addressed local archive.
 
-## Distillation Is Great Actually
+## Distillation Is Great, Actually
 
 There is a related form of lock-in at the model layer.
 
@@ -384,7 +387,7 @@ their own walls.  OpenAI has also offered an explicit [first-party API
 distillation workflow](https://openai.com/index/api-model-distillation/) for
 using outputs from a stronger OpenAI model to fine-tune a smaller OpenAI model.
 
-The moral asymmetry is still hard to miss.  The labs ask society to accept that
+The moral asymmetry is hard to miss.  The labs ask society to accept that
 machines may learn from the enormous body of work humans placed on the
 internet — often without advance, individual permission — while insisting that other
 machines must not learn from outputs the labs generate.  The broadest version of
