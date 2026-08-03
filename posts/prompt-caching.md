@@ -227,8 +227,8 @@ session.
 Extensibility means Pi cannot guarantee cache stability on behalf of every
 extension.  We can provide cache-friendly mechanisms; extensions still have to
 use them and from what we have seen, for many extensions cache efficiency is an
-afterthought.  This is, in part, because when you pay on a fixed subscription the
-associated cost with cache misses is not quite as obvious.
+afterthought.  This is, in part, because when you are on a fixed subscription,
+the associated cost with cache misses is not quite as obvious.
 
 ## Interruptions and TTLs
 
