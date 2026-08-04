@@ -133,7 +133,7 @@ def linkify_email_header(value: str) -> str:
     # Convert <email@domain> to &lt;<a href="mailto:email@domain">email@domain</a>&gt;
     return re.sub(
         r"<([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})>",
-        r"&lt;<a href=\"mailto:\1\">\1</a>&gt;",
+        r'&lt;<a href="mailto:\g<1>">\g<1></a>&gt;',
         value,
     )
 
