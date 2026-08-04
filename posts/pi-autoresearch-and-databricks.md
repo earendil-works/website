@@ -5,7 +5,7 @@ template: updates
 aria_label: Earendil posts
 from: Earendil <rfc@earendil.com>
 to: You
-date: Thu, 30 Jul 2026 01:00:00 +0200
+date: Tue, 4 Aug 2026 01:00:00 +0200
 subject: Pi, Minimal and Performant
 i18n_key: post.pi-autoresearch-and-databricks
 ---
