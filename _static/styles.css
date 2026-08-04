@@ -1393,6 +1393,30 @@ body:not(.theme-night) .posts-list .post-name::after {
   line-height: var(--leading-body);
 }
 
+.page--post-detail .post-figure {
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: 32px 0;
+  overflow-x: clip;
+}
+
+.page--post-detail .post-figure img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+.page--post-detail .post-figure figcaption {
+  margin-top: 8px;
+  font-size: 0.85em;
+  line-height: 1.35;
+  opacity: 0.75;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .section-heading {
   margin: 0 0 10px;
 }
