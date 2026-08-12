@@ -35,10 +35,10 @@ request 1:
 [system][tools][user]
 ```
 
-This starts a turn, which is the output triggered by a user message.
-The turn is finished when the assistant has completed generating output.
+This starts a turn.
 The LLM may first return an assistant message containing tool calls.
 The agent program executes them and sends their results back to the LLM, which can then return another assistant message.
+The turn is finished when the assistant has completed generating output.
 
 ```text
 after request 1:
