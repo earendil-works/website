@@ -1,12 +1,12 @@
 ---
-title: How compaction works in Pi
+title: How Compaction Works in Pi
 description: Why compaction is needed for large language models and how Pi implements it
 template: updates
 aria_label: Earendil posts
 from: Earendil Engineering <rfc@earendil.com>
 to: You
 date: Thu, 13 Aug 2026 11:30:00 +0200
-subject: How compaction works in Pi
+subject: How Compaction Works in Pi
 ---
 
 If you've ever had a long coding session in a coding agent like [Pi](https://pi.dev), Claude Code, or Codex, you will have triggered a compaction.
