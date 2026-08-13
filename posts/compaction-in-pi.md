@@ -115,9 +115,9 @@ Tool outputs are a reasonable place to cut because they tend to be intermediate 
 The compaction request that Pi sends differs from regular conversational requests.
 
 1. The system prompt used in the standalone compaction request is different.
-Instead of telling the LLM "you are an expert coding assistant", we tell the LLM ["you are a context summarization assistant"](https://github.com/earendil-works/pi/blob/47610217098d9ba8f22d223fa7c1413f9f5fd759/packages/coding-agent/src/core/compaction/utils.ts#L152-L158).
+Instead of telling the LLM "you are an expert coding assistant", we tell the LLM ["you are a context summarization assistant."](https://github.com/earendil-works/pi/blob/47610217098d9ba8f22d223fa7c1413f9f5fd759/packages/coding-agent/src/core/compaction/utils.ts#L152-L158)
 2. The user message in the compaction request is also different.
-It requests ["a structured summary of this conversation branch for context when returning later"](https://github.com/earendil-works/pi/blob/47610217098d9ba8f22d223fa7c1413f9f5fd759/packages/coding-agent/src/core/compaction/compaction.ts#L463-L498).
+It requests ["a structured summary of this conversation branch for context when returning later."](https://github.com/earendil-works/pi/blob/47610217098d9ba8f22d223fa7c1413f9f5fd759/packages/coding-agent/src/core/compaction/compaction.ts#L463-L498)
 The prompt specifies sections for goal, progress and key decisions.
 3. It is a standalone request that doesn't use any of the existing conversation history, which means it can use a different LLM model without incurring any unnecessary cost.
 
