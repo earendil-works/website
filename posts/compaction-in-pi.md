@@ -116,6 +116,10 @@ It requests ["a structured summary of this conversation branch for context when 
 The prompt specifies sections for goal, progress and key decisions.
 3. It is a standalone request that doesn't use any of the existing conversation history, which means it can use a different LLM model without incurring any unnecessary cost.
 
+It is misleading to think of the intent of compaction in a coding agent to be summarization, it's more like a briefing.
+Pi's compaction prompt focuses on the fact that there is a lot in the existing context that is no longer relevant.
+We should only keep around what is still important context for the next LLM request.
+
 The result of the compaction is appended to the Pi session as a compaction entry, and the session can now continue.
 After the compaction request, the context has been compressed.
 
