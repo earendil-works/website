@@ -12,9 +12,6 @@ subject: How Compaction Works in Pi
 If you've ever had a long coding session in a coding agent like [Pi](https://pi.dev), Claude Code, or Codex, you will have triggered a compaction.
 That is because large language models (LLMs) have limited [context windows](https://en.wikipedia.org/wiki/Context_window).
 
-<!-- In early ChatGPT conversations, users could not continue a conversation after it reached a certain length.
-Both occur when the context window would be exceeded. -->
-
 The context window is what the model can "see" while producing a response.
 [Transformer architecture](https://en.wikipedia.org/wiki/Transformer_(deep_learning)) limits how much input an LLM can process.
 The input for a coding agent session includes all the previous messages and tool calls, and this keeps growing as you work.
