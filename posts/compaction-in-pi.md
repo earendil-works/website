@@ -107,7 +107,12 @@ The number of retained messages varies because Pi uses a [configurable token bud
 Pi's current default of 20 thousand tokens comes out to roughly 5 to 20 turns.
 All the messages before this cut point are extracted and serialized, and will be summarized.
 
-The compaction request that Pi sends differs from regular conversational requests.
+## Pi's compaction prompt
+The ideal outcome of a good summarization for a coding agent is like a handoff briefing from one shift to the next.
+Pi's compaction prompt focuses on the fact that there is a lot in the existing context that is no longer relevant.
+We should only keep around what is still important context for the next LLM request.
+
+Pi therefore sends a different request for compaction than for regular conversation.
 
 1. The system prompt used in the standalone compaction request is different.
 Instead of telling the LLM "you are an expert coding assistant", we tell the LLM ["you are a context summarization assistant."](https://github.com/earendil-works/pi/blob/47610217098d9ba8f22d223fa7c1413f9f5fd759/packages/coding-agent/src/core/compaction/utils.ts#L152-L158)
@@ -115,10 +120,6 @@ Instead of telling the LLM "you are an expert coding assistant", we tell the LLM
 It requests ["a structured summary of this conversation branch for context when returning later."](https://github.com/earendil-works/pi/blob/47610217098d9ba8f22d223fa7c1413f9f5fd759/packages/coding-agent/src/core/compaction/compaction.ts#L463-L498)
 The prompt specifies sections for goal, progress and key decisions.
 3. It's a standalone request that doesn't use any of the existing conversation history, which means it can use a different LLM model without incurring any unnecessary cost.
-
-It's misleading to think of the intent of compaction in a coding agent to be summarization, it's more like a briefing.
-Pi's compaction prompt focuses on the fact that there is a lot in the existing context that is no longer relevant.
-We should only keep around what is still important context for the next LLM request.
 
 The result of the compaction is appended to the Pi session as a compaction entry, and the session can now continue.
 After the compaction request, the context has been compressed.
