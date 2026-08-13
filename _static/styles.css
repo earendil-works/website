@@ -13,8 +13,6 @@
 * { margin: 0; padding: 0; }
 
 :root {
-  --cursor-light: url('/static/cursor-light.svg') 12 12;
-  --cursor-dark: url('/static/cursor-dark.svg') 12 12;
   --mono-font: 'Departure Mono', 'SFMono-Regular', ui-monospace, monospace;
   --serif-font: 'PlantinNow', 'Plantin MT Pro', 'Plantin MT Std', 'Plantin', Georgia, serif;
 
@@ -86,14 +84,8 @@
   }
 }
 
-html:has(body:not(.theme-night)),
-body:not(.theme-night) {
-  --cursor-light: url('/static/cursor-dark.svg') 12 12;
-  --cursor-dark: url('/static/cursor-dark.svg') 12 12;
-}
-
 html, body {
-  cursor: var(--cursor-light), auto;
+  cursor: auto;
   background: #b8b8b8;
 }
 
@@ -117,8 +109,6 @@ body {
   background: #1a1a1a;
 }
 
-* { cursor: inherit; }
-
 .svg-definitions {
   position: absolute;
   overflow: hidden;
@@ -126,19 +116,19 @@ body {
 }
 
 a {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 a:hover {
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night a {
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night a:hover {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 /* ==========================================================================
@@ -445,19 +435,19 @@ html :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
 }
 
 body:not(.theme-night):has(.content-page) {
-  cursor: var(--cursor-dark), auto;
+  cursor: auto;
 }
 
 body:not(.theme-night):has(.content-page) :is(a, button, summary) {
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 body.theme-night:has(.content-page) {
-  cursor: var(--cursor-light), auto;
+  cursor: auto;
 }
 
 body.theme-night:has(.content-page) :is(a, button, summary) {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 body:not(.theme-night) .main-logo {
@@ -528,7 +518,7 @@ body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-lin
 .home-hero-open {
   color: inherit;
   text-shadow: none;
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 .home-hero-link:hover,
@@ -536,7 +526,7 @@ body:not(.theme-night):has(.content-page) .top-nav.has-overlap-backdrop .nav-lin
   color: inherit;
   text-decoration: none;
   text-shadow: none;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 body:not(.theme-night) .home-hero {
@@ -546,12 +536,12 @@ body:not(.theme-night) .home-hero {
 
 .theme-night .home-hero-link,
 .theme-night .home-hero-open {
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night .home-hero-link:hover,
 .theme-night .home-hero-open:hover {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 .home-hero-link::before,
@@ -658,7 +648,7 @@ body:not(.theme-night) .home-hero-open::after {
   display: inline-flex;
   align-items: center;
   color: rgba(255, 255, 255, 0.95);
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 .menu-label {
@@ -714,7 +704,7 @@ body:not(.theme-night) .top-nav.is-open .menu-trigger-toggle {
   text-decoration: none;
   text-shadow: none;
   transition: color 0.2s ease;
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -738,7 +728,7 @@ body:not(.theme-night) .top-nav.is-open .menu-trigger-toggle {
   text-decoration-thickness: 0.06em;
   text-underline-offset: 0.14em;
   text-shadow: none;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 body:not(.theme-night) .nav-link::after {
@@ -769,12 +759,12 @@ body:not(.theme-night) .nav-link::after {
 
 .theme-night .nav-link,
 .theme-night .menu-trigger-toggle {
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night .nav-link:hover,
 .theme-night .menu-trigger-toggle:hover {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 /* Footer */
@@ -804,21 +794,21 @@ body:not(.theme-night) .nav-link::after {
   font-size: var(--text-ui);
   line-height: var(--leading-ui);
   padding: 6px 10px;
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
   transition: color 0.2s ease;
 }
 
 #theme-toggle:hover {
   color: #fff;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night #theme-toggle {
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night #theme-toggle:hover {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 #theme-toggle .value {
@@ -840,7 +830,7 @@ body:not(.theme-night) .nav-link::after {
   font-size: var(--text-ui);
   line-height: var(--leading-ui);
   padding: 6px 10px;
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
   transition: color 0.2s ease;
   position: relative;
   z-index: 221;
@@ -849,15 +839,15 @@ body:not(.theme-night) .nav-link::after {
 
 #lang-toggle:hover {
   color: #fff;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night #lang-toggle {
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night #lang-toggle:hover {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 /* ==========================================================================
@@ -920,7 +910,7 @@ body:not(.theme-night) .nav-link::after {
   line-height: 1.4;
   padding: 8px 16px;
   text-align: start;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 1.2em auto;
@@ -989,11 +979,11 @@ body:not(.theme-night) .nav-link::after {
 .email-meta a {
   color: inherit;
   text-decoration: none;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night .email-meta a {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 .email-meta a:hover,
@@ -1118,11 +1108,11 @@ body:not(.theme-night) .posts-list .post-name::after {
   color: inherit;
   text-decoration: none;
   font-weight: 700;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night .letter-body a {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 .letter-body a:hover,
@@ -1145,11 +1135,11 @@ body:not(.theme-night) .posts-list .post-name::after {
 .letter-footer a {
   color: inherit;
   text-decoration: none;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .theme-night .letter-footer a {
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 .letter-footer a:hover,
@@ -1271,7 +1261,7 @@ body:not(.theme-night) .posts-list .post-name::after {
   position: relative;
   top: 2px;
   color: rgba(25, 24, 22, 0.6);
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
   transition: color 0.2s ease;
 }
 
@@ -1303,7 +1293,7 @@ body:not(.theme-night) .posts-list .post-name::after {
 
 .theme-night .updates-enter {
   color: rgba(240, 240, 240, 0.6);
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 .theme-night .updates-enter:hover {
@@ -1443,7 +1433,7 @@ body:not(.theme-night) .posts-list .post-name::after {
   align-items: baseline;
   gap: 8px;
   color: var(--color-text-day);
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
   transition: color 0.2s ease;
 }
 
@@ -1605,7 +1595,7 @@ body:not(.theme-night) .posts-list .post-name::after {
 
 .content-page .disclosure-summary {
   color: inherit;
-  cursor: var(--cursor-dark), pointer;
+  cursor: pointer;
 }
 
 .page--values .disclosure-summary {
@@ -1686,7 +1676,7 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 
 .theme-night .content-page .disclosure-summary {
   color: inherit;
-  cursor: var(--cursor-light), pointer;
+  cursor: pointer;
 }
 
 .theme-night .content-page .disclosure-summary:hover,
