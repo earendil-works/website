@@ -132,7 +132,7 @@ after compaction:
 There is now room in the conversation context for many more messages.
 
 Pi stores the compaction summary as plaintext in the session.
-This keeps the compacted contex readable and [portable](../session-portability), since we can switch models in Pi and continue using the summary.
+This keeps the compacted context readable and [portable](../session-portability), since we can switch models in Pi and continue using the summary.
 
 ## Compaction and prompt caching
 [Prompt caching](../prompt-caching) is used by LLM providers to make repeated requests in the same conversation more cost efficient.
