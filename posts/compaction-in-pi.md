@@ -5,7 +5,7 @@ template: updates
 aria_label: Earendil posts
 from: Earendil Engineering <rfc@earendil.com>
 to: You
-date: Thu, 13 Aug 2026 11:30:00 +0200
+date: Thu, 13 Aug 2026 8:30:00 +0200
 subject: How Compaction Works in Pi
 ---
 
