@@ -70,7 +70,7 @@ When we cannot continue with the existing conversation as-is, we have two choice
 
 1. We can start a new, empty conversation without the accumulated context.
 If we know what we were going to do next, this may often work, but will inevitably lose the conversation history.
-It might still be a good idea to do, because it is observable that [the performance of LLM outputs decrease as the context size grows](https://www.trychroma.com/research/context-rot).
+It might still be a good idea to do, because [the performance of LLM outputs decrease as the context size grows](https://www.trychroma.com/research/context-rot).
 2. We can create a smaller representation of the conversation context, since we want to keep this conversation going.
 That is what compaction does.
 
