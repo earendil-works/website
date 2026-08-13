@@ -34,7 +34,8 @@ request 1:
 
 This starts a turn.
 The LLM may first return an assistant message containing tool calls.
-The agent program executes them and sends their results back to the LLM, which can then return another assistant message.
+The agent program executes them and sends a new request to the LLM containing the complete conversation, now including the tool results.
+We get back another assistant message.
 The turn is finished when the assistant has completed generating output.
 
 ```text
