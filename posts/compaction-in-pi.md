@@ -17,14 +17,14 @@ Both occur when the context window would be exceeded. -->
 
 The context window is what the model can "see" while producing a response.
 [Transformer architecture](https://en.wikipedia.org/wiki/Transformer_(deep_learning)) limits how much input an LLM can process.
-The input for a coding agent session includes all the previous messages and tool calls.
-Hence LLMs reject requests that exceed the context window.
+The input for a coding agent session includes all the previous messages and tool calls, and this keeps growing as you work.
+Once it exceeds the context window, the LLM rejects the request.
 
 In this post, we will discuss when compaction is needed, and how it works in Pi.
-Compaction is also a useful tool for managing the size of the context window size, which both help reduce the cost of LLM requests and reduce [context rot](https://www.trychroma.com/research/context-rot).
+Compaction is also a useful tool for managing the size of the context window, which helps reduce both the cost of LLM requests and [context rot](https://www.trychroma.com/research/context-rot).
 
 ## An LLM conversation
-When working interactively with a coding agent like Pi, the agents and LLM exchange messages.
+When working interactively with a coding agent like Pi, the agent sends requests to an LLM and receives responses back.
 Each request to an LLM contains initial context including a system prompt, as well as some additional input.
 This is typically files loaded into the context such as `AGENTS.md`, and tool definitions.
 
@@ -67,9 +67,9 @@ The next request then returns an error such as `Request exceeds the maximum size
                                              exceeds context window
 ```
 
+## Handling context overflow
 When we cannot continue with the existing conversation as-is, we have two choices.
 
-## Handling context overflow
 1. We can start a new, empty conversation without the accumulated context.
 If we know what we were going to do next, this may often work, but will inevitably lose the conversation history.
 It might still be a good idea to do, because it is observable that [the performance of LLM outputs decrease as the context size grows](https://www.trychroma.com/research/context-rot).
@@ -112,8 +112,8 @@ Pi's current default of 20 thousand tokens comes out to roughly 5-20 turns.
 
 All the messages before this cut point are extracted and serialized, and will be summarixed.
 To keep the compaction request within the context limit, Pi truncates tool call results in the history to 2,000 characters.
-If we didn't somehow reduce some of the history, we would already be above the context limit.
-Tool outputs are a reasonable place to cut because they have a more intermediate nature.
+Without reducing the history somehow, the request would already be above the context limit.
+Tool outputs are a reasonable place to cut because they tend to be intermediate results.
 
 The compaction request that Pi sends differs from regular conversational requests.
 
