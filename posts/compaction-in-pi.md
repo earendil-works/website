@@ -10,7 +10,7 @@ subject: How Compaction Works in Pi
 ---
 
 If you have ever had a long coding session in a coding agent like [Pi](https://pi.dev), Claude Code, or Codex, you will have triggered a compaction.
-This post explains when Pi needs compaction and how compaction works.
+In this post we explain when Pi needs compaction and how compaction works.
 
 ## An LLM conversation
 Large language models (LLMs) have limited [context windows](https://en.wikipedia.org/wiki/Context_window).
