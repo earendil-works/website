@@ -9,18 +9,16 @@ date: Thu, 13 Aug 2026 8:30:00 +0200
 subject: How Compaction Works in Pi
 ---
 
-If you've ever had a long coding session in a coding agent like [Pi](https://pi.dev), Claude Code, or Codex, you will have triggered a compaction.
-That is because large language models (LLMs) have limited [context windows](https://en.wikipedia.org/wiki/Context_window).
+If you have ever had a long coding session in a coding agent like [Pi](https://pi.dev), Claude Code, or Codex, you will have triggered a compaction.
+This post explains when Pi needs compaction and how compaction works.
 
+## An LLM conversation
+Large language models (LLMs) have limited [context windows](https://en.wikipedia.org/wiki/Context_window).
 The context window is what the model can "see" while producing a response.
-[Transformer architecture](https://en.wikipedia.org/wiki/Transformer_(deep_learning)) limits how much input an LLM can process.
+The [transformer architecture](https://en.wikipedia.org/wiki/Transformer_(deep_learning)) used by LLMs limits how much input they can process.
 The input for a coding agent session includes all the previous messages and tool calls, and this keeps growing as you work.
 Once it exceeds the context window, the LLM rejects the request.
 
-In this post, we will discuss when compaction is needed, and how it works in Pi.
-Compaction is also a useful tool for managing the size of the context window, which helps reduce both the cost of LLM requests and [context rot](https://www.trychroma.com/research/context-rot).
-
-## An LLM conversation
 When working interactively with a coding agent like Pi, the agent sends requests to an LLM and receives responses back.
 Each request to an LLM contains initial context including a system prompt, as well as some additional input.
 This is typically files loaded into the context such as `AGENTS.md`, and tool definitions.
