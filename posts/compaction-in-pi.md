@@ -161,4 +161,4 @@ New requests after compaction will benefit from prompt caching again.
 ## Experiment
 
 Since Pi is extensible and malleable, you can replace its compaction with your own.
-To test a different compaction mechanism, ask Pi to create an extension with your own custom compaction prompt.
+To test a different compaction mechanism, ask Pi to create an extension with a custom compaction prompt.
