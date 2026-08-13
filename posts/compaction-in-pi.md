@@ -106,11 +106,7 @@ before compaction:
 
 How many messages are retained vary by session, but it's determined by a [configurable number of tokens](https://pi.dev/docs/latest/compaction#when-it-triggers).
 Pi's current default of 20 thousand tokens comes out to roughly 5-20 turns.
-
 All the messages before this cut point are extracted and serialized, and will be summarized.
-To keep the compaction request within the context limit, Pi truncates tool call results in the history to 2,000 characters.
-Without reducing the history somehow, the request would already be above the context limit.
-Tool outputs are a reasonable place to cut because they tend to be intermediate results.
 
 The compaction request that Pi sends differs from regular conversational requests.
 
