@@ -10,7 +10,7 @@ subject: How Compaction Works in Pi
 ---
 
 If you have ever had a long coding session in a coding agent like [Pi](https://pi.dev), Claude Code, or Codex, you will have triggered a compaction.
-In this post we explain when Pi needs compaction and how compaction works.
+In this post we explain how compaction works and when Pi needs to compact.
 
 ## An LLM conversation
 Large language models (LLMs) have limited [context windows](https://en.wikipedia.org/wiki/Context_window).
@@ -20,7 +20,7 @@ The input for a coding agent session includes all the previous messages and tool
 Once it exceeds the context window, the LLM rejects the request.
 
 When working interactively with a coding agent like Pi, the agent sends requests to an LLM and receives responses.
-Each request includes a system prompt, loaded files such as AGENTS.md, tool definitions, and the conversation history.
+Each request includes a system prompt, loaded files such as [`AGENTS.md`](https://agents.md/), tool definitions, and the conversation history.
 
 A coding agent's first LLM request contains this initial context, along with a first user message.
 
