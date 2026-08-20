@@ -19,6 +19,17 @@ subject: What is a Harness?
 
 When I think of a harness, I think first of the set of straps and belts that I put on in middle school before scrambling up the walls of my school. I was a mediocre climber at best. 
 
+<figure class="post-figure">
+  <img
+    src="/static/posts/what-is-a-harness/royal-robbins-el-capitan-climbing-05.png"
+    width="1440"
+    height="2182"
+    alt="Royal Robbins on El Capitan, his harness racked with the tools of the ascent."
+    loading="lazy"
+    decoding="async">
+  <figcaption>Royal Robbins on El Capitan, his harness racked with the tools of the ascent. Photo by <a href="https://www.frostworksclimbing.com/cool_aid.htm">Tom Frost</a>.</figcaption>
+</figure>
+
 If you’re main-lining into the AI newsfeed these days however, your archetypal harness may already be  an agent harness. And, this post was not written for you. 
 
 This was written for those who may be curious to know what an agent harness is, but don’t, and have been too embarrassed to ask.
@@ -49,7 +60,7 @@ Tools are a set of capabilities, written in code, that the model can “call”.
 
 ### III. Agentic Loops
 
-Now we have an AI model sitting within an agent harness with a set of instructions and a set of tools. Let us assume our harness was built to work within email, had the tools we described above (WebSearch, WriteCode, ComposeEmail), and that the user has asked the agent to compare rankings and test scores of local primary schools and provide recommendations. How will the agent behave? Firstly, it will try to understand the request (or, "prompt"). It will use its pre-training and weights to understand what a "primary school" is, what "the local area" means, and what rankings the user likely cares about. It will then construct web search queries to fetch recent data. What does it do with those results? Sitting within a harness, the AI model can review them in the context of the initial request. It may determine that the first search did not fetch the right information, or enough of it, and on its own, decide to search again. This decision to call the tool again based on its own assessment is the first clear example of the "loop". Now let's assume it collected all the relevant data. The AI model decides to make a spreadsheet using the "write code" tool. All spreadsheets are just code, after all. It can use that tool to do math and format the results so they are intelligible. It then compares the spreadsheet to the original prompt. If the data doesn't satisfy it, it may “loop” and go back and search again. When it decides it has enough, it calls ComposeEmail,  a tool that allows the AI to review its findings, summarize them, write an email, and include attachments like the spreadsheet. The model reviews this final work and decides the job is done. The  "agentic loop" closes. Within seconds, the user gets an email with a summary and recommendations in the body, and a spreadsheet presenting the findings attached.
+Now we have an AI model sitting within an agent harness with a set of instructions and a set of tools. Let us assume our harness was built to work within email, had the tools we described above (WebSearch, WriteCode, ComposeEmail), and that the user has asked the agent to compare rankings and test scores of local primary schools and provide recommendations. How will the agent behave? Firstly, it will try to understand the request (or, "prompt"). It will use its pre-training and weights to understand what a "primary school" is, what "the local area" means, and what rankings the user likely cares about. It will then construct web search queries to fetch recent data. What does it do with those results? Sitting within a harness, the AI model can review them in the context of the initial request. It may determine that the first search did not fetch the right information, or enough of it, and on its own, decide to search again. This decision to call the tool again based on its own assessment is the first clear example of the "loop". Now let's assume it collected all the relevant data. The AI model decides to make a spreadsheet using the "write code" tool. All spreadsheets are just code, after all. It can use that tool to do math and format the results so they are intelligible. It then compares the spreadsheet to the original prompt. If the data doesn't satisfy it, it may “loop” and go back and search again. When it decides it has enough, it calls ComposeEmail,  a tool that allows the AI to review its findings, summarize them, write an email, and include attachments like the spreadsheet. The model reviews this final work and decides the job is done. The  "agentic loop" closes. Within seconds, the user gets an email with a summary and recommendations in the body, and a spreadsheet presenting the findings attached. To see what an agentic loop looks like in practice, you can explore a Pi session [here](https://pi.dev/session/#b23f2459599f8439327f65c90ee95d06).
 
 ### IV. Translation Layer
 
