@@ -11,9 +11,9 @@ subject: What is a Harness?
 
 **Harness** – definition by the Cambridge Dictionary
 
-*Noun.* a [piece](https://dictionary.cambridge.org/dictionary/english/piece) of [equipment](https://dictionary.cambridge.org/dictionary/english/equipment) with [straps](https://dictionary.cambridge.org/dictionary/english/strap) and [belts](https://dictionary.cambridge.org/dictionary/english/belt), used to [control](https://dictionary.cambridge.org/dictionary/english/control) or [hold](https://dictionary.cambridge.org/dictionary/english/hold) in [place](https://dictionary.cambridge.org/dictionary/english/place) a [person](https://dictionary.cambridge.org/dictionary/english/person), [animal](https://dictionary.cambridge.org/dictionary/english/animal), or [object](https://dictionary.cambridge.org/dictionary/english/object)
+*Noun.* a piece of equipment with straps and belts, used to control or hold in place a person, animal, or object
 
-*Verb.* to [control](https://dictionary.cambridge.org/dictionary/english/control) something, usually in [order](https://dictionary.cambridge.org/dictionary/english/order) to use [its](https://dictionary.cambridge.org/dictionary/english/its) [power](https://dictionary.cambridge.org/dictionary/english/power)
+*Verb.* to control something, usually in order to use its power
 
 –
 
@@ -44,7 +44,7 @@ There are similarities between climbing harnesses and agent harnesses both in te
 
 ## Agent Harnesses
 
-Others have written (simplistically) that Agent \= Model \+ Harness. Here the word Harness refers to an Agent Harness. But what is an agent harness? Agent harnesses use AI models to create AI agents, and their first application was for coding. Now, agent harnesses sit at the core of all types of AI agents and understanding how an agent harness works will help you understand what an AI agent is. 
+Others have written (simplistically) that Agent = Model + Harness. Here the word Harness refers to an Agent Harness. But what is an agent harness? Agent harnesses use AI models to create AI agents, and their first application was for coding. Now, agent harnesses sit at the core of all types of AI agents and understanding how an agent harness works will help you understand what an AI agent is. 
 
 An agent harness is a piece of software that provides an environment for an AI model to operate within. Unlike most AI models, you as an end user can own your own agent harness.
 
@@ -74,7 +74,7 @@ Unlike AI models themselves, you can own and adapt the harness. Like a climbing 
 
 ## Neutral Open Source Harnesses as Tools of Agency
 
-Recently, harnesses have not been open source or neutral. Popular agent harness, Claude Code, was not built to provide an agnostic AI translation layer but was built as an application to enable coding with Claude models on your local computer. Since then, there has been an encouraging growth of free open source agent harnesses like OpenClaw, OpenCode, Hermes and Pi. At Earendil we are building Pi to be neutral, and to deliver capability choice and freedom to Pi users. We are also exploring how we can make the benefits and agency that harnesses provide to a broader swath of people. 
+Harnesses did not begin open source or neutral. The first popular agent harness, Claude Code, was not built to provide an agnostic AI translation layer but was built as an application to enable coding with Claude models on your local computer. Since then, there has been an encouraging growth of free open source agent harnesses like OpenClaw, OpenCode, Hermes and Pi. At Earendil we are building Pi to be neutral, and to deliver capability choice and freedom to Pi users. We are also exploring how we can make the benefits and agency that harnesses provide to a broader swath of people. 
 
 Many people right now are concerned about the power and influence of bigger and bigger AI companies. Some of those people may choose to avoid AI completely. We at Earendil believe we can strengthen human agency by crafting software and open protocols that bridge division and ignorance and cultivate lasting joy and understanding. We won’t do that by ignoring the technologies that exist today, but by harnessing them with clear eyes and a firm grip; ensuring that we wield the hammer, the hammer does not wield us.
 
