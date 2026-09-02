@@ -1595,6 +1595,40 @@ body:not(.theme-night) .posts-list .post-name::after {
   text-decoration: none;
 }
 
+@supports (grid-template-columns: subgrid) {
+  .page--posts:not(.page--post-detail) .posts-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 0.6em;
+    row-gap: 6px;
+  }
+
+  .page--posts:not(.page--post-detail) .posts-list li,
+  .page--posts:not(.page--post-detail) .posts-list li > a {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+  }
+
+  .page--posts:not(.page--post-detail) .posts-list li {
+    margin: 0;
+  }
+
+  .page--posts:not(.page--post-detail) .posts-list li > a {
+    align-items: baseline;
+  }
+
+  .page--posts:not(.page--post-detail) .posts-list .post-name {
+    margin-inline-start: 0;
+  }
+
+  @media (max-width: 32.5em) {
+    .page--posts:not(.page--post-detail) .posts-list {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
 .content-page .disclosure-summary {
   color: inherit;
   cursor: pointer;
