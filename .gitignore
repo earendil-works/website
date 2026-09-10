@@ -1,5 +1,7 @@
 /_build/
 /.venv
+/node_modules/
+__pycache__/
 /api/node_modules/
 /api/dist/
 /api/.env
