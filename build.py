@@ -158,7 +158,6 @@ def render_markdown(text: str) -> str:
     md = md_lib.Markdown(
         extensions=["extra", "pymdownx.arithmatex"],
         extension_configs={
-            "extra": {"footnotes": {"BACKLINK_TEXT": "Back to text"}},
             "pymdownx.arithmatex": {
                 "generic": True, "tex_inline_wrap": ["", ""], "tex_block_wrap": ["", ""],
             },
@@ -166,7 +165,13 @@ def render_markdown(text: str) -> str:
     )
     # After inline processing (20), before prettification (10).
     md.treeprocessors.register(KatexTreeprocessor(md), "katex", 15)
-    return _render_code_reveals(md.convert(text))
+    html = md.convert(text)
+    # Keep numbered footnote references, but omit return links and their spacer.
+    html = re.sub(
+        r'(?:&#160;)?<a\b[^>]*\bclass="footnote-backref"[^>]*>.*?</a>',
+        "", html,
+    )
+    return _render_code_reveals(html)
 
 
 def parse_post_date(date_str: str) -> datetime | None:
