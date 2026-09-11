@@ -158,7 +158,7 @@ def render_markdown(text: str) -> str:
     md = md_lib.Markdown(
         extensions=["extra", "pymdownx.arithmatex"],
         extension_configs={
-            "footnotes": {"BACKLINK_TEXT": "Back to text"},
+            "extra": {"footnotes": {"BACKLINK_TEXT": "Back to text"}},
             "pymdownx.arithmatex": {
                 "generic": True, "tex_inline_wrap": ["", ""], "tex_block_wrap": ["", ""],
             },
