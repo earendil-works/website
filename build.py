@@ -157,9 +157,12 @@ def render_markdown(text: str) -> str:
         return ""
     md = md_lib.Markdown(
         extensions=["extra", "pymdownx.arithmatex"],
-        extension_configs={"pymdownx.arithmatex": {
-            "generic": True, "tex_inline_wrap": ["", ""], "tex_block_wrap": ["", ""],
-        }},
+        extension_configs={
+            "footnotes": {"BACKLINK_TEXT": "Back to text"},
+            "pymdownx.arithmatex": {
+                "generic": True, "tex_inline_wrap": ["", ""], "tex_block_wrap": ["", ""],
+            },
+        },
     )
     # After inline processing (20), before prettification (10).
     md.treeprocessors.register(KatexTreeprocessor(md), "katex", 15)
