@@ -64,6 +64,11 @@
   font-weight: 500;
 }
 
+/* Keep footnotes, but hide their return links. */
+.prose .footnote-backref {
+  display: none;
+}
+
 .prose strong {
   color: var(--prose-bold);
   font-weight: 600;

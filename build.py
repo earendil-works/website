@@ -165,13 +165,7 @@ def render_markdown(text: str) -> str:
     )
     # After inline processing (20), before prettification (10).
     md.treeprocessors.register(KatexTreeprocessor(md), "katex", 15)
-    html = md.convert(text)
-    # Keep numbered footnote references, but omit return links and their spacer.
-    html = re.sub(
-        r'(?:&#160;)?<a\b[^>]*\bclass="footnote-backref"[^>]*>.*?</a>',
-        "", html,
-    )
-    return _render_code_reveals(html)
+    return _render_code_reveals(md.convert(text))
 
 
 def parse_post_date(date_str: str) -> datetime | None:
