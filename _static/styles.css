@@ -1,4 +1,5 @@
-/* Prose typography for rendered markdown (Tailwind Typography port). */
+/* Build-time equation and prose typography. */
+@import url('/static/katex/katex.min.css');
 @import url('/static/prose.css');
 
 /* ==========================================================================

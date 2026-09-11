@@ -1,13 +1,16 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["minijinja", "pyyaml", "markdown", "watchdog", "pillow"]
+# requires-python = ">=3.10"
+# dependencies = ["minijinja", "pyyaml", "markdown", "watchdog", "pillow", "pymdown-extensions==11.0.2"]
 # ///
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
+import subprocess
 import threading
 import time
 import traceback
@@ -24,6 +27,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 import yaml
 import markdown as md_lib
+
+from markdown.treeprocessors import Treeprocessor
+from markdown.util import AtomicString
 
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "_templates"
@@ -107,12 +113,59 @@ def _render_code_reveals(html: str) -> str:
     return CODE_BLOCK_RE.sub(replace_code_block, html)
 
 
+def copy_math_assets(static_dir: Path) -> None:
+    katex_dir = ROOT / "node_modules" / "katex"
+    if not (katex_dir / "dist" / "katex.min.css").is_file():
+        raise RuntimeError("KaTeX is not installed. Run `npm ci` before building.")
+    target = static_dir / "katex"
+    target.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(katex_dir / "dist" / "katex.min.css", target)
+    shutil.copy2(katex_dir / "LICENSE", target)
+    shutil.copytree(katex_dir / "dist" / "fonts", target / "fonts", dirs_exist_ok=True)
+
+
+class KatexTreeprocessor(Treeprocessor):
+    def run(self, root: ElementTree.Element) -> None:
+        # Arithmatex has already handled delimiters, escapes, and code blocks.
+        nodes = [el for el in root.iter() if el.get("class") == "arithmatex"]
+        if not nodes:
+            return
+        equations = [{"tex": el.text or "", "displayMode": el.tag == "div"} for el in nodes]
+        try:
+            result = subprocess.run(
+                ["node", str(ROOT / "scripts" / "render-math.cjs")],
+                input=json.dumps(equations), text=True, capture_output=True,
+                cwd=ROOT, timeout=30, check=True,
+            )
+        except FileNotFoundError as exc:
+            raise RuntimeError("Math rendering needs Node.js 22.12+ and `npm ci`.") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError("KaTeX rendering exceeded 30 seconds.") from exc
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(f"KaTeX rendering failed:\n{exc.stderr.strip()}") from exc
+        for el, html in zip(nodes, json.loads(result.stdout), strict=True):
+            el.set("class", "math-block" if el.tag == "div" else "math-inline")
+            el.set("dir", "ltr")
+            # Keep Markdown from modifying KaTeX's generated markup.
+            el.text = AtomicString(self.md.htmlStash.store(html))
+
+
 def render_markdown(text: str) -> str:
-    text = text.strip()
-    if not text:
+    # Preserve indentation (code blocks) and trailing spaces (hard line breaks).
+    text = text.strip("\r\n")
+    if not text.strip():
         return ""
-    html = md_lib.markdown(text, extensions=["extra"])
-    return _render_code_reveals(html)
+    md = md_lib.Markdown(
+        extensions=["extra", "pymdownx.arithmatex"],
+        extension_configs={
+            "pymdownx.arithmatex": {
+                "generic": True, "tex_inline_wrap": ["", ""], "tex_block_wrap": ["", ""],
+            },
+        },
+    )
+    # After inline processing (20), before prettification (10).
+    md.treeprocessors.register(KatexTreeprocessor(md), "katex", 15)
+    return _render_code_reveals(md.convert(text))
 
 
 def parse_post_date(date_str: str) -> datetime | None:
@@ -522,6 +575,8 @@ def build_to(build_dir: Path) -> None:
         static_count = sum(1 for f in static_files if f.is_file())
         print(f"  Copied {static_count} static files", flush=True)
 
+    copy_math_assets(build_dir / "static")
+
     if LOCALES_DIR.exists():
         shutil.copytree(LOCALES_DIR, build_dir / "locales")
         locale_files = list(LOCALES_DIR.rglob("*.json"))
@@ -626,7 +681,7 @@ def build() -> None:
 HOST = "0.0.0.0"
 PORT = 8000
 DEBOUNCE_DELAY = 0.3
-IGNORE_DIRS = {"_build", "_build_tmp", ".git"}
+IGNORE_DIRS = {"_build", "_build_tmp", ".git", "node_modules", "__pycache__", ".venv"}
 
 # Global dictionary to track reload events by connection ID
 RELOAD_EVENTS: dict[int, threading.Event] = {}

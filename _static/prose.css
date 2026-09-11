@@ -64,6 +64,11 @@
   font-weight: 500;
 }
 
+/* Keep footnotes, but hide their return links. */
+.prose .footnote-backref {
+  display: none;
+}
+
 .prose strong {
   color: var(--prose-bold);
   font-weight: 600;
@@ -73,6 +78,37 @@
 .prose blockquote strong,
 .prose thead th strong {
   color: inherit;
+}
+
+/* --- Build-time math ----------------------------------------------------- */
+
+.math-inline,
+.math-block {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.prose .math-inline .katex,
+.prose .math-block .katex {
+  font-size: 1em;
+}
+
+.math-block {
+  max-width: 100%;
+  margin-block: 1.5em;
+  padding-block: 0.4em 0.55em;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.math-block .katex-display {
+  margin: 0;
+}
+
+/* Keep long equations reachable from the left edge on narrow screens. */
+.math-block .katex-display > .katex {
+  width: max-content;
+  min-width: 100%;
 }
 
 /* --- Lists --------------------------------------------------------------- */
