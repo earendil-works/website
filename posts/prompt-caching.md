@@ -301,7 +301,7 @@ surprisingly large bill.  Understanding if something odd is going on with caches
 can be an important insight.
 
 Strict cache adherence also means less flexibility for a gateway to route you to
-the best option in-between turns.  You might want to take a cache hit to continue
+the best option in-between turns.  You might want to take a cache miss to continue
 with a different model which from that point onwards might be more economical,
 or it might be the case that you might be better off load balancing to another
 provider.
