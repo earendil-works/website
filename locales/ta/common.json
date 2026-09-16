@@ -18,7 +18,7 @@
   "aria.unsubscribe": "Unsubscribe from Earendil emails",
   "aria.values": "Earendil values",
   "home.hero": "Earendil, <a class=\"home-hero-link\" href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a> மற்றும் <a class=\"home-hero-link\" href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a> மூலம் AI-ஐ பயன்படுத்த உதவும் கருவிகளை உருவாக்குகிறது.<br><span class=\"home-hero-open-clause\"><a class=\"home-hero-open\" href=\"https://github.com/earendil-works\" target=\"_blank\" rel=\"noopener noreferrer\">திறந்த</a> நிலையில் உருவாக்கப்பட்ட,</span> <span class=\"home-hero-tail-clause\">அவற்றைப் பயன்படுத்தும் மனிதர்களால் வடிவமைக்கப்பட்டவை.</span>",
-  "meta.titleFormat": "{title} | EARENDIL",
+  "meta.titleFormat": "{title} | Earendil",
   "nav.joinUs": "எங்களுடன் சேரவும்",
   "nav.lefos": "Lefos",
   "nav.menu": "மெனு",

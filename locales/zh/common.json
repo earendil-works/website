@@ -18,7 +18,7 @@
   "aria.unsubscribe": "Unsubscribe from Earendil emails",
   "aria.values": "Earendil values",
   "home.hero": "Earendil 打造工具，通过 <a class=\"home-hero-link\" href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a> 和 <a class=\"home-hero-link\" href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a> 驾驭 AI。<br><span class=\"home-hero-open-clause\">在<a class=\"home-hero-open\" href=\"https://github.com/earendil-works\" target=\"_blank\" rel=\"noopener noreferrer\">开放</a>中构建，</span> <span class=\"home-hero-tail-clause\">由使用它们的人类塑造。</span>",
-  "meta.titleFormat": "{title} | EARENDIL",
+  "meta.titleFormat": "{title} | Earendil",
   "nav.joinUs": "加入我们",
   "nav.lefos": "Lefos",
   "nav.menu": "菜单",

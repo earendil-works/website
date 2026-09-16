@@ -18,7 +18,7 @@
   "aria.unsubscribe": "Unsubscribe from Earendil emails",
   "aria.values": "Earendil values",
   "home.hero": "Earendil, <a class=\"home-hero-link\" href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a> ve <a class=\"home-hero-link\" href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a> ile yapay zekâyı kullanmaya yönelik araçlar geliştirir.<br><span class=\"home-hero-open-clause\"><a class=\"home-hero-open\" href=\"https://github.com/earendil-works\" target=\"_blank\" rel=\"noopener noreferrer\">açık</a> şekilde inşa edilmiş,</span> <span class=\"home-hero-tail-clause\">onları kullanan insanlar tarafından şekillendirilmiştir.</span>",
-  "meta.titleFormat": "{title} | EARENDIL",
+  "meta.titleFormat": "{title} | Earendil",
   "nav.joinUs": "Katılın",
   "nav.lefos": "Lefos",
   "nav.menu": "MENÜ",

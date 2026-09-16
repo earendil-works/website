@@ -18,7 +18,7 @@
   "aria.unsubscribe": "Unsubscribe from Earendil emails",
   "aria.values": "Earendil values",
   "home.hero": "Earendil は <a class=\"home-hero-link\" href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a> と <a class=\"home-hero-link\" href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a> で AI を活用するためのツールを作っています。<br><span class=\"home-hero-open-clause\"><a class=\"home-hero-open\" href=\"https://github.com/earendil-works\" target=\"_blank\" rel=\"noopener noreferrer\">オープン</a>に作られ、</span> <span class=\"home-hero-tail-clause\">それを使う人々によって形作られます。</span>",
-  "meta.titleFormat": "{title} | EARENDIL",
+  "meta.titleFormat": "{title} | Earendil",
   "nav.joinUs": "参加する",
   "nav.lefos": "Lefos",
   "nav.menu": "メニュー",

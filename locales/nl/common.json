@@ -18,7 +18,7 @@
   "aria.unsubscribe": "Unsubscribe from Earendil emails",
   "aria.values": "Earendil values",
   "home.hero": "Earendil bouwt hulpmiddelen om AI te benutten met <a class=\"home-hero-link\" href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a> en <a class=\"home-hero-link\" href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a>.<br><span class=\"home-hero-open-clause\">In het <a class=\"home-hero-open\" href=\"https://github.com/earendil-works\" target=\"_blank\" rel=\"noopener noreferrer\">open</a> gebouwd,</span> <span class=\"home-hero-tail-clause\">gevormd door de mensen die ze gebruiken.</span>",
-  "meta.titleFormat": "{title} | EARENDIL",
+  "meta.titleFormat": "{title} | Earendil",
   "nav.joinUs": "Word lid",
   "nav.lefos": "Lefos",
   "nav.menu": "Menu",

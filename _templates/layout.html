@@ -13,7 +13,12 @@
     {% endif %}
   {% endif %}
 
-  <title data-i18n-doc-title="common.meta.titleFormat"{% if title_key %} data-i18n-title-key="{{ title_key }}"{% endif %} data-i18n-default-title="{{ title }}">{{ title }} | EARENDIL</title>
+  {% set document_title = "Earendil" if slug == "/" else title ~ " | Earendil" %}
+  {% if slug == "/" %}
+  <title>{{ document_title }}</title>
+  {% else %}
+  <title data-i18n-doc-title="common.meta.titleFormat"{% if title_key %} data-i18n-title-key="{{ title_key }}"{% endif %} data-i18n-default-title="{{ title }}">{{ document_title }}</title>
+  {% endif %}
 
   {# SEO meta tags #}
   {% set default_description = "Earendil is a public benefit corporation crafting software and open protocols to strengthen human agency, bridge division, and cultivate lasting joy." %}
@@ -24,7 +29,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="{% if is_article %}article{% else %}website{% endif %}">
   <meta property="og:site_name" content="Earendil">
-  <meta property="og:title" content="{{ title }} | EARENDIL">
+  <meta property="og:title" content="{{ document_title }}">
   <meta property="og:description" content="{{ meta_description }}">
   <meta property="og:url" content="{{ page_url }}">
   <meta property="og:image" content="{{ og_image }}">
@@ -36,17 +41,14 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="{% if is_article %}summary_large_image{% else %}summary{% endif %}">
-  <meta name="twitter:title" content="{{ title }} | EARENDIL">
+  <meta name="twitter:title" content="{{ document_title }}">
   <meta name="twitter:description" content="{{ meta_description }}">
   <meta name="twitter:image" content="{{ og_image }}">
   <meta name="twitter:image:alt" content="{{ title }} — Earendil">
-  <link rel="icon" type="image/svg+xml" href="/static/favicon/square.svg">
-  <link rel="icon" type="image/x-icon" href="/static/favicon/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png">
+  <link rel="icon" type="image/x-icon" sizes="16x16 32x32" href="/static/favicon/favicon.ico">
+  <link rel="icon" type="image/svg+xml" sizes="any" href="/static/favicon/square.svg">
+  <link rel="icon" type="image/x-icon" sizes="16x16 32x32" media="(prefers-color-scheme: dark)" href="/static/favicon/favicon-dark.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon/android-chrome-192x192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon/android-chrome-512x512.png">
   <link rel="preload" href="/static/fonts/DepartureMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/static/fonts/PlantinNowVariable-Upright.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/static/fonts/PlantinNowVariable-Italic.woff2" as="font" type="font/woff2" crossorigin>

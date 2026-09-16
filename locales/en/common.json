@@ -68,7 +68,7 @@
     "context": "Home page hero paragraph introducing Earendil with links to Pi, Lefos, and open source"
   },
   "meta.titleFormat": {
-    "message": "{title} | EARENDIL",
+    "message": "{title} | Earendil",
     "context": "Format string for the browser tab title; {title} is replaced by the page title"
   },
   "aria.primaryNav": {
