@@ -1375,6 +1375,41 @@ body:not(.theme-night) .posts-list .post-name::after {
   font-weight: 700;
 }
 
+.join-roles {
+  width: auto;
+  max-width: 100%;
+  border: 0;
+  border-collapse: collapse;
+}
+
+.join-roles td {
+  padding: 0;
+  border: 0;
+  vertical-align: baseline;
+}
+
+.join-role__title {
+  width: min(24rem, 60vw);
+}
+
+.join-role__title em {
+  display: block;
+  line-height: 1.4;
+}
+
+.join-role__spacer {
+  width: 10vw;
+  min-width: 10vw;
+}
+
+.page--prose .letter-body a.join-role__apply {
+  display: block;
+  font: normal var(--font-size-xs)/var(--leading-ui) var(--mono-font);
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .page--purpose .prose-subheading {
   font-weight: 600;
 }
