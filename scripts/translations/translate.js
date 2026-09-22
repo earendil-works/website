@@ -42,14 +42,29 @@ if (!ANTHROPIC_API_KEY) {
 /**
  * Make a request to Claude API
  */
-function callClaude(systemPrompt, userMessage) {
+function callClaude(systemPrompt, userMessage, outputKeys) {
   return new Promise((resolve, reject) => {
+    const properties = Object.fromEntries(
+      outputKeys.map(key => [key, { type: 'string' }])
+    );
+
     const data = JSON.stringify({
       model: 'claude-sonnet-5',
       max_tokens: 4096,
       thinking: { type: 'disabled' },
       system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }]
+      messages: [{ role: 'user', content: userMessage }],
+      output_config: {
+        format: {
+          type: 'json_schema',
+          schema: {
+            type: 'object',
+            properties,
+            required: outputKeys,
+            additionalProperties: false
+          }
+        }
+      }
     });
 
     const options = {
@@ -188,7 +203,7 @@ async function translateKeys(lang, keysToTranslate) {
 
   try {
     const systemPrompt = buildSystemPrompt(lang);
-    const response = await callClaude(systemPrompt, JSON.stringify(input, null, 2));
+    const response = await callClaude(systemPrompt, JSON.stringify(input, null, 2), keys);
 
     // Parse JSON from response
     let jsonStr = response;
