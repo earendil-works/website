@@ -35,6 +35,14 @@
     "message": "Go to Market",
     "context": "Go-to-market role label on the join page"
   },
+  "join.apply": {
+    "message": "APPLY",
+    "context": "Call-to-action label for job application links on the join page"
+  },
+  "join.openRoles": {
+    "message": "Open roles",
+    "context": "Accessible label for the open roles table on the join page"
+  },
   "purpose.intro": {
     "message": "<a href=\"/\">Earendil</a> is a public benefit corporation founded by <a href=\"https://ronacher.eu/\" target=\"_blank\" rel=\"noopener noreferrer\">Armin Ronacher</a> and <a href=\"https://colin.day/\" target=\"_blank\" rel=\"noopener noreferrer\">Colin Daymond Hanna</a>",
     "context": "Purpose page intro with founder links"

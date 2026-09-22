@@ -47,6 +47,7 @@ function callClaude(systemPrompt, userMessage) {
     const data = JSON.stringify({
       model: 'claude-sonnet-5',
       max_tokens: 4096,
+      thinking: { type: 'disabled' },
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }]
     });
@@ -72,7 +73,10 @@ function callClaude(systemPrompt, userMessage) {
           if (response.error) {
             reject(new Error(response.error.message));
           } else {
-            const text = response.content?.[0]?.text || '';
+            const text = response.content
+              ?.filter(block => block.type === 'text' && typeof block.text === 'string')
+              .map(block => block.text)
+              .join('\n') || '';
             resolve(text);
           }
         } catch (e) {
