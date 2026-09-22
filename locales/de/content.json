@@ -1,6 +1,8 @@
 {
+  "join.apply": "APPLY",
   "join.foundersOffice": "Founder's Office",
   "join.goToMarket": "Go to Market",
+  "join.openRoles": "Open roles",
   "join.technicalStaff": "Mitglied des technischen Teams",
   "page.home.title": "Willkommen",
   "page.join.title": "Mitmachen",

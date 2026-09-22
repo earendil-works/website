@@ -1,4 +1,9 @@
 {
+  "join.apply": "APPLY",
+  "join.foundersOffice": "Founder's Office",
+  "join.goToMarket": "Go to Market",
+  "join.openRoles": "Open roles",
+  "join.technicalStaff": "Member of the Technical Staff",
   "page.home.title": "خوش آمدید",
   "page.join.title": "به ما بپیوندید",
   "page.purpose.title": "هدف",
