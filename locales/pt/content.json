@@ -1,4 +1,9 @@
 {
+  "join.apply": "CANDIDATAR",
+  "join.foundersOffice": "Gabinete do Fundador",
+  "join.goToMarket": "Go to Market",
+  "join.openRoles": "Vagas abertas",
+  "join.technicalStaff": "Membro da Equipa Técnica",
   "page.home.title": "Bem-vindo",
   "page.join.title": "Junte-se",
   "page.purpose.title": "Propósito",
