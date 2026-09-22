@@ -47,7 +47,6 @@ function callClaude(systemPrompt, userMessage) {
     const data = JSON.stringify({
       model: 'claude-sonnet-5',
       max_tokens: 4096,
-      temperature: 0.1,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }]
     });
