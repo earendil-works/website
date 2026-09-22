@@ -45,7 +45,7 @@ if (!ANTHROPIC_API_KEY) {
 function callClaude(systemPrompt, userMessage) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-5',
       max_tokens: 4096,
       temperature: 0.1,
       system: systemPrompt,
