@@ -1,5 +1,9 @@
 {
-  "join.hiring": "Nous recrutons pour notre équipe technique et le bureau du fondateur",
+  "join.apply": "POSTULER",
+  "join.foundersOffice": "Cabinet des fondateurs",
+  "join.goToMarket": "Mise sur le marché",
+  "join.openRoles": "Postes ouverts",
+  "join.technicalStaff": "Membre de l'équipe technique",
   "page.home.title": "Bienvenue",
   "page.join.title": "Rejoignez-nous",
   "page.purpose.title": "Mission",

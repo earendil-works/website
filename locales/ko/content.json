@@ -1,5 +1,9 @@
 {
-  "join.hiring": "기술 스태프와 창업자 오피스의 멤버를 채용 중입니다",
+  "join.apply": "지원하기",
+  "join.foundersOffice": "파운더스 오피스",
+  "join.goToMarket": "고투마켓",
+  "join.openRoles": "채용 중인 포지션",
+  "join.technicalStaff": "테크니컬 스태프",
   "page.home.title": "환영합니다",
   "page.join.title": "합류하기",
   "page.purpose.title": "목적",
