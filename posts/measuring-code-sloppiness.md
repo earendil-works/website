@@ -1,12 +1,12 @@
 ---
-title: "If coding is solved, what now?: Measuring the sloppiness of code"
+title: Measuring the Sloppiness of Code
 description: Exploring how to measure code sloppiness, why correct code can still erode a codebase, and why human intuition and taste still matter.
 template: updates
 aria_label: Earendil posts
-from: Sebastian <sebastian@earendil.com>
+from: Earendil <rfc@earendil.com>
 to: You
 date: Thu, 10 Sep 2026 17:46:39 +0200
-subject: "If coding is solved, what now?: Measuring the sloppiness of code"
+subject: Measuring the Sloppiness of Code
 ---
 
 LLMs have become almost perfect at generating code, but that isn’t the end of the story. Just because the code is formally correct doesn’t mean that it is not introducing unnecessary abstractions, creating duplicates, or just making bad decisions overall. This is not a groundbreaking observation, most people who have vibe-coded a project, have realized that each additional feature can sometimes lead to an explosion of lines of code (LOC).
