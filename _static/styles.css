@@ -754,6 +754,7 @@ body:not(.theme-night) .nav-link::after {
 
 @media (prefers-reduced-motion: reduce) {
   .nav-link:hover::after,
+  .page--prose .letter-body a.join-role__apply:hover::after,
   .page--values .disclosure-summary:is(:hover, :focus-visible)::after,
   .posts-list a:is(:hover, :focus-visible) .post-name::after {
     animation: none;
@@ -1403,11 +1404,42 @@ body:not(.theme-night) .posts-list .post-name::after {
 }
 
 .page--prose .letter-body a.join-role__apply {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: normal var(--font-size-xs)/var(--leading-ui) var(--mono-font);
   letter-spacing: 0;
   text-transform: uppercase;
   white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.page--prose .letter-body a.join-role__apply::after {
+  content: "";
+  width: 15px;
+  height: 15px;
+  background: url('/static/cursor-light.svg') center/contain no-repeat;
+  transform-origin: center;
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body:not(.theme-night) .page--prose .letter-body a.join-role__apply::after {
+  background-image: url('/static/cursor-dark.svg');
+}
+
+.content-page.page--prose .letter-body a.join-role__apply:hover {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+
+.page--prose .letter-body a.join-role__apply:hover::after {
+  opacity: 1;
+  animation: navLinkStarSpin 1.15s linear infinite;
 }
 
 .page--purpose .prose-subheading {
