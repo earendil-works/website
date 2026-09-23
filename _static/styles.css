@@ -755,6 +755,7 @@ body:not(.theme-night) .nav-link::after {
 @media (prefers-reduced-motion: reduce) {
   .nav-link:hover::after,
   .page--prose .letter-body a.join-role__apply:hover::after,
+  .content-page .letter-body a.posts-action-link:hover::after,
   .page--values .disclosure-summary:is(:hover, :focus-visible)::after,
   .posts-list a:is(:hover, :focus-visible) .post-name::after {
     animation: none;
@@ -1403,7 +1404,8 @@ body:not(.theme-night) .posts-list .post-name::after {
   min-width: 10vw;
 }
 
-.page--prose .letter-body a.join-role__apply {
+.page--prose .letter-body a.join-role__apply,
+.content-page .letter-body a.posts-action-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1415,7 +1417,8 @@ body:not(.theme-night) .posts-list .post-name::after {
   transition: color 0.2s ease;
 }
 
-.page--prose .letter-body a.join-role__apply::after {
+.page--prose .letter-body a.join-role__apply::after,
+.content-page .letter-body a.posts-action-link::after {
   content: "";
   width: 15px;
   height: 15px;
@@ -1426,18 +1429,21 @@ body:not(.theme-night) .posts-list .post-name::after {
   transition: opacity 0.2s ease;
 }
 
-body:not(.theme-night) .page--prose .letter-body a.join-role__apply::after {
+body:not(.theme-night) .page--prose .letter-body a.join-role__apply::after,
+body:not(.theme-night) .content-page .letter-body a.posts-action-link::after {
   background-image: url('/static/cursor-dark.svg');
 }
 
-.content-page.page--prose .letter-body a.join-role__apply:hover {
+.content-page.page--prose .letter-body a.join-role__apply:hover,
+.content-page.page--posts .letter-body a.posts-action-link:hover {
   text-decoration-line: underline;
   text-decoration-style: dotted;
   text-decoration-thickness: 0.06em;
   text-underline-offset: 0.14em;
 }
 
-.page--prose .letter-body a.join-role__apply:hover::after {
+.page--prose .letter-body a.join-role__apply:hover::after,
+.content-page .letter-body a.posts-action-link:hover::after {
   opacity: 1;
   animation: navLinkStarSpin 1.15s linear infinite;
 }
