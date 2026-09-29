@@ -14,7 +14,7 @@ import subprocess
 import threading
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -49,6 +49,14 @@ CODE_REVEAL_STEP_DELAY_MS = 105
 SITE_URL = "https://earendil.com/"
 UPDATES_FEED_LIMIT = 10
 UPDATE_IGNORED_FILES = {"_index.md", "subscribe.md"}
+
+# Posts dated in the future are scheduled. `build` leaves them out entirely
+# (page, listings, feeds, social card, and their _static/posts/<name>/ assets)
+# until the date passes; the scheduled-posts workflow redeploys at that time.
+# `serve` includes them for previewing, as does SHOW_SCHEDULED=1.
+INCLUDE_SCHEDULED = os.environ.get("SHOW_SCHEDULED") == "1"
+# Recently published posts the workflow checks for on the live site.
+SCHEDULE_LOOKBACK = timedelta(days=2)
 
 OG_IMAGE_SIZE = (1200, 630)
 OG_TITLE_MAX_WIDTH = 1000
@@ -178,6 +186,56 @@ def parse_post_date(date_str: str) -> datetime | None:
         return parsed
     except (TypeError, ValueError):
         return None
+
+
+def build_now() -> datetime:
+    """The current time, or BUILD_NOW (ISO 8601) to test a schedule."""
+    override = os.environ.get("BUILD_NOW")
+    if not override:
+        return datetime.now(timezone.utc)
+    parsed = datetime.fromisoformat(override)
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def iter_post_dates() -> list[tuple[Path, datetime]]:
+    posts = []
+    for md_path in sorted((ROOT / "posts").glob("*.md")):
+        if md_path.name in UPDATE_IGNORED_FILES:
+            continue
+        frontmatter, _ = parse_frontmatter(md_path.read_text())
+        parsed = parse_post_date(str(frontmatter.get("date", "")))
+        if parsed:
+            posts.append((md_path, parsed))
+    return posts
+
+
+def scheduled_post_names(now: datetime) -> set[str]:
+    """File stems of the posts that are not published yet."""
+    return {md_path.stem for md_path, date in iter_post_dates() if date > now}
+
+
+def post_schedule(now: datetime) -> dict[str, Any]:
+    """Recently published and next scheduled posts, for the publish workflow."""
+    def describe(md_path: Path, date: datetime) -> dict[str, Any]:
+        slug = slug_for_path(md_path)
+        return {
+            "slug": slug,
+            "url": SITE_URL.rstrip("/") + slug,
+            "date": date.astimezone(timezone.utc).isoformat(),
+            "seconds": int((date - now).total_seconds()),
+        }
+
+    posts = iter_post_dates()
+    upcoming = sorted((date, md_path) for md_path, date in posts if date > now)
+    return {
+        "now": now.isoformat(),
+        "published": [
+            describe(md_path, date)
+            for md_path, date in posts
+            if now - SCHEDULE_LOOKBACK <= date <= now
+        ],
+        "next": describe(upcoming[0][1], upcoming[0][0]) if upcoming else None,
+    }
 
 
 def linkify_email_header(value: str) -> str:
@@ -397,14 +455,14 @@ def iter_markdown_files() -> list[Path]:
     return markdown_files
 
 
-def collect_update_entries() -> list[dict[str, Any]]:
+def collect_update_entries(hidden: set[str]) -> list[dict[str, Any]]:
     """Collect update files with metadata and rendered content."""
     updates_dir = ROOT / "posts"
     updates = []
     if not updates_dir.exists():
         return updates
     for md_path in updates_dir.glob("*.md"):
-        if md_path.name in UPDATE_IGNORED_FILES:
+        if md_path.name in UPDATE_IGNORED_FILES or md_path.stem in hidden:
             continue
         raw = md_path.read_text()
         frontmatter, body = parse_frontmatter(raw)
@@ -569,8 +627,20 @@ def build_to(build_dir: Path) -> None:
         shutil.rmtree(build_dir)
     build_dir.mkdir(parents=True, exist_ok=True)
 
+    now = build_now()
+    scheduled = scheduled_post_names(now)
+    hidden = set() if INCLUDE_SCHEDULED else scheduled
+    for name in sorted(scheduled):
+        state = "included for preview" if INCLUDE_SCHEDULED else "hidden"
+        print(f"  posts/{name}.md is scheduled ({state})", flush=True)
+
+    def ignore_scheduled_assets(directory: str, names: list[str]) -> list[str]:
+        if Path(directory) == STATIC_DIR / "posts":
+            return [name for name in names if name in hidden]
+        return []
+
     if STATIC_DIR.exists():
-        shutil.copytree(STATIC_DIR, build_dir / "static")
+        shutil.copytree(STATIC_DIR, build_dir / "static", ignore=ignore_scheduled_assets)
         static_files = list(STATIC_DIR.rglob("*"))
         static_count = sum(1 for f in static_files if f.is_file())
         print(f"  Copied {static_count} static files", flush=True)
@@ -589,7 +659,7 @@ def build_to(build_dir: Path) -> None:
     env = Environment(loader=load_from_path(str(TEMPLATES_DIR)))
 
     # Collect updates for navigation + feeds
-    update_entries = collect_update_entries()
+    update_entries = collect_update_entries(hidden)
     updates = [
         {
             "name": update["name"],
@@ -607,6 +677,8 @@ def build_to(build_dir: Path) -> None:
 
     md_files = iter_markdown_files()
     for md_path in md_files:
+        if md_path.parent == ROOT / "posts" and md_path.stem in hidden:
+            continue
         raw = md_path.read_text()
         frontmatter, body = parse_frontmatter(raw)
         template_key = frontmatter.get("template", "index")
@@ -920,6 +992,8 @@ class BackgroundBuilder:
 
 def serve() -> None:
     """Serve with file watching and live reload."""
+    global INCLUDE_SCHEDULED
+    INCLUDE_SCHEDULED = True
     background_builder = BackgroundBuilder(on_build_complete=notify_reload)
     background_builder.start()
 
@@ -942,10 +1016,12 @@ def serve() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the site.")
-    parser.add_argument("command", nargs="?", default="build", choices=["build", "serve"])
+    parser.add_argument("command", nargs="?", default="build", choices=["build", "serve", "schedule"])
     args = parser.parse_args()
 
-    if args.command == "serve":
+    if args.command == "schedule":
+        print(json.dumps(post_schedule(build_now()), indent=2))
+    elif args.command == "serve":
         serve()
     else:
         print("Building...", flush=True)

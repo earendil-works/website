@@ -1,0 +1,102 @@
+name: Publish Scheduled Posts
+
+# Posts dated in the future are left out of the build (see build.py), so a
+# scheduled post only appears once the site is rebuilt after its date. This
+# workflow does that rebuild at the right moment: when the next post is due
+# within the runner's time limit, it waits for it and dispatches the deploy
+# workflow, then checks that the post is live.
+#
+# Pushes start waiting right away. The hourly run picks up posts scheduled
+# further out and redeploys if a recently published post is missing from the
+# live site, for example because a waiting run failed.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "posts/**"
+      - "build.py"
+      - ".github/workflows/scheduled-posts.yml"
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+# A newer run knows the latest schedule, so it replaces a waiting one.
+concurrency:
+  group: scheduled-posts
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # Runs wait at most this long; later posts are left to a later run.
+      MAX_WAIT_SECONDS: 19200
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: false
+
+      - name: Read the post schedule
+        run: uv run --script build.py schedule | tee schedule.json
+
+      # On push the regular deploy is already running, so only check later.
+      - name: Redeploy if a published post is not live
+        if: github.event_name != 'push'
+        run: |
+          missing=
+          for url in $(jq -r '.published[].url' schedule.json); do
+            status=$(curl -sL -o /dev/null -w '%{http_code}' "$url")
+            echo "$url -> $status"
+            [ "$status" = 200 ] || missing=1
+          done
+          if [ -n "$missing" ]; then
+            gh workflow run deploy.yml --ref main
+            echo "Redeployed for missing posts" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Wait for the next post and deploy it
+        run: |
+          next=$(jq -c '.next' schedule.json)
+          if [ "$next" = null ]; then
+            echo "No scheduled posts."
+            exit 0
+          fi
+          url=$(jq -r '.url' <<< "$next")
+          target=$(date -u -d "$(jq -r '.date' <<< "$next")" +%s)
+          if [ $((target - $(date -u +%s))) -gt "$MAX_WAIT_SECONDS" ]; then
+            echo "$url is due $(jq -r '.date' <<< "$next"); a later run will publish it."
+            exit 0
+          fi
+
+          echo "Waiting until $(date -u -d "@$target") to publish $url"
+          while [ "$(date -u +%s)" -lt "$target" ]; do
+            sleep 20
+          done
+
+          gh workflow run deploy.yml --ref main
+          echo "Dispatched deploy for $url"
+
+          # GitHub Pages takes a moment to build, deploy, and expire caches.
+          for attempt in $(seq 1 40); do
+            sleep 30
+            status=$(curl -sL -o /dev/null -w '%{http_code}' "$url")
+            echo "$url -> $status"
+            if [ "$status" = 200 ]; then
+              echo "Published $url" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done
+          echo "::error::$url is not live 20 minutes after deploying"
+          exit 1
