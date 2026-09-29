@@ -5,7 +5,7 @@ template: updates
 aria_label: Earendil posts
 from: Earendil Engineering <rfc@earendil.com>
 to: You
-date: Tue, 29 Sep 2026 19:30:00 +0000
+date: Tue, 29 Sep 2026 19:30:00 +0200
 subject: "“You Said No MCP!”"
 ---
 
