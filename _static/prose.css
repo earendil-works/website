@@ -468,6 +468,259 @@
   }
 }
 
+/* --- Pi session replays ------------------------------------------------- */
+
+/* A terminal-like panel replaying a Pi session (see script.js). The colors
+   are Pi's own light and dark TUI themes, so the replay reads like Pi. The
+   chat area has a fixed height and scrolls like a terminal, so the page does
+   not shift while the replay grows. */
+
+.pi-replay {
+  --pi-bg: #f7f6f6;
+  --pi-text: #3b3f41;
+  --pi-muted: #677176;
+  --pi-dim: #879095;
+  --pi-accent: #7459b4;
+  --pi-success: #337e58;
+  --pi-warning: #8f6802;
+  --pi-border: #a2b7e0;
+  --pi-user-bg: #dfe7ec;
+  --pi-tool-pending-bg: #e4e5e6;
+  --pi-tool-success-bg: #dee9e1;
+  --pi-md-code: #7459b4;
+  --pi-syn-keyword: #2f7899;
+  --pi-syn-function: #8f6802;
+  --pi-syn-string: #a45417;
+  --pi-syn-number: #337e58;
+  --pi-syn-comment: #677176;
+  --pi-syn-punctuation: #677176;
+}
+
+.theme-night .pi-replay {
+  --pi-bg: #21252c;
+  --pi-text: #dee0e1;
+  --pi-muted: #9da5a9;
+  --pi-dim: #7e888e;
+  --pi-accent: #a798d7;
+  --pi-success: #68b78d;
+  --pi-warning: #cd9a22;
+  --pi-border: #6185cc;
+  --pi-user-bg: #213b49;
+  --pi-tool-pending-bg: #34383a;
+  --pi-tool-success-bg: #254131;
+  --pi-md-code: #a798d7;
+  --pi-syn-keyword: #69add0;
+  --pi-syn-function: #cd9a22;
+  --pi-syn-string: #de8d5a;
+  --pi-syn-number: #68b78d;
+  --pi-syn-comment: #9da5a9;
+  --pi-syn-punctuation: #9da5a9;
+}
+
+.prose .pi-replay__fallback {
+  white-space: pre-wrap;
+}
+
+.pi-replay__terminal {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px 10px;
+  border: 1px solid var(--prose-hr);
+  border-radius: 4px;
+  background: var(--pi-bg);
+  color: var(--pi-text);
+  font-family: var(--mono-font);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.pi-replay__chat {
+  height: 30rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pi-dim) transparent;
+}
+
+.pi-replay__chat > * + * {
+  margin-top: 1.5em;
+}
+
+.pi-replay__user {
+  padding: 0.75em 1ch;
+  background: var(--pi-user-bg);
+}
+
+.pi-replay__assistant {
+  padding: 0 1ch;
+}
+
+.pi-replay__tool {
+  padding: 0.75em 1ch;
+  background: var(--pi-tool-pending-bg);
+  transition: background-color 400ms ease-out;
+}
+
+.pi-replay__tool.is-success {
+  background: var(--pi-tool-success-bg);
+}
+
+.pi-replay__tool-title {
+  font-weight: 700;
+}
+
+.prose .pi-replay__code,
+.prose .pi-replay__output {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.prose .pi-replay__output {
+  margin-top: 1.5em;
+  color: var(--pi-muted);
+}
+
+.pi-replay__calls {
+  margin-top: 1.5em;
+  overflow-wrap: anywhere;
+}
+
+.pi-replay__call {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pi-replay__muted { color: var(--pi-muted); }
+.pi-replay__dim { color: var(--pi-dim); }
+.pi-replay__ok { color: var(--pi-success); }
+.pi-replay__running { color: var(--pi-warning); }
+.pi-replay__syn-k { color: var(--pi-syn-keyword); }
+.pi-replay__syn-f { color: var(--pi-syn-function); }
+.pi-replay__syn-s { color: var(--pi-syn-string); }
+.pi-replay__syn-n { color: var(--pi-syn-number); }
+.pi-replay__syn-c { color: var(--pi-syn-comment); }
+.pi-replay__syn-p { color: var(--pi-syn-punctuation); }
+
+.prose .pi-replay__answer :where(p, ul) {
+  margin: 0;
+}
+
+.prose .pi-replay__answer > * + * {
+  margin-top: 1em;
+}
+
+.prose .pi-replay__answer ul {
+  padding-inline-start: 2ch;
+  list-style: none;
+}
+
+.prose .pi-replay__answer li {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.prose .pi-replay__answer li::before {
+  content: "-";
+  position: absolute;
+  left: -2ch;
+  color: var(--pi-accent);
+}
+
+.prose .pi-replay__answer b {
+  font-weight: 700;
+}
+
+.prose .pi-replay__answer code {
+  color: var(--pi-md-code);
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.prose .pi-replay__answer code::before,
+.prose .pi-replay__answer code::after {
+  content: none;
+}
+
+.pi-replay__status {
+  margin-top: 0.75em;
+  padding: 0 1ch;
+  visibility: hidden;
+}
+
+.pi-replay__status.is-active {
+  visibility: visible;
+}
+
+.pi-replay__spinner {
+  color: var(--pi-accent);
+}
+
+.pi-replay__editor {
+  margin-top: 0.75em;
+  padding: 0.25em 1ch;
+  border-block: 1px solid var(--pi-border);
+  min-height: 1.5em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pi-replay__cursor {
+  background: var(--pi-text);
+  animation: pi-replay-blink 1s steps(1, end) infinite;
+}
+
+@keyframes pi-replay-blink {
+  50% { background: transparent; }
+}
+
+.pi-replay__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 2ch;
+  margin-top: 0.5em;
+  color: var(--pi-dim);
+}
+
+.pi-replay__button {
+  margin-inline-start: 1ch;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .pi-replay__terminal {
+    padding-inline: 10px;
+    font-size: 0.6875rem;
+  }
+
+  .pi-replay__chat {
+    height: 26rem;
+  }
+}
+
+@media print, (prefers-reduced-motion: reduce) {
+  .pi-replay__cursor {
+    animation: none;
+  }
+}
+
 /* --- Tables -------------------------------------------------------------- */
 
 .prose table {
