@@ -716,6 +716,12 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         except (ConnectionResetError, BrokenPipeError):
             pass
 
+    def end_headers(self):
+        # Revalidate every asset so live reloads also pick up @import-ed CSS.
+        if self.path != "/sse":
+            self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
+
     def do_GET(self):
         try:
             if self.path == "/sse":
