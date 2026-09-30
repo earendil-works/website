@@ -10,7 +10,7 @@ subject: "“You Said No MCP!”"
 ---
 
 If you went to pi.dev in the past, you found a proud declaration that Pi does
-not support MCP. If you listen to podcasts where we talked about Pi, you will
+not support [MCP](https://en.wikipedia.org/wiki/Model_Context_Protocol). If you listen to podcasts where we talked about Pi, you will
 have found more than one dismissive statement about MCP from us. Including [a
 post by Mario about
 it](https://mariozechner.at/posts/2025-11-02-what-if-you-dont-need-mcp/).  And
