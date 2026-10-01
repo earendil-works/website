@@ -138,7 +138,9 @@ a:hover {
    LAYER 0: Canvas Background
    ========================================================================== */
 
-canvas {
+/* Scoped to the shader canvas: other canvases (like the terminal recording
+   player's) must not become hidden, fixed, full-viewport layers. */
+#canvas {
   display: block;
   width: 100vw;
   height: 100vh;
@@ -152,12 +154,12 @@ canvas {
 }
 
 @supports (height: 100dvh) {
-  canvas {
+  #canvas {
     height: 100dvh;
   }
 }
 
-canvas.shader-ready { 
+#canvas.shader-ready {
   opacity: 1; 
 }
 
