@@ -795,8 +795,6 @@ commit, small enough to send over a socket. If you prefer the coding agent's
 familiar events, `watchEvents()` turns the commits into those, at the cost of
 more bytes on the wire.
 
-TBD: Christian's Cloudflare demo video.
-
 ## Try it
 
 You can try Pi Durable today. Pi Durable is experimental, and the API might
