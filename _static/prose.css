@@ -15,6 +15,7 @@
   --prose-code: var(--color-text-day);
   --prose-pre-code: rgba(244, 242, 238, 0.9);
   --prose-pre-bg: #1c1b1a;
+  --prose-code-muted: rgba(25, 24, 22, 0.55);
   --prose-th-borders: rgba(39, 37, 34, 0.3);
   --prose-td-borders: rgba(39, 37, 34, 0.14);
 
@@ -39,6 +40,7 @@
   --prose-code: #fff;
   --prose-pre-code: rgba(240, 240, 240, 0.8);
   --prose-pre-bg: rgb(0 0 0 / 50%);
+  --prose-code-muted: rgba(240, 240, 240, 0.5);
   --prose-th-borders: rgba(244, 242, 238, 0.3);
   --prose-td-borders: rgba(244, 242, 238, 0.14);
 }
@@ -390,11 +392,14 @@
   overflow-x: auto;
   scrollbar-width: thin;
   font-weight: 400;
-  font-size: var(--text-meta, 0.9375rem);
-  line-height: 1.7142857;
+  /* Departure Mono is drawn on an 11px pixel grid (50 of 550 units per em),
+     so 13px is slightly soft. We accept that for readability; the line
+     height is still a whole number of pixels to avoid extra vertical blur. */
+  font-size: 13px;
+  line-height: 24px;
   font-family: var(--mono-font);
-  margin-top: 1.7142857em;
-  margin-bottom: 1.7142857em;
+  margin-top: 1.625rem;
+  margin-bottom: 1.625rem;
   padding-block: 1.5rem;
   padding-inline: 0;
   border-block: 1px solid var(--prose-hr);
@@ -428,6 +433,29 @@
 .prose pre code::before,
 .prose pre code::after {
   content: none;
+}
+
+/* --- Syntax highlighting ------------------------------------------------- */
+
+/* Rendered at build time (see build.py). Intentionally minimal: text color,
+   bold, italic, and a single gray. Comments are gray italic, literals gray,
+   keywords bold. */
+
+.prose pre .hl-c {
+  color: var(--prose-code-muted);
+  font-style: italic;
+}
+
+.prose pre .hl-s {
+  color: var(--prose-code-muted);
+}
+
+/* Departure Mono has no bold cut, and the browser's synthetic bold is a
+   sub-pixel smear that shows up on some words and not others. Thicken the
+   strokes by one device pixel on 2x screens instead; anything near a full
+   font pixel fills the one-pixel counters of m and w. */
+.prose pre .hl-k {
+  text-shadow: 0.5px 0 0 currentColor;
 }
 
 /* --- Marked code reveals ------------------------------------------------- */
