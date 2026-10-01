@@ -368,7 +368,7 @@ plus `CH` for the latest request's cache-hit rate.  The `/session` command gives
 a fuller view: total cached and uncached input, cumulative hit rate, cost, and
 an estimate of tokens and dollars re-billed by [significant cache misses](https://github.com/earendil-works/pi/blob/34f3719a942ecbf3e6d23e67098f47ba2867de0a/packages/coding-agent/src/core/cache-stats.ts#L50-L90).
 
-```
+```text
 ◊Messages
 ◊Total: 178
 ◊User: 6

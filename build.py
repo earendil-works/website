@@ -1,11 +1,12 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["minijinja", "pyyaml", "markdown", "watchdog", "pillow", "pymdown-extensions==11.0.2"]
+# dependencies = ["minijinja", "pyyaml", "markdown", "watchdog", "pillow", "pymdown-extensions==11.0.2", "pygments"]
 # ///
 from __future__ import annotations
 
 import argparse
+import html as html_lib
 import json
 import os
 import re
@@ -30,6 +31,9 @@ import markdown as md_lib
 
 from markdown.treeprocessors import Treeprocessor
 from markdown.util import AtomicString
+from pygments.lexers import get_lexer_by_name
+from pygments.token import Comment, Keyword, Literal, Name, Operator, String, Token
+from pygments.util import ClassNotFound
 
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "_templates"
@@ -42,6 +46,9 @@ CODE_BLOCK_RE = re.compile(
     r"<pre><code(?P<attrs>[^>]*)>(?P<body>.*?)</code></pre>",
     re.DOTALL,
 )
+CODE_LANGUAGE_RE = re.compile(r'\bclass="(?:[^"]*\s)?language-(?P<lang>[\w.+#-]+)')
+# Languages that are shown verbatim, even though Pygments may know them.
+PLAIN_CODE_LANGUAGES = {"text", "plain", "plaintext", "txt", "none"}
 CODE_REVEAL_MARKER = "◊"
 CODE_REVEAL_INITIAL_DELAY_MS = 120
 CODE_REVEAL_STEP_DELAY_MS = 105
@@ -88,19 +95,102 @@ def parse_frontmatter(raw: str) -> Tuple[dict[str, Any], str]:
     return data, body
 
 
-def _render_code_reveals(html: str) -> str:
-    """Turn ◊-delimited code chunks into viewport-reveal steps.
+def _code_token_class(ttype: Any) -> str | None:
+    """Map a Pygments token to one of the few highlight styles we use.
 
-    The marker only has meaning inside a fenced code block. Text before the
+    The palette is deliberately tiny: comments are gray italic, literals are
+    gray, keywords are bold, and everything else stays in the text color.
+    """
+    if ttype in Comment:
+        return "hl-c"
+    if ttype in Keyword.Constant:
+        return "hl-s"
+    if ttype in Keyword.Type:
+        # Lexers guess these (TypeScript tags `cwd` in `{ cwd: cwd }`).
+        return None
+    if ttype in Keyword or ttype in Operator.Word or ttype in Name.Decorator:
+        return "hl-k"
+    if ttype in String or ttype in Literal:
+        return "hl-s"
+    return None
+
+
+def _highlight_code(code: str, lang: str | None) -> list[tuple[str | None, str]]:
+    """Split code into (class, text) runs. Unknown languages stay plain."""
+    if not lang or lang.lower() in PLAIN_CODE_LANGUAGES:
+        return [(None, code)]
+    try:
+        lexer = get_lexer_by_name(lang, stripnl=False, ensurenl=False)
+    except ClassNotFound:
+        return [(None, code)]
+    runs: list[tuple[str | None, str]] = []
+    for ttype, value in lexer.get_tokens(code):
+        if not value:
+            continue
+        cls = _code_token_class(ttype) if ttype is not Token.Error else None
+        if runs and runs[-1][0] == cls:
+            runs[-1] = (cls, runs[-1][1] + value)
+        else:
+            runs.append((cls, value))
+    # Pygments may normalize the input (tabs, line endings); never lose text.
+    if "".join(value for _, value in runs) != code:
+        return [(None, code)]
+    return runs
+
+
+def _render_runs(runs: list[tuple[str | None, str]]) -> str:
+    parts = []
+    for cls, value in runs:
+        escaped = html_lib.escape(value, quote=False)
+        parts.append(f'<span class="{cls}">{escaped}</span>' if cls else escaped)
+    return "".join(parts)
+
+
+def _render_code_blocks(html: str) -> str:
+    """Highlight fenced code server-side and apply ◊ code reveals.
+
+    Highlighting uses Pygments for the fence's language (``language-*``
+    class) and emits a small set of ``hl-*`` classes styled in prose.css.
+
+    The ◊ marker only has meaning inside a fenced code block. Text before the
     first marker stays visible; each marked chunk becomes the next reveal.
     Without the site CSS or JavaScript all chunks remain ordinary code text.
+    Markers are removed before lexing so they never disturb the tokenizer.
     """
     def replace_code_block(match: re.Match[str]) -> str:
+        attrs = match.group("attrs")
         body = match.group("body")
-        if CODE_REVEAL_MARKER not in body:
+        lang_match = CODE_LANGUAGE_RE.search(attrs)
+        lang = lang_match.group("lang") if lang_match else None
+        has_reveals = CODE_REVEAL_MARKER in body
+        if lang is None and not has_reveals:
+            # Not a fenced block we own (e.g. raw HTML); leave it untouched.
             return match.group(0)
 
-        chunks = body.split(CODE_REVEAL_MARKER)
+        if lang is None:
+            # Unlabeled code: keep the already escaped body as-is.
+            chunks = body.split(CODE_REVEAL_MARKER)
+        else:
+            raw_chunks = html_lib.unescape(body).split(CODE_REVEAL_MARKER)
+            runs = iter(_highlight_code("".join(raw_chunks), lang))
+            # Cut the highlighted runs at the marker offsets so every reveal
+            # step wraps whole spans and the markup stays well nested.
+            chunks = []
+            pending: tuple[str | None, str] | None = None
+            for raw_chunk in raw_chunks:
+                remaining = len(raw_chunk)
+                chunk_runs: list[tuple[str | None, str]] = []
+                while remaining:
+                    cls, value = pending if pending is not None else next(runs)
+                    take = value[:remaining]
+                    chunk_runs.append((cls, take))
+                    remaining -= len(take)
+                    pending = (cls, value[len(take):]) if len(take) < len(value) else None
+                chunks.append(_render_runs(chunk_runs))
+
+        if not has_reveals:
+            return f"<pre><code{attrs}>{chunks[0]}</code></pre>"
+
         rendered_chunks = [chunks[0]]
         reveal_index = 0
         for chunk in chunks[1:]:
@@ -112,7 +202,6 @@ def _render_code_reveals(html: str) -> str:
             )
             reveal_index += 1
 
-        attrs = match.group("attrs")
         return (
             f'<pre class="code-reveal" data-code-reveal data-reveal-steps="{reveal_index}">'
             f"<code{attrs}>{''.join(rendered_chunks)}</code></pre>"
@@ -130,6 +219,22 @@ def copy_math_assets(static_dir: Path) -> None:
     shutil.copy2(katex_dir / "dist" / "katex.min.css", target)
     shutil.copy2(katex_dir / "LICENSE", target)
     shutil.copytree(katex_dir / "dist" / "fonts", target / "fonts", dirs_exist_ok=True)
+
+
+def copy_asciinema_player_assets(static_dir: Path) -> None:
+    """Vendor the standalone asciinema-player bundle for terminal recordings.
+
+    script.js loads it lazily, only on pages that embed a recording.
+    """
+    player_dir = ROOT / "node_modules" / "asciinema-player"
+    bundle_dir = player_dir / "dist" / "bundle"
+    if not (bundle_dir / "asciinema-player.min.js").is_file():
+        raise RuntimeError("asciinema-player is not installed. Run `npm ci` before building.")
+    target = static_dir / "asciinema-player"
+    target.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(bundle_dir / "asciinema-player.min.js", target)
+    shutil.copy2(bundle_dir / "asciinema-player.css", target)
+    shutil.copy2(player_dir / "LICENSE", target)
 
 
 class KatexTreeprocessor(Treeprocessor):
@@ -173,7 +278,7 @@ def render_markdown(text: str) -> str:
     )
     # After inline processing (20), before prettification (10).
     md.treeprocessors.register(KatexTreeprocessor(md), "katex", 15)
-    return _render_code_reveals(md.convert(text))
+    return _render_code_blocks(md.convert(text))
 
 
 def parse_post_date(date_str: str) -> datetime | None:
@@ -646,6 +751,7 @@ def build_to(build_dir: Path) -> None:
         print(f"  Copied {static_count} static files", flush=True)
 
     copy_math_assets(build_dir / "static")
+    copy_asciinema_player_assets(build_dir / "static")
 
     if LOCALES_DIR.exists():
         shutil.copytree(LOCALES_DIR, build_dir / "locales")
