@@ -824,6 +824,140 @@
   text-align: start;
 }
 
+/* --- Terminal recordings ------------------------------------------------ */
+
+/* asciinema recordings embedded as <figure data-asciicast> (see script.js).
+   The chapter list is the no-JS fallback; the enhanced figure shows the
+   player and a caption for the current chapter instead. Recordings use Pi's
+   dark TUI theme, so the terminal stays dark in both site themes, with
+   Ghostty's Rapture colors for the terminal itself. */
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/static/fonts/CommitMono-400-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/static/fonts/CommitMono-400-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/static/fonts/CommitMono-700-Regular.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/static/fonts/CommitMono-700-Italic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+.ap-player.asciinema-player-theme-pi {
+  /* Ghostty's "Rapture" theme. Two classes to beat the player's own
+     .ap-player defaults, which load later. */
+  --term-color-foreground: #c0c9e5;
+  --term-color-background: #111e2a;
+  --term-color-0: #000000;
+  --term-color-1: #fc644d;
+  --term-color-2: #7afde1;
+  --term-color-3: #fff09b;
+  --term-color-4: #6c9bf5;
+  --term-color-5: #ff4fa1;
+  --term-color-6: #64e0ff;
+  --term-color-7: #c0c9e5;
+  --term-color-8: #304b66;
+  --term-color-9: #fc644d;
+  --term-color-10: #7afde1;
+  --term-color-11: #fff09b;
+  --term-color-12: #6c9bf5;
+  --term-color-13: #ff4fa1;
+  --term-color-14: #64e0ff;
+  --term-color-15: #ffffff;
+}
+
+.asciicast.is-enhanced .asciicast__chapters {
+  display: none;
+}
+
+/* Reserve the 80x24 terminal's shape while the player loads. */
+.asciicast__player {
+  min-height: 2rem;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #111e2a;
+}
+
+.asciicast__player:empty {
+  aspect-ratio: 80 / 40;
+}
+
+.asciicast__player .ap-wrapper,
+.asciicast__player .ap-player {
+  border-radius: 0;
+}
+
+/* Room for two lines, so a longer caption does not move the page. */
+.page--post-detail .post-figure .asciicast__caption {
+  min-height: 2.7em;
+  margin-top: 10px;
+}
+
+/* Shown while playback holds at a chapter: a short bar that fills to the
+   right until playback continues. */
+.asciicast__countdown {
+  display: inline-block;
+  position: relative;
+  width: 2em;
+  height: 2px;
+  margin-inline-start: 0.6em;
+  vertical-align: middle;
+  overflow: hidden;
+  background: var(--prose-hr);
+  visibility: hidden;
+}
+
+.asciicast__countdown::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.asciicast.is-counting-down .asciicast__countdown {
+  visibility: visible;
+}
+
+.asciicast.is-counting-down .asciicast__countdown::after {
+  animation: asciicast-countdown var(--asciicast-pause, 2500ms) linear forwards;
+}
+
+@keyframes asciicast-countdown {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asciicast.is-counting-down .asciicast__countdown::after {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
+
 /* --- Rhythm guards --------------------------------------------------------
    Collapse double spacing: nothing above the first child, nothing below
    the last, and no top margin on whatever follows a heading or rule. */

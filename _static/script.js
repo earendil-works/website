@@ -831,6 +831,239 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
   document.body.addEventListener('htmx:afterSettle', initPiReplays);
 })();
 
+// Terminal recordings (asciinema). A figure lists its chapters in an <ol>,
+// which is the no-JS fallback. With JavaScript, the list becomes an
+// asciinema-player with a caption below it: playback pauses at every chapter,
+// shows the chapter's caption, and continues after a short countdown. The
+// player is only downloaded on pages that embed a recording.
+(function() {
+  var PLAYER_JS = '/static/asciinema-player/asciinema-player.min.js';
+  var PLAYER_CSS = '/static/asciinema-player/asciinema-player.css';
+  var FONT_FAMILY = "'Commit Mono', ui-monospace, monospace";
+  var CHAPTER_PAUSE_MS = 2500;
+  var playerLoad = null;
+  var castObserver = null;
+
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  // htmx's head-support extension makes <head> match each page it navigates
+  // to and would drop these injected tags; hx-preserve keeps them.
+  function loadPlayerCss() {
+    var existing = document.querySelector('link[data-asciinema-player]');
+    if (existing) return existing.__loaded;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = PLAYER_CSS;
+    link.setAttribute('hx-preserve', 'true');
+    link.setAttribute('data-asciinema-player', '');
+    link.__loaded = new Promise(function(resolve, reject) {
+      link.onload = resolve;
+      link.onerror = function(error) {
+        link.remove(); // allow a retry
+        reject(error);
+      };
+    });
+    document.head.appendChild(link);
+    return link.__loaded;
+  }
+
+  function loadPlayer() {
+    // The player renders unstyled without its CSS, so make sure it is still
+    // in <head> even when the script itself is already loaded.
+    var css = loadPlayerCss();
+    if (playerLoad) {
+      return Promise.all([playerLoad, css]).then(function(results) {
+        return results[0];
+      });
+    }
+    var js = new Promise(function(resolve, reject) {
+      var script = document.createElement('script');
+      script.setAttribute('hx-preserve', 'true');
+      script.src = PLAYER_JS;
+      script.onload = function() { resolve(window.AsciinemaPlayer); };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+    // The player measures the font when it is created, so load it first.
+    var fonts = document.fonts ? Promise.all([
+      document.fonts.load('400 15px "Commit Mono"'),
+      document.fonts.load('700 15px "Commit Mono"'),
+      document.fonts.load('italic 400 15px "Commit Mono"')
+    ]).catch(function() {}) : Promise.resolve();
+    playerLoad = Promise.all([js, css, fonts]).then(function(results) {
+      return results[0];
+    });
+    playerLoad.catch(function() { playerLoad = null; });
+    return playerLoad;
+  }
+
+  // "1:14.8" -> 74.8
+  function parseTime(value) {
+    return String(value || '0').split(':').reduce(function(total, part) {
+      return total * 60 + parseFloat(part || '0');
+    }, 0);
+  }
+
+  function node(tag, className) {
+    var el = document.createElement(tag);
+    el.className = className;
+    return el;
+  }
+
+  function Cast(figure, list) {
+    this.figure = figure;
+    this.list = list;
+    this.chapters = Array.prototype.map.call(list.children, function(item) {
+      return {
+        time: parseTime(item.getAttribute('data-start')),
+        label: item.textContent.trim(),
+        html: item.innerHTML
+      };
+    });
+    this.chapter = -1;
+    this.timer = null;
+    this.player = null;
+    this.started = false;
+
+    this.mount = node('div', 'asciicast__player');
+    this.caption = node('figcaption', 'asciicast__caption');
+    this.captionText = node('span', 'asciicast__caption-text');
+    this.countdown = node('span', 'asciicast__countdown');
+    this.countdown.setAttribute('aria-hidden', 'true');
+    this.countdown.style.setProperty('--asciicast-pause', CHAPTER_PAUSE_MS + 'ms');
+    this.caption.setAttribute('aria-live', 'polite');
+    this.caption.appendChild(this.captionText);
+    this.caption.appendChild(this.countdown);
+
+    figure.insertBefore(this.mount, list);
+    figure.appendChild(this.caption);
+    figure.classList.add('is-enhanced');
+    this.setChapter(0);
+  }
+
+  Cast.prototype.setChapter = function(index) {
+    index = Math.max(0, Math.min(index, this.chapters.length - 1));
+    if (index === this.chapter) return;
+    this.chapter = index;
+    this.captionText.innerHTML = this.chapters[index].html;
+  };
+
+  Cast.prototype.chapterAt = function(time) {
+    var index = 0;
+    for (var i = 0; i < this.chapters.length; i++) {
+      if (this.chapters[i].time <= time + 0.05) index = i;
+    }
+    return index;
+  };
+
+  Cast.prototype.syncChapter = function() {
+    var self = this;
+    Promise.resolve(this.player.getCurrentTime()).then(function(time) {
+      self.setChapter(self.chapterAt(time || 0));
+    });
+  };
+
+  // Hold for a moment, with an indicator sliding to the right, then continue.
+  Cast.prototype.continueAfterPause = function() {
+    var self = this;
+    this.cancelCountdown();
+    void this.countdown.offsetWidth; // restart the CSS animation
+    this.figure.classList.add('is-counting-down');
+    this.timer = window.setTimeout(function() {
+      self.timer = null;
+      self.figure.classList.remove('is-counting-down');
+      if (self.figure.isConnected) self.player.play();
+    }, CHAPTER_PAUSE_MS);
+  };
+
+  Cast.prototype.cancelCountdown = function() {
+    if (this.timer !== null) window.clearTimeout(this.timer);
+    this.timer = null;
+    this.figure.classList.remove('is-counting-down');
+  };
+
+  Cast.prototype.create = function(AsciinemaPlayer) {
+    var self = this;
+    var poster = this.figure.getAttribute('data-asciicast-poster');
+    var options = {
+      fit: 'width',
+      theme: 'pi',
+      terminalFontFamily: FONT_FAMILY,
+      preload: true,
+      markers: this.chapters.slice(1).map(function(chapter) {
+        return [chapter.time, chapter.label];
+      }),
+      pauseOnMarkers: true
+    };
+    if (poster) options.poster = 'npt:' + poster;
+    this.player = AsciinemaPlayer.create(
+      this.figure.getAttribute('data-asciicast'), this.mount, options
+    );
+
+    this.player.addEventListener('marker', function(event) {
+      self.setChapter(event.index + 1);
+      self.continueAfterPause();
+    });
+    // Manual play, seeking, or a replay after the end: drop any pending
+    // countdown and show the caption for wherever playback is now.
+    this.player.addEventListener('play', function() {
+      self.cancelCountdown();
+      self.syncChapter();
+    });
+    this.player.addEventListener('seeked', function() {
+      self.syncChapter();
+    });
+  };
+
+  Cast.prototype.start = function() {
+    if (this.started || !this.player) return;
+    this.started = true;
+    if (castObserver) castObserver.unobserve(this.figure);
+    if (!prefersReducedMotion()) this.continueAfterPause();
+  };
+
+  function getCastObserver() {
+    if (castObserver || typeof IntersectionObserver !== 'function') return castObserver;
+    castObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && entry.target.__asciicast) {
+          entry.target.__asciicast.start();
+        }
+      });
+    }, { threshold: 0.6 });
+    return castObserver;
+  }
+
+  function initAsciicasts() {
+    document.querySelectorAll('[data-asciicast]').forEach(function(figure) {
+      if (figure.dataset.asciicastInitialized) return;
+      var list = figure.querySelector('.asciicast__chapters');
+      if (!list || !list.children.length) return;
+      figure.dataset.asciicastInitialized = 'true';
+      var cast = new Cast(figure, list);
+      loadPlayer()
+        .then(function(AsciinemaPlayer) {
+          if (!figure.isConnected) return;
+          cast.create(AsciinemaPlayer);
+          figure.__asciicast = cast;
+          var observer = getCastObserver();
+          if (observer) observer.observe(figure); else cast.start();
+        })
+        .catch(function() {
+          // Fall back to the chapter list.
+          figure.classList.remove('is-enhanced');
+          cast.mount.remove();
+          cast.caption.remove();
+        });
+    });
+  }
+
+  initAsciicasts();
+  document.body.addEventListener('htmx:afterSettle', initAsciicasts);
+})();
+
 // WebGL ocean rendering (runs once)
 (function() {
 if (window.__earendilInitialized) return;

@@ -221,6 +221,22 @@ def copy_math_assets(static_dir: Path) -> None:
     shutil.copytree(katex_dir / "dist" / "fonts", target / "fonts", dirs_exist_ok=True)
 
 
+def copy_asciinema_player_assets(static_dir: Path) -> None:
+    """Vendor the standalone asciinema-player bundle for terminal recordings.
+
+    script.js loads it lazily, only on pages that embed a recording.
+    """
+    player_dir = ROOT / "node_modules" / "asciinema-player"
+    bundle_dir = player_dir / "dist" / "bundle"
+    if not (bundle_dir / "asciinema-player.min.js").is_file():
+        raise RuntimeError("asciinema-player is not installed. Run `npm ci` before building.")
+    target = static_dir / "asciinema-player"
+    target.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(bundle_dir / "asciinema-player.min.js", target)
+    shutil.copy2(bundle_dir / "asciinema-player.css", target)
+    shutil.copy2(player_dir / "LICENSE", target)
+
+
 class KatexTreeprocessor(Treeprocessor):
     def run(self, root: ElementTree.Element) -> None:
         # Arithmatex has already handled delimiters, escapes, and code blocks.
@@ -735,6 +751,7 @@ def build_to(build_dir: Path) -> None:
         print(f"  Copied {static_count} static files", flush=True)
 
     copy_math_assets(build_dir / "static")
+    copy_asciinema_player_assets(build_dir / "static")
 
     if LOCALES_DIR.exists():
         shutil.copytree(LOCALES_DIR, build_dir / "locales")
