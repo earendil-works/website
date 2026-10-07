@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := build
 .PHONY: build serve
 
-# Install pinned npm dependencies (KaTeX, asciinema-player) on first use and
+# Install pinned npm dependencies (KaTeX) on first use and
 # after dependency updates.
 node_modules/.installed: package.json package-lock.json
 	npm ci --ignore-scripts --no-audit --no-fund

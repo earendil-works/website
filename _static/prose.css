@@ -908,6 +908,116 @@
   border-radius: 0;
 }
 
+.asciicast.is-enhanced .asciicast__fallback {
+  display: none;
+}
+
+/* Theme picker below the player (figures with data-asciicast-themes). Each
+   swatch is a tiny terminal: the theme's background with Pi's accent, text
+   and success colors. */
+.page--post-detail .post-figure .asciicast__themes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 28px;
+  margin-top: 16px;
+}
+
+.asciicast__theme-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.asciicast__theme-heading {
+  margin-inline-end: 4px;
+  color: var(--prose-captions);
+  font-size: 0.8em;
+}
+
+.asciicast__theme {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--swatch-bg);
+  box-shadow: inset 0 0 0 1px rgb(128 128 128 / 30%);
+  cursor: pointer;
+  appearance: none;
+}
+
+.asciicast__theme[aria-checked="true"] {
+  outline: 2px solid var(--prose-body);
+  outline-offset: 2px;
+}
+
+.asciicast__theme:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 2px;
+}
+
+.asciicast__swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 18px;
+}
+
+.asciicast__swatch-line {
+  height: 2px;
+  border-radius: 1px;
+}
+
+.asciicast__swatch-line:nth-child(1) {
+  width: 55%;
+}
+
+.asciicast__swatch-line:nth-child(3) {
+  width: 35%;
+}
+
+/* Phones: the label above the swatches, and swatches small enough that a
+   row of twelve fits. */
+@media (max-width: 600px) {
+  .page--post-detail .post-figure .asciicast__themes {
+    row-gap: 12px;
+  }
+
+  .asciicast__theme-group {
+    gap: 5px;
+  }
+
+  .asciicast__theme-heading {
+    flex-basis: 100%;
+    margin-inline-end: 0;
+    text-align: center;
+  }
+
+  .asciicast__theme {
+    width: 22px;
+    height: 18px;
+    border-radius: 3px;
+  }
+
+  .asciicast__swatch {
+    gap: 2px;
+    width: 13px;
+  }
+}
+
+.page--post-detail .post-figure .asciicast__theme-current {
+  min-height: 1.35em;
+  margin-top: 10px;
+}
+
 /* Room for two lines, so a longer caption does not move the page. */
 .page--post-detail .post-figure .asciicast__caption {
   min-height: 2.7em;

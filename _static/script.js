@@ -836,6 +836,9 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 // asciinema-player with a caption below it: playback pauses at every chapter,
 // shows the chapter's caption, and continues after a short countdown. The
 // player is only downloaded on pages that embed a recording.
+//
+// Figures without chapters just play. data-asciicast-loop loops playback, and
+// data-asciicast-themes adds a theme picker below the player (see ThemePicker).
 (function() {
   var PLAYER_JS = '/static/asciinema-player/asciinema-player.min.js';
   var PLAYER_CSS = '/static/asciinema-player/asciinema-player.css';
@@ -899,6 +902,14 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     return playerLoad;
   }
 
+  function loadThemes(url) {
+    if (!url) return Promise.resolve(null);
+    return fetch(url).then(function(response) {
+      if (!response.ok) throw new Error('Failed to load ' + url);
+      return response.json();
+    });
+  }
+
   // "1:14.8" -> 74.8
   function parseTime(value) {
     return String(value || '0').split(':').reduce(function(total, part) {
@@ -914,36 +925,40 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
   function Cast(figure, list) {
     this.figure = figure;
-    this.list = list;
-    this.chapters = Array.prototype.map.call(list.children, function(item) {
+    this.chapters = list ? Array.prototype.map.call(list.children, function(item) {
       return {
         time: parseTime(item.getAttribute('data-start')),
         label: item.textContent.trim(),
         html: item.innerHTML
       };
-    });
+    }) : [];
     this.chapter = -1;
     this.timer = null;
     this.player = null;
     this.started = false;
+    this.caption = null;
 
     this.mount = node('div', 'asciicast__player');
-    this.caption = node('figcaption', 'asciicast__caption');
-    this.captionText = node('span', 'asciicast__caption-text');
-    this.countdown = node('span', 'asciicast__countdown');
-    this.countdown.setAttribute('aria-hidden', 'true');
-    this.countdown.style.setProperty('--asciicast-pause', CHAPTER_PAUSE_MS + 'ms');
-    this.caption.setAttribute('aria-live', 'polite');
-    this.caption.appendChild(this.captionText);
-    this.caption.appendChild(this.countdown);
+    figure.insertBefore(this.mount, figure.firstChild);
 
-    figure.insertBefore(this.mount, list);
-    figure.appendChild(this.caption);
+    if (this.chapters.length) {
+      this.caption = node('figcaption', 'asciicast__caption');
+      this.captionText = node('span', 'asciicast__caption-text');
+      this.countdown = node('span', 'asciicast__countdown');
+      this.countdown.setAttribute('aria-hidden', 'true');
+      this.countdown.style.setProperty('--asciicast-pause', CHAPTER_PAUSE_MS + 'ms');
+      this.caption.setAttribute('aria-live', 'polite');
+      this.caption.appendChild(this.captionText);
+      this.caption.appendChild(this.countdown);
+      figure.appendChild(this.caption);
+    }
+
     figure.classList.add('is-enhanced');
     this.setChapter(0);
   }
 
   Cast.prototype.setChapter = function(index) {
+    if (!this.chapters.length) return;
     index = Math.max(0, Math.min(index, this.chapters.length - 1));
     if (index === this.chapter) return;
     this.chapter = index;
@@ -959,6 +974,7 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
   };
 
   Cast.prototype.syncChapter = function() {
+    if (!this.chapters.length) return;
     var self = this;
     Promise.resolve(this.player.getCurrentTime()).then(function(time) {
       self.setChapter(self.chapterAt(time || 0));
@@ -992,11 +1008,14 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
       theme: 'pi',
       terminalFontFamily: FONT_FAMILY,
       preload: true,
-      markers: this.chapters.slice(1).map(function(chapter) {
-        return [chapter.time, chapter.label];
-      }),
-      pauseOnMarkers: true
+      loop: this.figure.hasAttribute('data-asciicast-loop')
     };
+    if (this.chapters.length) {
+      options.markers = this.chapters.slice(1).map(function(chapter) {
+        return [chapter.time, chapter.label];
+      });
+      options.pauseOnMarkers = true;
+    }
     if (poster) options.poster = 'npt:' + poster;
     this.player = AsciinemaPlayer.create(
       this.figure.getAttribute('data-asciicast'), this.mount, options
@@ -1021,7 +1040,149 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     if (this.started || !this.player) return;
     this.started = true;
     if (castObserver) castObserver.unobserve(this.figure);
-    if (!prefersReducedMotion()) this.continueAfterPause();
+    if (prefersReducedMotion()) return;
+    if (this.chapters.length) this.continueAfterPause();
+    else this.player.play();
+  };
+
+  // Rows of terminal themes below the player. Each theme is a full palette:
+  // the terminal's foreground, background and 16 ANSI colors, followed by the
+  // colors Pi's system theme generates from them, one 256-color index per
+  // Pi color token (scripts/pi-system-themes.mts). The recording draws Pi's
+  // tokens in those indices, so switching the palette recolors it like Pi
+  // would in that terminal, without interrupting playback. Themes come in
+  // display order.
+  //
+  // The picker follows the page: on a night page it shows a dark theme, on a
+  // day page a light one, starting with data.initial and switching when the
+  // page does. It remembers the last pick for each appearance.
+  function ThemePicker(cast, data) {
+    var self = this;
+    this.cast = cast;
+    this.themes = data.themes;
+    this.tokenIndex = {};
+    data.tokens.forEach(function(token, index) {
+      self.tokenIndex[token] = data.firstTokenIndex + index;
+    });
+    this.buttons = [];
+    this.selected = -1;
+    this.chosen = {};
+    ['dark', 'light'].forEach(function(appearance) {
+      var name = (data.initial || {})[appearance];
+      var index = -1;
+      self.themes.forEach(function(theme, i) {
+        if (theme.appearance !== appearance) return;
+        if (index === -1 || theme.name === name) index = i;
+      });
+      self.chosen[appearance] = index;
+    });
+
+    this.el = node('div', 'asciicast__themes');
+    this.el.setAttribute('role', 'radiogroup');
+    this.el.setAttribute('aria-label', 'Terminal theme');
+    this.label = node('figcaption', 'asciicast__theme-current');
+    this.label.setAttribute('aria-hidden', 'true');
+
+    ['dark', 'light'].forEach(function(appearance) {
+      var group = node('div', 'asciicast__theme-group');
+      var heading = node('span', 'asciicast__theme-heading');
+      heading.textContent = appearance === 'dark' ? 'Dark' : 'Light';
+      group.appendChild(heading);
+      self.themes.forEach(function(theme, index) {
+        if (theme.appearance === appearance) group.appendChild(self.button(theme, index));
+      });
+      self.el.appendChild(group);
+    });
+
+    // Arrow keys move through all themes, as in a radio group.
+    this.el.addEventListener('keydown', function(event) {
+      var order = self.buttons.map(function(button) { return Number(button.dataset.index); });
+      var position = order.indexOf(self.selected);
+      var next = null;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (position + 1) % order.length;
+      else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (position - 1 + order.length) % order.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = order.length - 1;
+      if (next === null) return;
+      event.preventDefault();
+      self.select(order[next]);
+      self.buttons[next].focus();
+    });
+    this.el.addEventListener('mouseleave', function() { self.showName(self.selected); });
+    this.el.addEventListener('focusout', function() { self.showName(self.selected); });
+
+    cast.figure.appendChild(this.el);
+    cast.figure.appendChild(this.label);
+    this.followPage();
+
+    // The site switches appearance by toggling theme-night on <body>.
+    var observer = new MutationObserver(function() {
+      if (!cast.figure.isConnected) {
+        observer.disconnect();
+        return;
+      }
+      self.followPage();
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  ThemePicker.prototype.followPage = function() {
+    var appearance = document.body.classList.contains('theme-night') ? 'dark' : 'light';
+    var current = this.themes[this.selected];
+    if (current && current.appearance === appearance) return;
+    this.select(this.chosen[appearance]);
+  };
+
+  ThemePicker.prototype.color = function(theme, token) {
+    return theme.palette[this.tokenIndex[token]];
+  };
+
+  ThemePicker.prototype.button = function(theme, index) {
+    var self = this;
+    var button = node('button', 'asciicast__theme');
+    button.type = 'button';
+    button.dataset.index = String(index);
+    button.setAttribute('role', 'radio');
+    button.setAttribute('aria-label', theme.name);
+    button.title = theme.name;
+    // A tiny terminal: Pi's accent, text and success colors on the background.
+    button.style.setProperty('--swatch-bg', theme.background);
+    var swatch = node('span', 'asciicast__swatch');
+    ['accent', 'text', 'success'].forEach(function(token) {
+      var line = node('span', 'asciicast__swatch-line');
+      line.style.background = self.color(theme, token);
+      swatch.appendChild(line);
+    });
+    button.appendChild(swatch);
+    button.addEventListener('click', function() { self.select(index); });
+    button.addEventListener('mouseenter', function() { self.showName(index); });
+    button.addEventListener('focus', function() { self.showName(index); });
+    this.buttons.push(button);
+    return button;
+  };
+
+  ThemePicker.prototype.showName = function(index) {
+    var theme = this.themes[index];
+    if (theme) this.label.textContent = theme.name;
+  };
+
+  ThemePicker.prototype.select = function(index) {
+    var theme = this.themes[index];
+    if (!theme) return;
+    this.selected = index;
+    this.chosen[theme.appearance] = index;
+    this.buttons.forEach(function(button) {
+      var checked = Number(button.dataset.index) === index;
+      button.setAttribute('aria-checked', checked ? 'true' : 'false');
+      button.tabIndex = checked ? 0 : -1;
+    });
+    this.showName(index);
+    this.cast.mount.style.background = theme.background;
+    this.cast.player.setTheme({
+      foreground: theme.foreground,
+      background: theme.background,
+      palette: theme.palette
+    });
   };
 
   function getCastObserver() {
@@ -1040,22 +1201,25 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     document.querySelectorAll('[data-asciicast]').forEach(function(figure) {
       if (figure.dataset.asciicastInitialized) return;
       var list = figure.querySelector('.asciicast__chapters');
-      if (!list || !list.children.length) return;
+      if (list && !list.children.length) return;
       figure.dataset.asciicastInitialized = 'true';
       var cast = new Cast(figure, list);
-      loadPlayer()
-        .then(function(AsciinemaPlayer) {
+      Promise.all([loadPlayer(), loadThemes(figure.getAttribute('data-asciicast-themes'))])
+        .then(function(results) {
           if (!figure.isConnected) return;
-          cast.create(AsciinemaPlayer);
+          cast.create(results[0]);
+          // Without its palettes, a recording made for them shows wrong colors,
+          // so a failed theme load falls back like a failed player load.
+          if (results[1]) new ThemePicker(cast, results[1]);
           figure.__asciicast = cast;
           var observer = getCastObserver();
           if (observer) observer.observe(figure); else cast.start();
         })
         .catch(function() {
-          // Fall back to the chapter list.
+          // Fall back to the chapter list or fallback text.
           figure.classList.remove('is-enhanced');
           cast.mount.remove();
-          cast.caption.remove();
+          if (cast.caption) cast.caption.remove();
         });
     });
   }

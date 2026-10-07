@@ -1,0 +1,254 @@
+From 3dbde28d80295ee94e8bc3372fe392bacf1d45f9 Mon Sep 17 00:00:00 2001
+From: Armin Ronacher <armin@earendil.com>
+Date: Wed, 7 Oct 2026 18:03:54 +0200
+Subject: [PATCH] Add player.setTheme() for runtime theme changes, with up to
+ 256 colors
+
+---
+ index.d.ts                 |  9 +++++++++
+ src/components/Player.js   |  4 +++-
+ src/components/Terminal.js | 40 ++++++++++++++++++++++++++++++--------
+ src/index.js               |  3 ++-
+ src/ui.js                  |  3 ++-
+ src/view.js                | 36 +++++++++++++++++++++++++++++++++-
+ 6 files changed, 83 insertions(+), 12 deletions(-)
+
+diff --git a/index.d.ts b/index.d.ts
+index 9bf29a9..95fd154 100644
+--- a/index.d.ts
++++ b/index.d.ts
+@@ -95,6 +95,13 @@ export interface MarkerEvent {
+   label: string;
+ }
+ 
++export interface Theme {
++  foreground: string;
++  background: string;
++  /** Hex colors: the 16 base colors, optionally followed by the rest of the 256-color palette. */
++  palette: string[];
++}
++
+ export interface Player {
+   el: HTMLElement;
+   dispose(): void;
+@@ -103,6 +110,8 @@ export interface Player {
+   play(): Promise<boolean | void>;
+   pause(): Promise<boolean | void>;
+   seek(location: SeekLocation): Promise<boolean | void>;
++  /** Recolor the terminal with a theme, or restore the CSS/embedded theme with null. */
++  setTheme(theme: Theme | null): void;
+   addEventListener(
+     eventName: "play" | "playing" | "pause" | "ended",
+     handler: (this: Player) => void,
+diff --git a/src/components/Player.js b/src/components/Player.js
+index 62cc41d..cb745a4 100644
+--- a/src/components/Player.js
++++ b/src/components/Player.js
+@@ -478,6 +478,7 @@ export default (props) => {
+   };
+ 
+   const embeddedTheme = createMemo(() => (preferEmbeddedTheme ? originalTheme() : null));
++  const customTheme = () => props.customTheme?.() ?? null;
+ 
+   const playerStyle = () => {
+     const style = {};
+@@ -505,7 +506,7 @@ export default (props) => {
+       style["--term-font-family"] = props.terminalFontFamily;
+     }
+ 
+-    const themeColors = embeddedTheme();
++    const themeColors = customTheme() ?? embeddedTheme();
+ 
+     if (themeColors) {
+       style["--term-color-foreground"] = themeColors.foreground;
+@@ -570,6 +571,7 @@ export default (props) => {
+           adaptivePalette={props.adaptivePalette}
+           lineHeight={props.terminalLineHeight}
+           preferEmbeddedTheme={preferEmbeddedTheme}
++          customTheme={customTheme()}
+           core={core}
+           logger={logger}
+           onReady={props.onTerminalReady}
+diff --git a/src/components/Terminal.js b/src/components/Terminal.js
+index a88315c..e7d7d2a 100644
+--- a/src/components/Terminal.js
++++ b/src/components/Terminal.js
+@@ -107,6 +107,23 @@ export default (props) => {
+     }
+   });
+ 
++  // A theme set with player.setTheme() replaces the CSS and embedded themes and
++  // recolors the current frame right away. Clearing it restores them.
++  let embeddedTheme = null;
++
++  createEffect(() => {
++    const customTheme = props.customTheme;
++    pendingChanges.theme = customTheme ?? (props.preferEmbeddedTheme ? embeddedTheme : null);
++
++    if (vt !== undefined) {
++      for (let row = 0; row < size().rows; row++) {
++        pendingChanges.rows.add(row);
++      }
++    }
++
++    scheduleRender();
++  });
++
+   createEffect(() => {
+     cursorOn();
+ 
+@@ -178,6 +195,7 @@ export default (props) => {
+     }
+ 
+     if (theme !== undefined && props.preferEmbeddedTheme) {
++      embeddedTheme = theme;
+       pendingChanges.theme = theme;
+ 
+       for (let row = 0; row < size().rows; row++) {
+@@ -248,11 +266,8 @@ export default (props) => {
+       }
+ 
+       if (newTheme !== undefined) {
+-        if (newTheme === null) {
+-          setTheme(buildTheme(cssTheme, props.adaptivePalette));
+-        } else {
+-          setTheme(buildTheme(newTheme, props.adaptivePalette));
+-        }
++        const effectiveTheme = props.customTheme ?? newTheme ?? cssTheme;
++        setTheme(buildTheme(effectiveTheme, props.adaptivePalette));
+ 
+         colorsCache.clear();
+       }
+@@ -626,12 +641,21 @@ export default (props) => {
+ };
+ 
+ function buildTheme(theme, adaptivePalette = false) {
++  const base16 = theme.palette.slice(0, 16);
++
++  const palette = adaptivePalette
++    ? generate256Palette(base16, theme.background, theme.foreground)
++    : generateFixed256Palette(base16);
++
++  // Themes may define colors beyond the 16 base ones, up to all 256.
++  for (let i = 16; i < Math.min(theme.palette.length, 256); i++) {
++    if (theme.palette[i] !== undefined) palette[i] = theme.palette[i];
++  }
++
+   return {
+     fg: theme.foreground,
+     bg: theme.background,
+-    palette: adaptivePalette
+-      ? generate256Palette(theme.palette, theme.background, theme.foreground)
+-      : generateFixed256Palette(theme.palette),
++    palette,
+   };
+ }
+ 
+diff --git a/src/index.js b/src/index.js
+index b67d81b..defe653 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -7,7 +7,7 @@ function create(src, elem, opts = {}) {
+   const logger = opts.logger ?? new DummyLogger();
+   const core = new Core(src, coreOpts(opts, { logger }));
+   const onTerminalReady = () => core.terminalReady();
+-  const { el, dispose } = mount(core, elem, uiOpts(opts, { logger, onTerminalReady }));
++  const { el, dispose, setTheme } = mount(core, elem, uiOpts(opts, { logger, onTerminalReady }));
+   const ready = core.init();
+   void ready.catch(() => {});
+ 
+@@ -19,6 +19,7 @@ function create(src, elem, opts = {}) {
+     play: () => core.play(),
+     pause: () => core.pause(),
+     seek: (pos) => core.seek(pos),
++    setTheme,
+   };
+ 
+   player.addEventListener = (name, callback) => {
+diff --git a/src/ui.js b/src/ui.js
+index 126af73..f4e41a7 100644
+--- a/src/ui.js
++++ b/src/ui.js
+@@ -7,7 +7,7 @@ function create(src, elem, workerUrl, opts = {}) {
+   const coreLogger = opts.logger === console ? true : undefined;
+   const uiLogger = opts.logger ?? new DummyLogger();
+   const core = new CoreWorkerProxy(workerUrl, src, coreOpts(opts, { logger: coreLogger }), uiLogger);
+-  const { el, dispose } = mount(
++  const { el, dispose, setTheme } = mount(
+     core,
+     elem,
+     uiOpts(opts, {
+@@ -27,6 +27,7 @@ function create(src, elem, workerUrl, opts = {}) {
+     play: () => ready.then(core.play.bind(core)),
+     pause: () => ready.then(core.pause.bind(core)),
+     seek: (pos) => ready.then(() => core.seek(pos)),
++    setTheme,
+   };
+ 
+   player.addEventListener = (name, callback) => {
+diff --git a/src/view.js b/src/view.js
+index 1691fe7..96f029e 100644
+--- a/src/view.js
++++ b/src/view.js
+@@ -1,8 +1,11 @@
++import { createSignal } from "solid-js";
+ import { render } from "solid-js/web";
+ import Player from "./components/Player";
++import { normalizeHexColor } from "./colors.js";
+ 
+ function mount(core, elem, opts = {}) {
+   const metrics = measureTerminal(opts.terminalFontFamily, opts.terminalLineHeight);
++  const [customTheme, setCustomTheme] = createSignal(null);
+ 
+   const props = {
+     core: core,
+@@ -21,6 +24,7 @@ function mount(core, elem, opts = {}) {
+     terminalLineHeight: opts.terminalLineHeight,
+     theme: opts.theme,
+     onTerminalReady: opts.onTerminalReady,
++    customTheme,
+     ...metrics,
+   };
+ 
+@@ -31,7 +35,37 @@ function mount(core, elem, opts = {}) {
+     return el;
+   }, elem);
+ 
+-  return { el: el, dispose: dispose };
++  const setTheme = (theme) => setCustomTheme(normalizeTheme(theme));
++
++  return { el: el, dispose: dispose, setTheme };
++}
++
++// Validates a theme passed to player.setTheme(). The palette needs the 16
++// base colors and may define the rest of the 256-color palette.
++function normalizeTheme(theme) {
++  if (theme === null || theme === undefined) return null;
++
++  const foreground = normalizeHexColor(theme.foreground);
++  const background = normalizeHexColor(theme.background);
++  const palette = Array.isArray(theme.palette) ? theme.palette.slice(0, 256) : [];
++
++  if (foreground === undefined || background === undefined || palette.length < 16) {
++    throw new Error("setTheme: expected foreground, background and at least 16 palette colors");
++  }
++
++  return {
++    foreground,
++    background,
++    palette: palette.map((color, i) => {
++      const normalized = normalizeHexColor(color);
++
++      if (normalized === undefined && i < 16) {
++        throw new Error(`setTheme: invalid palette color ${i}: ${color}`);
++      }
++
++      return normalized;
++    }),
++  };
+ }
+ 
+ function measureTerminal(fontFamily, lineHeight) {
+-- 
+2.54.0 (Apple Git-157)
+
