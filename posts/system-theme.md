@@ -9,9 +9,23 @@ date: Fri, 1 Jan 2100 00:00:00 +0000
 subject: There are many themes, but this one is yours
 ---
 
+At Earendil, we want to build products that respect the choices of the people using them. So when I was refreshing Pi's themes, I also wanted to work on a theme that adapts to the terminal it runs in. Most people who spend their day in a terminal have picked a theme for it at some point. So why not make Pi look like that theme?
+
+The result is the new system theme, which is now Pi's default. It asks your terminal for its colors and builds Pi's theme from them. In this post I want to share how it works.
+
 <figure class="post-figure asciicast" data-asciicast="/static/posts/system-theme/demo.cast.json" data-asciicast-themes="/static/posts/system-theme/themes.json" data-asciicast-poster="0:53.2" data-asciicast-loop>
 <p class="asciicast__fallback">A Pi session in the terminal. With JavaScript enabled, it plays here and can be shown in 24 terminal themes.</p>
 </figure>
+
+## Can you trust the ANSI palette?
+
+Every terminal theme defines 16 ANSI colors, and the simplest way to match your terminal would be to use them directly. But there aren't really any rules to the ANSI palette. The original standard, ECMA-48, was adopted in 1976. Its nearly identical American counterpart from 1979, ANSI X3.64, is where the name comes from. The standard names eight colors (black, red, green, yellow, blue, magenta, cyan and white), but doesn't say what they should look like or how they should relate to the background.
+
+The eight bright variants aren't part of the standard. Quite a few terminals rendered bold text in a brighter color, which effectively gave them eight more colors. The codes to select bright colors directly were added later by IBM's aixterm and adopted by other terminals like xterm.
+
+Since the bright colors started out as bold text, I would assume that "bright" was meant to stand out more. And since early terminals mostly showed light text on a dark screen, brighter also meant more contrast. I looked at the more than 460 themes that come with Ghostty, and today this only sort of holds. In dark themes, the bright variant has more contrast in about 60% of cases. In light themes, it's only about a quarter, since bright usually still means lighter, which on a light background means less contrast. Individual themes don't agree either: in Gruvbox Dark, bright blue has more contrast than blue, in Catppuccin Mocha it has less, and in Tokyo Night they are the same color. The contrast against the background also varies a lot. I measured it with the WCAG 2 contrast ratio, which compares the luminance of two colors and ranges from 1:1 (no contrast) to 21:1 (black on white). Normal text should reach at least 4.5:1, and large text and UI elements 3:1. Bright black, which a lot of software uses for secondary text, doesn't even reach 3:1 in most dark themes.
+
+This isn't a flaw of the themes. The palette was made to color the output of simple applications, like a red error or a green success message, and many themes are designed to look good rather than to meet contrast minimums. But it makes it hard to build an accessible, more complex TUI on top of it. Pi has around 60 color roles, from body text and dim text to panels behind tool calls and red text on a red error panel. I wanted to use your colors and still guarantee that all of them stay readable.
 
 ## Contrast is all you need
 
@@ -33,6 +47,26 @@ Perceptual color spaces like OKLCH are built around human perception instead. Co
 
 With a lightness axis, the idea behind the system theme is simple: Pi decides the lightness of every color based on contrast requirements, and takes the hue and chroma from your terminal's palette.
 
+## Lightness
+
+To figure out what lightness each color needs, I wrote down every place in the UI where two colors meet. Every panel needs enough contrast with the terminal background to read as a separate area, but not so much that it distracts. Every foreground color needs enough contrast on every background it can appear on. An error message, for example, has to be readable on the background, on the selected row and on all three tool panels. In code, this is a list of rules:
+
+```ts
+{ token: "text", on: ["background"], level: "text" },
+...each(["accent", "success", "error", "warning"], ["background", "selectedBg", ...TOOL_PANELS], "readable"),
+{ token: "dim", on: ["background", "selectedBg", ...TOOL_PANELS], level: "subtle" },
+```
+
+A contrast algorithm normally takes two colors and returns the contrast between them. Here I need the reverse: I know the background and how much contrast I want, and need the color. I have reversed contrast algorithms before, and you can find implementations for both WCAG and perceptual contrast on GitHub. With a reversed algorithm, calculating the theme becomes a loop: starting with the panels, Pi calculates the lightness each color needs for each of its rules and takes the strictest one.
+
+## The Algorithm
+
+My first prototype did exactly that, together with a review app in which I tuned the contrast minimums. The app can render Pi with any of the themes that come with Ghostty, so I could check a sample of very different themes to make sure the system holds up beyond the default one.
+
+That prototype used a well known perceptual contrast algorithm and that reference implementation. We then used that against a large number of ghostty themes and ensured that it looked good against all the themes. We then did not want to ship that algorithm itself. We tried to use simpler measures but were unable to approximate the results. In the end we had a coding agent do the fitting. For each contrast level in the reference the agent ran the original algorithm on every gray background from white ot black and recorded the lightness and fitted a polynomial to the results. It settled on a fifth degree polynomial which was found to stay close enough to the reference lightness. Pi now only ships with those coefficients.
+
+We first convert the queried terminal colors from RGB into OKLCH and OKHSL. From that we get the original lightness L, chroma C and hue H as well as the saturation S relative to what sRGB can display at that lightness. Once the polynomial is evaluated against the lightness of the background. The resulting lightness is then not used as a direct replacement, but converted into an OKHSL lightness and a new color is computed using the original hue and adjusted saturation. A bell shaped saturation curve is applied. Strongest at the middle lightness and weaker towards black and white. Finally that is converted to OKLCH and Pi limits the original chroma so that H stays the same, L comes from the contrast rules and C becomes what the adjusted OKHSL produces. This is so that a pale pink for instance, when moved towards a darker shade, might otherwise make it too vivid. The adjustment ensures that it can never be more colorful than the original color.
+
 ## Hue & chroma
 
 Pi keeps the hue of your palette colors as it is. Chroma is trickier. The weird shape of OKLCH shows how much chroma a screen can display, which depends on both hue and lightness. At a lightness of 0.9, the most colorful yellow a screen can show has a chroma of about 0.2, while the most colorful blue only reaches about 0.05. So when Pi moves a palette color to the lightness it needs, its chroma might not exist at that lightness, and mapping it back to a displayable color can change the lightness Pi just calculated.
@@ -43,3 +77,13 @@ That's why Pi builds its colors in OKHSL. OKHSL is built on the same foundation 
 <p class="color-space__fallback">What Pi makes of the most colorful color of each hue when it moves it to other lightnesses, in OKHSL: lightness goes from black at the bottom to white at the top, saturation from gray at the center outward, and hue around. The shape reaches OKHSL's full cylinder, outlined around it, only at mid lightness and narrows toward black and white, where Pi lets saturation fall off.</p>
 <figcaption>What Pi makes of the most colorful color of each hue at other lightnesses, in OKHSL: lightness going up, saturation going out, and hue around. Saturation falls off toward black and white, inside OKHSL's full cylinder (outlined). Drag to rotate, and pick a color to cut it open there.</figcaption>
 </figure>
+
+But keeping the saturation the same doesn't keep a color equally colorful. Since saturation is relative to what the screen can display, the same percentage can mean very different amounts of chroma at different lightnesses. Shortly after the release, a bug report showed that Pi looked much more vivid than the terminal with Catppuccin Frappé. Catppuccin's pink, #f4b8e4, has an OKHSL saturation of 84%, but that is 84% of the little chroma a screen can show at such a high lightness. Pi's accent needs to be darker to be readable, and since the shape is much wider there, 84% saturation becomes #eb76d1, with about twice the chroma of the original pink. The fix was to also cap the chroma: a palette color can move to a different lightness, but it can never become more colorful than it is in your palette. With the cap, the accent becomes #cc92bd, which looks like Catppuccin again.
+
+So in the end, the chroma of a palette color is limited three times: by what your screen can display, through OKHSL; by the falloff toward black and white; and by the chroma it has in your palette.
+
+## The result
+
+Pi asks the terminal for its foreground, background and ANSI colors on startup, and rebuilds the theme when the terminal switches between light and dark. If a terminal only reports its background, Pi uses its own hues. If it reports nothing, Pi falls back to the ANSI colors and lets the terminal draw them. The generated colors keep the hues of your terminal, but their lightness is adjusted to a similar contrast. Gruvbox's dark red becomes a lot lighter, Catppuccin Latte's red a little darker, and Nord's colors barely move.
+
+If you haven't picked a theme, you are already using the system theme. Otherwise, you can switch to it in /settings under Theme. If your terminal theme looks off in Pi, please open an issue with the name of the theme.
