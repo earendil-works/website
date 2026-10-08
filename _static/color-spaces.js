@@ -134,7 +134,7 @@
   var DRAG_SPEED = 0.01; // radians per CSS pixel
   var KEY_STEP = 0.15;
   var RESUME_IDLE_MS = 2500; // auto-rotation resumes this long after a drag
-  var FOLLOW_MS = 180; // how quickly a shape turns to follow its cut
+  var TURN_MS = 450; // how long a shape takes to turn to a new cut
   var PROBE_MS = 100; // how often the lens checks whether it is hidden
   var MAX_CHROMA = 0.37; // the picker's range, about Display P3's most
   var THUMB_WIDTH = 8; // the sliders' thumbs, in CSS pixels (prose.css)
@@ -500,6 +500,18 @@
     return Math.PI - hue + 0.15;
   }
 
+  // From angle a to angle b the short way round, in radians.
+  function angleTo(a, b) {
+    var delta = (b - a) % (2 * Math.PI);
+    if (delta > Math.PI) delta -= 2 * Math.PI;
+    if (delta < -Math.PI) delta += 2 * Math.PI;
+    return delta;
+  }
+
+  function easeOut(e) {
+    return 1 - Math.pow(1 - e, 3);
+  }
+
   function cylinderFacing() {
     return facingHue(selectedOkhsl()[0]);
   }
@@ -516,6 +528,12 @@
   function lchOfHex(hex) {
     var lch = rgbToOklch(hexToRgb(hex), GAMUTS.srgb, 0);
     return [lch.l, lch.c, lch.h * Math.PI / 180];
+  }
+
+  // An OKHSL color (hue in radians) as CSS.
+  function okhslCss(hue, saturation, lightness) {
+    var lch = okhslToOklch(hue, saturation, lightness);
+    return css(lch[0], lch[1], hue * 180 / Math.PI);
   }
 
   function hexOf(rgb) {
@@ -882,7 +900,7 @@
             return missing(position(hsl[0], beyond, l0), 'Outside sRGB');
           }
           var range = pair && pair.__piRange;
-          var h0 = (range ? range.hue() : hsl[0]) % (2 * Math.PI);
+          var h0 = ((range ? range.hue() : hsl[0]) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
           // Pi's outputs share the source's hue up to rounding: on the side.
           var markers = range ? range.outputs().map(function(output) {
             var out = okhslOfHex(output.hex);
@@ -1228,6 +1246,26 @@
         return { made: made, result: result };
       };
 
+      // The slice: its hue, its saturation at each row (lightness) for each
+      // setting (column), and the dot, for the current source.
+      var sampled = null;
+      var sliceState = function() {
+        var key = sourceKey();
+        if (sampled && sampled.key === key) return sampled;
+        var range = currentRange();
+        // The source's own lightness as a row, so the edge passes through it.
+        var rows = steps(0, 1, LIGHTNESS_STEPS);
+        if (range.palette && range.from[2] > 0 && range.from[2] < 1) rows.push(range.from[2]);
+        rows.sort(function(a, b) { return a - b; });
+        var lightness = range.palette ? range.from[2] : 0.5;
+        sampled = { key: key, hue: range.hue, rows: rows,
+          sats: rows.map(function(row) {
+            return steps(0, 1, SATURATION_STEPS).map(function(multiplier) { return range.at(row, multiplier); });
+          }),
+          point: [range.hue, range.at(lightness, 1), lightness] };
+        return sampled;
+      };
+
       var reference = new MeshBuilder();
       [0, 1].forEach(function(lightness) {
         reference.line(steps(0, 2 * Math.PI, SIDE_STEPS).map(function(hue) {
@@ -1364,20 +1402,15 @@
           document.body.removeEventListener('asciicast:theme', onTheme);
         },
         cut: function() {
-          var range = currentRange();
-          var family = range.family, from = range.from, palette = range.palette, hue = range.hue, at = range.at;
-          var ls = steps(0, 1, LIGHTNESS_STEPS);
-          // Put the source precisely on the edge, not between grid rows.
-          if (palette && from[2] > 0 && from[2] < 1) ls.push(from[2]);
-          ls.sort(function(a, b) { return a - b; });
+          var state = sliceState();
           var faces = new MeshBuilder();
-          faces.grid(ls.length - 1, SATURATION_STEPS, function(i, j) {
-            var saturation = at(ls[i], j / SATURATION_STEPS);
-            faces.vertex(cylinderPosition(hue, saturation, ls[i]),
-              okhslToRgb(hue, saturation, ls[i], GAMUTS.srgb), NOT_CUT);
+          faces.grid(state.rows.length - 1, SATURATION_STEPS, function(i, j) {
+            var saturation = state.sats[i][j];
+            faces.vertex(cylinderPosition(state.hue, saturation, state.rows[i]),
+              okhslToRgb(state.hue, saturation, state.rows[i], GAMUTS.srgb), NOT_CUT);
           });
-          faces.line(ls.map(function(lightness) {
-            return cylinderPosition(hue, at(lightness, 1), lightness);
+          faces.line(state.rows.map(function(lightness, i) {
+            return cylinderPosition(state.hue, state.sats[i][SATURATION_STEPS], lightness);
           }));
           faces.line([[0, 0, 0], [0, 1, 0]]);
 
@@ -1388,12 +1421,11 @@
               kind: 'output', match: output === shown.result.match };
           });
           if (shown.result.marker) markers.push(shown.result.marker);
-          var lightness = palette ? from[2] : 0.5;
-          var marker = okhslToOklch(hue, at(lightness, 1), lightness);
+          // The dot in the color where it is, also while it moves.
+          var dot = state.point;
           return { from: NO_CUT.from, size: NO_CUT.size, wrap: 0, faces: faces,
-            point: cylinderPosition(hue, at(lightness, 1), lightness),
-            color: css(marker[0], marker[1], hue * 180 / Math.PI),
-            markers: markers };
+            point: cylinderPosition(dot[0], dot[1], dot[2]),
+            color: okhslCss(dot[0], dot[1], dot[2]), markers: markers };
         }
       };
     }
@@ -1550,7 +1582,7 @@
     this.yaw = this.shape.yaw;
     this.pitch = this.shape.pitch;
     this.velocity = 0; // yaw per ms, after letting go of a drag
-    this.target = null; // yaw to turn to, following the cut
+    this.target = null; // a turn toward the cut: { from, to, start }
     this.drag = null;
     this.lastInteraction = -Infinity;
     this.visible = false;
@@ -1601,7 +1633,7 @@
       self.cutChanged = true;
       // In a pair, a shape that follows its partner leaves the facing to it.
       if (self.shape.facing && !self.drag && !(self.pair && self.shape.followsPair)) {
-        self.target = self.shape.facing();
+        self.turnTo(self.shape.facing());
       }
       self.schedule();
     };
@@ -1868,6 +1900,23 @@
       this.idle(performance.now());
   };
 
+  // Turns to a yaw the short way round, as one solid object: the cut has
+  // already changed, and turns into view over TURN_MS, easing out.
+  ColorSpace.prototype.turnTo = function(yaw) {
+    var delta = angleTo(this.yaw, yaw);
+    if (this.target && Math.abs(angleTo(this.target.to, yaw)) < 1e-6) return;
+    if (Math.abs(delta) < 1e-4) {
+      this.target = null;
+      return;
+    }
+    if (prefersReducedMotion()) {
+      this.yaw += delta;
+      this.target = null;
+      return;
+    }
+    this.target = { from: this.yaw, to: this.yaw + delta, start: performance.now() };
+  };
+
   ColorSpace.prototype.schedule = function() {
     var self = this;
     if (this.frame !== null || !this.visible) return;
@@ -1887,15 +1936,10 @@
     this.last = now;
     if (!this.drag) {
       if (this.target !== null) {
-        // Turn the short way round, easing in on the cut.
-        var delta = this.target - this.yaw;
-        delta -= 2 * Math.PI * Math.round(delta / (2 * Math.PI));
-        if (Math.abs(delta) < 0.002 || prefersReducedMotion()) {
-          this.yaw += delta;
-          this.target = null;
-        } else {
-          this.yaw += delta * (1 - Math.exp(-dt / FOLLOW_MS));
-        }
+        var turn = this.target;
+        var e = Math.min(1, (now - turn.start) / TURN_MS);
+        this.yaw = turn.from + (turn.to - turn.from) * easeOut(e);
+        if (e >= 1) this.target = null;
         this.velocity = 0;
       } else if (Math.abs(this.velocity) > 1e-5) {
         this.yaw += this.velocity * dt;
