@@ -13,11 +13,12 @@
 // Every point is drawn in its own color. Drag (or arrow keys) to rotate.
 //
 // OKLCH and RGB sliders select one color for all figures; paired views
-// share one picker. The color spaces are cut open at that color, so the
-// color sits in the inner corner of the cut: the cube loses the box between
-// the color and white, the landscape the block of higher lightness, hue and
-// chroma, and the cylinder a wedge from the color's hue, above its lightness
-// and outside its saturation. The shapes' surfaces stay put and the GPU
+// share one picker. The color spaces are cut open at that color: the cube
+// loses the box between the color and white, and the landscape the block of
+// higher lightness, hue and chroma, so the color sits in the cut's inner
+// corner. The cylinder loses a full-height wedge from the color's hue, so
+// the color is on a side showing its whole hue; beside Pi's range, from the
+// source's hue, with Pi's outputs on that side. The shapes' surfaces stay put and the GPU
 // discards them inside the cut; only the cut's faces are rebuilt. What the
 // cut removed stays as a ghost, a dotted pattern in its colors. A round
 // lens in the color marks it, faded while the shape hides it. A shape that
@@ -824,7 +825,10 @@
     },
 
     // The full OKHSL cylinder, cut open at the selected color.
-    okhsl: function(gamut) {
+    // Beside Pi's range, it is cut open at the source's hue instead, with
+    // the colors Pi makes from the source marked on the cut's side.
+    okhsl: function(gamut, figure) {
+      var pair = figure && figure.closest('[data-color-space-pair]');
       var position = cylinderPosition;
       var add = function(target, hue, saturation, lightness, coords, keep) {
         target.vertex(position(hue, saturation, lightness),
@@ -868,37 +872,36 @@
         cut: function() {
           var lch = selected();
           var hsl = selectedHsl();
-          var h0 = hsl[0] % (2 * Math.PI), s0 = hsl[1], l0 = hsl[2];
+          var s0 = hsl[1], l0 = hsl[2];
           if (!inside(lch, GAMUTS.srgb)) {
             // Past the cylinder, further out the more chroma it lacks.
             var most = maxChroma(lch[0], lch[2], GAMUTS.srgb);
             var beyond = Math.min(1.3, 1 + (lch[1] - most) / Math.max(most, 0.05));
-            return missing(position(h0, beyond, l0), 'Outside sRGB');
+            return missing(position(hsl[0], beyond, l0), 'Outside sRGB');
           }
+          var range = pair && pair.__piRange;
+          var h0 = (range ? range.hue() : hsl[0]) % (2 * Math.PI);
+          // Pi's outputs share the source's hue up to rounding: on the side.
+          var markers = range ? range.outputs().map(function(output) {
+            var out = okhslOfHex(output.hex);
+            return { point: position(h0, out[1], out[2]), color: output.hex, label: output.token, kind: 'output' };
+          }) : [];
+          // A full-height wedge from the hue on: the side at the hue shows it
+          // at every lightness and saturation, the colors Pi's range takes
+          // from it.
           var faces = new MeshBuilder();
-          var ls = steps(l0, 1, Math.max(2, Math.round(LIGHTNESS_STEPS / 2 * (1 - l0))));
-          var hues = steps(h0, h0 + WEDGE, WEDGE_STEPS);
-          // The two radial sides of the cut.
+          var ls = steps(0, 1, LIGHTNESS_STEPS / 2);
           [h0, h0 + WEDGE].forEach(function(hue) {
             faces.grid(ls.length - 1, SATURATION_STEPS, function(j, k) {
-              add(faces, hue, s0 + (1 - s0) * k / SATURATION_STEPS, ls[j], NOT_CUT);
+              add(faces, hue, k / SATURATION_STEPS, ls[j], NOT_CUT);
             });
-            faces.line([position(hue, s0, l0), position(hue, s0, 1)]);
-            faces.line([position(hue, 1, l0), position(hue, 1, 1)]);
-            faces.line([position(hue, s0, l0), position(hue, 1, l0)]);
+            faces.line([position(hue, 0, 0), position(hue, 1, 0), position(hue, 1, 1), position(hue, 0, 1)]);
           });
-          // The inner wall and the floor.
-          faces.grid(hues.length - 1, ls.length - 1, function(i, j) {
-            add(faces, hues[i], s0, ls[j], NOT_CUT);
-          });
-          faces.grid(hues.length - 1, SATURATION_STEPS, function(i, k) {
-            add(faces, hues[i], s0 + (1 - s0) * k / SATURATION_STEPS, l0, NOT_CUT);
-          });
-          faces.line(hues.map(function(hue) { return position(hue, s0, l0); }));
-          faces.line(hues.map(function(hue) { return position(hue, 1, l0); }));
+          faces.line([position(h0, 0, 0), position(h0, 0, 1)]);
+          // No ghost: the dots would cover the side.
           return {
-            from: [h0, s0, l0], size: [WEDGE, OPEN, OPEN], wrap: 2 * Math.PI, faces: faces,
-            point: position(h0, s0, l0)
+            from: [h0, -1, -1], size: [WEDGE, OPEN, OPEN], wrap: 2 * Math.PI, faces: faces,
+            point: position(hsl[0], s0, l0), ghost: false, markers: markers
           };
         }
       };
@@ -922,7 +925,15 @@
       var wanted = null; // a theme asked for before they loaded
       var noPalette = false;
       var ui = null; // the controls' elements
-      var changed = function() {};
+      var pair = null; // the pair it is in, if any
+      // Redraws itself and the views beside it, which follow its source.
+      var onChange = function() {};
+      var changed = function() {
+        onChange();
+        instances.forEach(function(instance) {
+          if (pair && instance.pair === pair && instance.shape.followsPair) instance.onSelect();
+        });
+      };
       var findTheme = function(name) {
         return (data && data.themes.filter(function(item) { return item.name === name; })[0]) || null;
       };
@@ -1117,23 +1128,28 @@
       };
       // What the status line says, by kind; p has the details. Shared with
       // the reserve, which keeps the line as tall as its longest text.
+      // The status line, by kind, always naming the source it compares with:
+      // the theme's ANSI color, or without a palette Pi's own color for the
+      // role. p has the details.
       var verdictText = function(kind, p) {
+        var source = p.palette ? p.theme + '\u2019s ' + p.slot : 'Pi\u2019s own ' + p.role + ' color';
         switch (kind) {
-          case 'none': return 'Pick a color to check whether Pi can make it.';
-          case 'gamut': return 'The selected color is outside sRGB.';
-          case 'source': return p.hex + ' is the source itself.';
-          case 'output': return p.hex + ' is Pi\u2019s ' + p.token + ' color.';
-          case 'edge': return p.hex + ' is on the edge: Pi makes it at this lightness.';
-          case 'inside': return p.hex + ' is inside: Pi makes it at a lower saturation setting.';
-          case 'hue': return p.hex + ' is outside: its hue is ' + p.degrees + '\u00b0 off, and Pi keeps the hue.';
-          case 'chroma': return p.hex + ' is outside: it is more colorful than the source.';
-          default: return p.hex + ' is outside: it is too saturated for this lightness.';
+          case 'none':
+            return 'Pick a color to compare with ' + source + (p.palette ? ' (' + p.source + ').' : '.');
+          case 'gamut': return 'The selected color is outside sRGB, so it can\u2019t come from ' + source + '.';
+          case 'source': return p.hex + ' is ' + source + ' itself.';
+          case 'output': return p.hex + ' is Pi\u2019s ' + p.token + ' on ' + p.theme + '.';
+          case 'edge': return p.hex + ' can come from ' + source + ', on a background that needs this lightness.';
+          case 'inside': return p.hex + ' can come from ' + source + ' at a lower saturation setting.';
+          case 'hue': return p.hex + ' can\u2019t come from ' + source + ': its hue is ' + p.degrees + '\u00b0 off.';
+          case 'chroma': return p.hex + ' can\u2019t come from ' + source + ': it is more colorful.';
+          default: return p.hex + ' can\u2019t come from ' + source + ': it is too saturated at this lightness.';
         }
       };
       // What the status line says about the candidate, and how to mark it.
       var verdict = function(at, made) {
-        var p = { palette: usesPalette(), family: PI_FAMILIES[role.family].label,
-          theme: theme && theme.name, slot: ANSI_NAMES[role.slot] };
+        var p = { palette: usesPalette(), role: role.label.toLowerCase(), theme: theme && theme.name,
+          slot: ANSI_NAMES[role.slot], source: theme && theme.palette[role.slot] };
         if (!candidate) return { text: verdictText('none', p) };
         var lch = selected();
         if (!inside(lch, GAMUTS.srgb)) return { text: verdictText('gamut', p), outside: true };
@@ -1162,9 +1178,9 @@
       var verdictReserve = function() {
         var tokens = [];
         PI_ROLES.forEach(function(item) { tokens = tokens.concat(item.tokens); });
-        var p = { hex: '#000000', degrees: 180, token: longest(tokens), slot: longest(ANSI_NAMES),
+        var p = { hex: '#000000', source: '#000000', degrees: 180, token: longest(tokens), slot: longest(ANSI_NAMES),
           theme: longest(data ? data.themes.map(function(item) { return item.name; }) : ['']),
-          family: longest(Object.keys(PI_FAMILIES).map(function(key) { return PI_FAMILIES[key].label; })) };
+          role: longest(PI_ROLES.map(function(item) { return item.label.toLowerCase(); })) };
         var texts = [];
         ['none', 'gamut', 'source', 'output', 'edge', 'inside', 'hue', 'chroma', 'saturation'].forEach(function(kind) {
           [true, false].forEach(function(palette) {
@@ -1221,8 +1237,8 @@
         // Below both views in a pair: the theme, and the source's ANSI
         // color with the role.
         panel: true,
-        controls: function(onChange, figure) {
-          changed = onChange;
+        controls: function(redraw, figure) {
+          onChange = redraw;
           var box = document.createElement('div');
           box.className = 'color-space__source';
           var status = document.createElement('p');
@@ -1317,11 +1333,16 @@
           sourceListeners.push(onArticle);
           listeners.push(onSelect);
           document.body.addEventListener('asciicast:theme', onTheme);
+          // The OKHSL cylinder beside it cuts at the source's hue and marks
+          // Pi's outputs.
+          pair = figure.closest('[data-color-space-pair]');
+          if (pair) pair.__piRange = { hue: sliceHue, outputs: outputs };
           load(figure.getAttribute('data-pi-themes'));
           // The result for the picked color goes below the color sliders.
           return { el: box, below: status };
         },
         destroy: function() {
+          if (pair && pair.__piRange && pair.__piRange.outputs === outputs) delete pair.__piRange;
           var index = listeners.indexOf(onSelect);
           if (index !== -1) listeners.splice(index, 1);
           index = sourceListeners.indexOf(onArticle);
@@ -1358,8 +1379,7 @@
           return { from: NO_CUT.from, size: NO_CUT.size, wrap: 0, faces: faces,
             point: cylinderPosition(hue, at(lightness, 1), lightness),
             color: css(marker[0], marker[1], hue * 180 / Math.PI),
-            markers: markers,
-            label: palette ? 'Source' : 'Pi’s own color' };
+            markers: markers };
         }
       };
     }
@@ -1508,7 +1528,7 @@
 
     var gamut = pickGamut(gl);
     figure.setAttribute('data-gamut', gamut.canvas);
-    this.shape = SHAPES[kind](gamut);
+    this.shape = SHAPES[kind](gamut, figure);
     this.surfaces = this.upload(this.shape.mesh);
     this.cut = null; // set on the first draw
     this.cutChanged = true;
@@ -1650,6 +1670,7 @@
       from: cut.from,
       size: cut.size,
       wrap: cut.wrap,
+      ghost: cut.ghost !== false,
       point: cut.point.map(function(value, axis) { return value - offset[axis]; }),
       markers: this.updateMarkers(cut.markers || [], offset),
       buffers: this.upload(faces, this.cut && this.cut.buffers)
@@ -1657,8 +1678,7 @@
     this.cutChanged = false;
     this.cutProbed = false; // probe right away
     this.lens.classList.toggle('is-missing', !!cut.missing);
-    this.lens.classList.toggle('is-labeled', !cut.missing && !!cut.label);
-    this.lensLabel.textContent = cut.missing || cut.label || '';
+    this.lensLabel.textContent = cut.missing || '';
     this.lens.style.setProperty('--lens-color', cut.color || css(selection.l, selection.c, selection.h));
   };
 
@@ -1771,8 +1791,7 @@
 
   // Markers' labels go right of them, or left where that would cover a
   // marker or an earlier label, or nowhere where both would. The candidate,
-  // last, goes first, then the markers in order; the lens's own label is
-  // above it.
+  // last, goes first, then the markers in order.
   ColorSpace.prototype.placeLabels = function(lenses, spots) {
     var taken = lenses.map(function(item, index) {
       var half = item.lens.offsetWidth / 2;
@@ -1783,10 +1802,6 @@
         return box[0] < other[2] && other[0] < box[2] && box[1] < other[3] && other[1] < box[3];
       });
     };
-    if (this.lens.classList.contains('is-labeled')) {
-      var width = this.lensLabel.offsetWidth;
-      taken.push([spots[0].left - width / 2, spots[0].top - 36, spots[0].left + width / 2, spots[0].top - 11]);
-    }
     var order = lenses.slice(1).map(function(item, index) { return index + 1; });
     var first = function(index) { return lenses[index].lens.classList.contains('is-candidate') ? 0 : 1; };
     order.sort(function(a, b) { return first(a) - first(b) || a - b; });
@@ -1924,7 +1939,7 @@
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     // The ghost of what the cut removed: hidden by the shape in front of it,
     // but not hiding the cut behind it.
-    if (cut.size[0] > 0) {
+    if (cut.size[0] > 0 && cut.ghost) {
       gl.depthMask(false);
       gl.uniform3f(u.ghost, GHOST_SPACING * ratio, GHOST_RADIUS * ratio, GHOST_ALPHA);
       this.bind(this.surfaces);

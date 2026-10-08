@@ -85,8 +85,8 @@ The two views below separate the color space from what Pi does inside it. OKHSL'
 <div class="post-figure color-space-pair" data-color-space-pair>
 <figure class="color-space" data-color-space="okhsl">
 <p class="color-space__title">OKHSL color space</p>
-<p class="color-space__fallback">The full OKHSL cylinder: lightness from black at the bottom to white at the top, saturation from gray at the center outward, and hue around. It is cut open at the selected color.</p>
-<figcaption>The sRGB OKHSL cylinder, cut open at the selected color.</figcaption>
+<p class="color-space__fallback">The full OKHSL cylinder: lightness from black at the bottom to white at the top, saturation from gray at the center outward, and hue around. It is cut open at the source's hue.</p>
+<figcaption>The sRGB OKHSL cylinder, cut open at the source's hue.</figcaption>
 </figure>
 <figure class="color-space" data-color-space="pi-range" data-pi-themes="/static/posts/system-theme/themes.json">
 <p class="color-space__title">What Pi makes from a palette color</p>

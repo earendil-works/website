@@ -1628,16 +1628,6 @@
   display: block;
 }
 
-/* The lens's own label, such as Pi's range's "Source": above it, clear of
-   the markers' labels beside them. */
-.color-space__lens.is-labeled .color-space__lens-label {
-  display: block;
-  top: auto;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-}
-
 /* Markers in Pi's range: squares for the colors Pi made from the source,
    labeled with their token, and a ring for the candidate color, labeled
    with its hex, red when Pi cannot make it. */
