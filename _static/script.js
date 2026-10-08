@@ -1118,6 +1118,20 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     cast.figure.appendChild(this.label);
     this.followPage();
 
+    // Themes picked in the post's other figures (pi:theme, color-spaces.js),
+    // so that every picker shows the same one. Selecting one announces it
+    // as asciicast:theme, which those figures ignore for their own theme.
+    this.onTheme = function(event) {
+      if (!cast.figure.isConnected) {
+        document.body.removeEventListener('pi:theme', self.onTheme);
+        return;
+      }
+      var name = event.detail && event.detail.name;
+      var index = self.themes.map(function(theme) { return theme.name; }).indexOf(name);
+      if (index !== -1 && index !== self.selected) self.select(index, PICK_FADE_MS);
+    };
+    document.body.addEventListener('pi:theme', this.onTheme);
+
     // The site switches appearance by toggling theme-night on <body>.
     var observer = new MutationObserver(function() {
       if (!cast.figure.isConnected) {
@@ -1329,13 +1343,14 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
   document.body.addEventListener('htmx:afterSettle', initAsciicasts);
 })();
 
-// Rotatable color spaces, <figure data-color-space> (color-spaces.js). The
-// script is only downloaded on pages that have one.
+// Rotatable color spaces, <figure data-color-space>, and Pi's lightness
+// curves, <figure data-lightness-curves> (color-spaces.js). The script is
+// only downloaded on pages that have one.
 (function() {
   var loading = false;
 
   function loadColorSpaces() {
-    if (loading || !document.querySelector('[data-color-space]')) return;
+    if (loading || !document.querySelector('[data-color-space], [data-lightness-curves]')) return;
     loading = true;
     // htmx's head-support extension would drop the injected tag otherwise.
     var script = document.createElement('script');

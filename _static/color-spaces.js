@@ -149,6 +149,40 @@
   // Pi's range figures, to switch their theme and role for an article color.
   var sourceListeners = [];
 
+  // Every terminal theme picker on the page shows the same theme. A pick in
+  // a figure is announced on <body> as pi:theme, which the demo's picker
+  // (script.js) follows; the demo announces its own as asciicast:theme.
+  // Pickers follow both, except their own, and only announce what a reader
+  // picked, so following never echoes.
+  var sharedTheme = null;
+  function announceTheme(name, source) {
+    if (!name) return;
+    sharedTheme = name;
+    document.body.dispatchEvent(new CustomEvent('pi:theme', { detail: { name: name, source: source } }));
+  }
+  // The theme an event names, or null for one's own.
+  function themeOf(event, source) {
+    if (event.type === 'pi:theme') return event.detail && event.detail.source !== source ? event.detail.name : null;
+    return event.target.dataset.colorTheme || null;
+  }
+  function followThemes(handler) {
+    document.body.addEventListener('pi:theme', handler);
+    document.body.addEventListener('asciicast:theme', handler);
+  }
+  function unfollowThemes(handler) {
+    document.body.removeEventListener('pi:theme', handler);
+    document.body.removeEventListener('asciicast:theme', handler);
+  }
+  // The theme a figure starts with: the last one picked anywhere.
+  function currentTheme(data) {
+    var player = document.querySelector('[data-color-theme]');
+    var appearance = document.body.classList.contains('theme-night') ? 'dark' : 'light';
+    return sharedTheme || (player && player.dataset.colorTheme) || (data.initial || {})[appearance];
+  }
+  document.body.addEventListener('asciicast:theme', function(event) {
+    if (event.target.dataset.colorTheme) sharedTheme = event.target.dataset.colorTheme;
+  });
+
   function select(next, isDefault) {
     selection = next;
     if (!isDefault) hasSelection = true;
@@ -1054,7 +1088,7 @@
               swatch.appendChild(line);
             });
             button.appendChild(swatch);
-            button.addEventListener('click', function() { setSource({ theme: item.name, palette: true }); });
+            button.addEventListener('click', function() { pickTheme(item.name); });
             button.addEventListener('mouseenter', function() { showName(item); });
             button.addEventListener('focus', function() { showName(item); });
             ui.themeButtons.push(button);
@@ -1112,21 +1146,25 @@
         changed();
       };
       // The demo's theme picker: follow it into the new palette.
+      // Follow the other pickers into the new palette.
       var onTheme = function(event) {
-        if (event.target.dataset.colorTheme) setSource({ theme: event.target.dataset.colorTheme });
+        var name = themeOf(event, onTheme);
+        if (name && !(theme && theme.name === name)) setSource({ theme: name });
+      };
+      var pickTheme = function(name) {
+        setSource({ theme: name, palette: true });
+        announceTheme(name, onTheme);
       };
       var onArticle = function(spec) {
         setSource({ theme: spec.theme, role: spec.role, palette: true }, true);
+        if (spec.theme) announceTheme(spec.theme, onTheme);
       };
       var load = function(url) {
         if (!url || typeof fetch !== 'function') return;
         fetch(url).then(function(response) { return response.json(); }).then(function(json) {
           if (!json || !json.themes) return;
           data = json;
-          var player = document.querySelector('[data-color-theme]');
-          var appearance = document.body.classList.contains('theme-night') ? 'dark' : 'light';
-          theme = findTheme(wanted) || findTheme(player && player.dataset.colorTheme) ||
-            findTheme((data.initial || {})[appearance]) || data.themes[0];
+          theme = findTheme(wanted) || findTheme(currentTheme(data)) || data.themes[0];
           update();
           if (!candidate) showSource();
           showTexts();
@@ -1310,7 +1348,7 @@
             else if (event.key === 'End') next = buttons.length - 1;
             if (next === null || !buttons.length) return;
             event.preventDefault();
-            setSource({ theme: buttons[next].dataset.name, palette: true });
+            pickTheme(buttons[next].dataset.name);
             buttons[next].focus();
           });
           themes.addEventListener('mouseleave', function() { showName(theme); });
@@ -1382,7 +1420,7 @@
           showTexts();
           sourceListeners.push(onArticle);
           listeners.push(onSelect);
-          document.body.addEventListener('asciicast:theme', onTheme);
+          followThemes(onTheme);
           // The OKHSL cylinder beside it cuts at the source's hue and marks
           // Pi's outputs.
           pair = figure.closest('[data-color-space-pair]');
@@ -1399,7 +1437,7 @@
           if (index !== -1) listeners.splice(index, 1);
           index = sourceListeners.indexOf(onArticle);
           if (index !== -1) sourceListeners.splice(index, 1);
-          document.body.removeEventListener('asciicast:theme', onTheme);
+          unfollowThemes(onTheme);
         },
         cut: function() {
           var state = sliceState();
@@ -2569,6 +2607,1326 @@
     document.removeEventListener('keydown', this.onKey, true);
   };
 
+  // Pi's system theme generator (system-theme.ts), for the lightness curves
+  // figure: the same families, contrast rules, target-lightness curves,
+  // relaxation and 8-bit rounding as Pi, so it makes Pi's colors for any
+  // background, not only for the themes in themes.json. Colors are
+  // { r, g, b } with 0-255 channels, as in Pi. Only terminals that report
+  // their background are covered; without one, Pi uses ANSI indices.
+  var PI_THEME = (function() {
+    var FAMILY_SLOTS = { neutral: 8, blue: 4, green: 2, red: 1, yellow: 3, orange: 3, violet: 5, calamine: 6,
+      thinkingSlate: 4, thinkingBlue: 4, thinkingPeriwinkle: 6, thinkingViolet: 5, thinkingMagenta: 13,
+      thinkingRed: 1 };
+    var FAMILY_TOKENS = {
+      blue: ['selectedBg', 'userMessageBg', 'border', 'mdLink', 'syntaxKeyword'],
+      orange: ['searchMatchBg', 'syntaxString'],
+      violet: ['customMessageBg', 'accent', 'borderAccent', 'customMessageLabel', 'mdCode', 'mdListBullet',
+        'syntaxType'],
+      neutral: ['toolPendingBg', 'text', 'userMessageText', 'customMessageText', 'toolTitle', 'syntaxOperator',
+        'syntaxPunctuation', 'muted', 'dim', 'thinkingText', 'toolOutput', 'mdLinkUrl', 'mdQuote', 'mdQuoteBorder',
+        'mdHr', 'mdCodeBlockBorder', 'toolDiffContext', 'syntaxComment', 'scrollbarTrack', 'scrollbarThumb',
+        'searchMatchText', 'borderMuted', 'thinkingOff'],
+      green: ['toolSuccessBg', 'success', 'mdCodeBlock', 'toolDiffAdded', 'bashMode', 'syntaxNumber'],
+      red: ['toolErrorBg', 'error', 'toolDiffRemoved'],
+      calamine: ['syntaxVariable'],
+      yellow: ['warning', 'mdHeading', 'syntaxFunction'],
+      thinkingSlate: ['thinkingMinimal'],
+      thinkingBlue: ['thinkingLow'],
+      thinkingPeriwinkle: ['thinkingMedium'],
+      thinkingViolet: ['thinkingHigh'],
+      thinkingMagenta: ['thinkingXhigh'],
+      thinkingRed: ['thinkingMax']
+    };
+    var TOKEN_FAMILIES = {};
+    Object.keys(FAMILY_TOKENS).forEach(function(family) {
+      FAMILY_TOKENS[family].forEach(function(token) { TOKEN_FAMILIES[token] = family; });
+    });
+    // Palette slots for tokens that would otherwise share a hue with a similar token.
+    var TOKEN_SLOTS = { syntaxString: 2, syntaxNumber: 5, searchMatchBg: 3 };
+
+    // Target-lightness curves: a polynomial in the surface's OKLab lightness
+    // giving the OKLab lightness a token needs on it, fitted to a reference
+    // contrast algorithm. Beyond reachable, the level cannot be reached.
+    var LEVELS = {
+      panel: {
+        dark: { coefficients: [0.29131, -0.39746, 2.33185, -0.85524, -1.2076, 0.86276],
+          reachable: [0, 0.979] },
+        light: { coefficients: [-3.74073, 27.94549, -78.44258, 112.6798, -79.60015, 22.11277],
+          reachable: [0.348, 1] }
+      },
+      track: {
+        dark: { coefficients: [0.39028, -0.23015, 0.83573, 2.43829, -4.38292, 2.01582],
+          reachable: [0, 0.946] },
+        light: { coefficients: [-5.24921, 38.37322, -107.28833, 152.10005, -106.17127, 29.18061],
+          reachable: [0.368, 1] }
+      },
+      thinking0: {
+        dark: { coefficients: [0.52988, -0.05809, -0.30924, 4.63567, -6.52933, 2.89108],
+          reachable: [0, 0.873] },
+        light: { coefficients: [-28.27749, 182.85284, -469.62416, 603.15916, -384.59976, 97.35147],
+          reachable: [0.51, 1] }
+      },
+      thinking1: {
+        dark: { coefficients: [0.55278, -0.03667, -0.45659, 4.95347, -6.90265, 3.0706],
+          reachable: [0, 0.858] },
+        light: { coefficients: [-37.10484, 235.86282, -596.62344, 754.3633, -474.00763, 118.3551],
+          reachable: [0.535, 1] }
+      },
+      thinking2: {
+        dark: { coefficients: [0.57486, -0.01765, -0.58987, 5.25227, -7.27175, 3.25532],
+          reachable: [0, 0.842] },
+        light: { coefficients: [-59.89653, 377.05024, -945.07843, 1182.03145, -734.96375, 181.68658],
+          reachable: [0.556, 1] }
+      },
+      thinking3: {
+        dark: { coefficients: [0.59621, -0.00062, -0.71148, 5.53588, -7.6392, 3.44606],
+          reachable: [0, 0.827] },
+        light: { coefficients: [-72.07122, 445.84082, -1099.57352, 1353.88793, -829.53392, 202.26164],
+          reachable: [0.58, 1] }
+      },
+      thinking4: {
+        dark: { coefficients: [0.61691, 0.01462, -0.82288, 5.80651, -8.00641, 3.64333],
+          reachable: [0, 0.811] },
+        light: { coefficients: [-110.14338, 674.21488, -1645.75941, 2004.32367, -1215.15899, 293.3183],
+          reachable: [0.6, 1] }
+      },
+      thinking5: {
+        dark: { coefficients: [0.63702, 0.02826, -0.92498, 6.06465, -8.37246, 3.84651],
+          reachable: [0, 0.795] },
+        light: { coefficients: [-175.47701, 1063.54495, -2570.70594, 3098.80776, -1860.15527, 444.76392],
+          reachable: [0.62, 1] }
+      },
+      thinking6: {
+        dark: { coefficients: [0.65658, 0.04044, -1.01835, 6.30989, -8.73529, 4.05439],
+          reachable: [0, 0.779] },
+        light: { coefficients: [-183.81712, 1094.70055, -2602.68539, 3088.71276, -1826.91131, 430.75931],
+          reachable: [0.643, 1] }
+      },
+      subtle: {
+        dark: { coefficients: [0.56762, -0.02475, -0.5383, 5.12628, -7.10931, 3.17324],
+          reachable: [0, 0.848] },
+        light: { coefficients: [-232.85459, 1376.54473, -3249.11801, 3827.91186, -2248.29472, 526.55751],
+          reachable: [0.657, 1] }
+      },
+      thumb: {
+        dark: { coefficients: [0.60323, 0.00278, -0.73328, 5.57157, -7.68067, 3.46933],
+          reachable: [0, 0.823] },
+        light: { coefficients: [-82.89897, 511.01355, -1255.98095, 1540.76821, -940.68087, 228.58523],
+          reachable: [0.586, 1] }
+      },
+      readable: {
+        dark: { coefficients: [0.66937, 0.04704, -1.06871, 6.43941, -8.9332, 4.17229],
+          reachable: [0, 0.77] },
+        light: { coefficients: [-1554.52576, 8733.56817, -19604.93507, 21977.72696, -12300.99599, 2749.81288],
+          reachable: [0.751, 1] }
+      },
+      emphasis: {
+        dark: { coefficients: [0.7303, 0.07695, -1.31626, 7.1681, -10.14436, 4.92846],
+          reachable: [0, 0.712] },
+        light: { coefficients: [-4948.31942, 26870.91986, -58334.48399, 63280.17197, -34298.01053, 7430.30146],
+          reachable: [0.811, 1] }
+      },
+      textOnPanel: {
+        dark: { coefficients: [0.86713, 0.05232, -0.89428, 4.79014, -5.5432, 1.75023],
+          reachable: [0, 0.542] },
+        light: { coefficients: [-8570.89457, 43954.60805, -90084.00702, 92220.6791, -47152.15802, 9632.27113],
+          reachable: [0.867, 1] }
+      },
+      text: {
+        dark: { coefficients: [0.89242, 0.02311, -0.44862, 2.34417, -0.06084, -2.63844],
+          reachable: [0, 0.5] },
+        light: { coefficients: [-2004.67048, 6664.47299, -6060.70202, -1792.61209, 5133.82359, -1939.85583],
+          reachable: [0.894, 1] }
+      }
+    };
+
+    var TOOL_PANELS = ['toolPendingBg', 'toolSuccessBg', 'toolErrorBg'];
+    var MESSAGE_PANELS = ['userMessageBg', 'customMessageBg'];
+    var PANELS = ['userMessageBg', 'toolPendingBg', 'toolSuccessBg', 'toolErrorBg', 'selectedBg', 'searchMatchBg',
+      'customMessageBg'];
+    var THINKING = ['thinkingOff', 'thinkingMinimal', 'thinkingLow', 'thinkingMedium', 'thinkingHigh',
+      'thinkingXhigh', 'thinkingMax'];
+    var each = function(tokens, on, level) {
+      return tokens.map(function(token) { return { token: token, on: on, level: level }; });
+    };
+    var SYNTAX = ['syntaxComment', 'syntaxKeyword', 'syntaxFunction', 'syntaxVariable', 'syntaxString',
+      'syntaxNumber', 'syntaxType', 'syntaxOperator', 'syntaxPunctuation'];
+    var RULES = [].concat(
+      each(PANELS, ['background'], 'panel'),
+      [{ token: 'text', on: ['background'], level: 'text' },
+        { token: 'text', on: ['selectedBg'], level: 'textOnPanel' },
+        { token: 'userMessageText', on: ['userMessageBg'], level: 'textOnPanel' },
+        { token: 'toolTitle', on: TOOL_PANELS, level: 'textOnPanel' }],
+      each(['accent', 'success', 'error', 'warning'], ['background', 'selectedBg'].concat(TOOL_PANELS), 'readable'),
+      [{ token: 'muted', on: ['background', 'selectedBg', 'customMessageBg'].concat(TOOL_PANELS), level: 'readable' },
+        { token: 'dim', on: ['background', 'selectedBg', 'customMessageBg'].concat(TOOL_PANELS), level: 'subtle' },
+        { token: 'thinkingText', on: ['background'], level: 'readable' },
+        { token: 'customMessageText', on: ['customMessageBg'].concat(TOOL_PANELS), level: 'readable' },
+        { token: 'customMessageLabel', on: ['background', 'customMessageBg', 'selectedBg'].concat(TOOL_PANELS),
+          level: 'readable' },
+        { token: 'toolOutput', on: ['background'].concat(TOOL_PANELS), level: 'readable' }],
+      each(['mdHeading', 'mdLink', 'mdLinkUrl', 'mdCode', 'mdQuote', 'mdCodeBlockBorder', 'mdListBullet'],
+        ['background'].concat(MESSAGE_PANELS), 'readable'),
+      [{ token: 'mdCodeBlock', on: ['background'].concat(MESSAGE_PANELS, TOOL_PANELS), level: 'readable' }],
+      each(['toolDiffAdded', 'toolDiffRemoved', 'toolDiffContext'], ['background'].concat(TOOL_PANELS), 'readable'),
+      each(SYNTAX, ['background'].concat(MESSAGE_PANELS, TOOL_PANELS), 'readable'),
+      [{ token: 'searchMatchText', on: ['searchMatchBg'], level: 'readable' }],
+      each(['bashMode', 'border', 'borderAccent'], ['background'], 'readable'),
+      [{ token: 'borderMuted', on: ['background'], level: 'subtle' }],
+      each(['mdQuoteBorder', 'mdHr'], ['background'].concat(MESSAGE_PANELS, TOOL_PANELS), 'readable'),
+      [{ token: 'scrollbarTrack', on: ['background'], level: 'track' },
+        { token: 'scrollbarThumb', on: ['scrollbarTrack'], level: 'thumb' }],
+      THINKING.map(function(token, index) { return { token: token, on: ['background'], level: 'thinking' + index }; })
+    );
+    // Relaxation compresses levels stronger than this one toward it before weakening all levels.
+    var READABLE_FLOOR = { dark: 'readable', light: 'subtle' };
+    // Body text keeps the terminal's foreground where it reaches this level.
+    var FOREGROUND_LEVEL = 'emphasis';
+    var FOREGROUND_TOKENS = ['text', 'userMessageText', 'toolTitle'];
+    var TEXT_MINIMUM_WCAG_CONTRAST = 4.5;
+    // Every surface before the tokens drawn on it.
+    var SOLVE_ORDER = (function() {
+      var order = [];
+      var visit = function(token) {
+        if (order.indexOf(token) !== -1) return;
+        RULES.forEach(function(rule) {
+          if (rule.token !== token) return;
+          rule.on.forEach(function(surface) { if (surface !== 'background') visit(surface); });
+        });
+        order.push(token);
+      };
+      RULES.forEach(function(rule) { visit(rule.token); });
+      return order;
+    })();
+
+    // pi-tui's oklab.ts and colors.ts, with their constants: the figures'
+    // own conversions differ in the last digits, which is enough to round a
+    // channel the other way.
+    var LINEAR_SRGB_TO_LMS = [
+      [0.4122214694707629, 0.5363325372617349, 0.0514459932675022],
+      [0.2119034958178251, 0.6806995506452344, 0.1073969535369405],
+      [0.0883024591900564, 0.2817188391361215, 0.6299787016738222]
+    ];
+    var LMS_TO_LAB = [
+      [0.210454268309314, 0.793617774702305, -0.0040720430116193],
+      [1.9779985324311684, -2.42859224204858, 0.450593709617411],
+      [0.0259040424655478, 0.7827717124575296, -0.8086757549230774]
+    ];
+    var LAB_TO_LMS = [
+      [1, 0.3963377773761749, 0.2158037573099136],
+      [1, -0.1055613458156586, -0.0638541728258133],
+      [1, -0.0894841775298119, -1.2914855480194092]
+    ];
+    var LMS_TO_LINEAR_SRGB = [
+      [4.0767416360759583, -3.3077115392580629, 0.2309699031821043],
+      [-1.2684379732850315, 2.6097573492876882, -0.341319376002657],
+      [-0.0041960761386756, -0.7034186179359362, 1.7076146940746117]
+    ];
+    var times = function(m, v) {
+      return m.map(function(row) { return row[0] * v[0] + row[1] * v[1] + row[2] * v[2]; });
+    };
+    var toOkhslLightness = function(x) {
+      var y = OKHSL_K3 * x - OKHSL_K1;
+      return 0.5 * (y + Math.sqrt(y * y + 4 * OKHSL_K2 * OKHSL_K3 * x));
+    };
+    var toOklabLightness = function(x) { return (x * x + OKHSL_K1 * x) / (OKHSL_K3 * (x + OKHSL_K2)); };
+    var labToLinear = function(lab) {
+      return times(LMS_TO_LINEAR_SRGB, times(LAB_TO_LMS, lab).map(function(v) { return v * v * v; }));
+    };
+    var labOf = function(rgb) {
+      var linear = [rgb.r / 255, rgb.g / 255, rgb.b / 255].map(function(v) {
+        return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return times(LMS_TO_LAB, times(LINEAR_SRGB_TO_LMS, linear).map(Math.cbrt));
+    };
+    // Without exact, channels are rounded to 8 bits, as in Pi.
+    var toRgb = function(linear, exact) {
+      var channel = function(value) {
+        var v = value > 0.0031308 ? 1.055 * Math.pow(value, 1 / 2.4) - 0.055 : 12.92 * value;
+        v = Math.min(1, Math.max(0, v)) * 255;
+        return exact ? v : Math.round(v);
+      };
+      return { r: channel(linear[0]), g: channel(linear[1]), b: channel(linear[2]) };
+    };
+    var slopes = function(a, b) {
+      return LAB_TO_LMS.map(function(row) { return row[1] * a + row[2] * b; });
+    };
+    var dot = function(row, values) { return row[0] * values[0] + row[1] * values[1] + row[2] * values[2]; };
+    var maxSaturation = function(a, b) {
+      var channel = 2;
+      for (var i = 0; i < 2; i++) {
+        var plane = SATURATION_FIT[i][0];
+        if (plane[0] * a + plane[1] * b > 1) {
+          channel = i;
+          break;
+        }
+      }
+      var k = SATURATION_FIT[channel][1];
+      var weights = LMS_TO_LINEAR_SRGB[channel];
+      var saturation = k[0] + k[1] * a + k[2] * b + k[3] * a * a + k[4] * a * b;
+      var s = slopes(a, b);
+      var base = s.map(function(slope) { return 1 + saturation * slope; });
+      var f = dot(weights, base.map(function(v) { return v * v * v; }));
+      var f1 = dot(weights, base.map(function(v, j) { return 3 * s[j] * v * v; }));
+      var f2 = dot(weights, base.map(function(v, j) { return 6 * s[j] * s[j] * v; }));
+      return saturation - f * f1 / (f1 * f1 - 0.5 * f * f2);
+    };
+    var cusp = function(a, b) {
+      var saturation = maxSaturation(a, b);
+      var lightness = Math.cbrt(1 / Math.max.apply(null, labToLinear([1, saturation * a, saturation * b])));
+      return [lightness, lightness * saturation];
+    };
+    var maxChromaAt = function(a, b, lightness, peak) {
+      if (lightness <= peak[0]) return peak[1] * lightness / peak[0];
+      var t = peak[1] * (lightness - 1) / (peak[0] - 1);
+      var s = slopes(a, b);
+      var lms = s.map(function(k) { return lightness + t * k; });
+      var cubes = lms.map(function(v) { return v * v * v; });
+      var first = lms.map(function(v, j) { return 3 * s[j] * v * v; });
+      var second = lms.map(function(v, j) { return 6 * s[j] * s[j] * v; });
+      var steps = LMS_TO_LINEAR_SRGB.map(function(row) {
+        var f = dot(row, cubes) - 1;
+        var f1 = dot(row, first);
+        var f2 = dot(row, second);
+        var u = f1 / (f1 * f1 - 0.5 * f * f2);
+        return u >= 0 ? -f * u : Number.MAX_VALUE;
+      });
+      return t + Math.min.apply(null, steps);
+    };
+    var chromaStops = function(L, a, b) {
+      var peak = cusp(a, b);
+      var cMax = maxChromaAt(a, b, L, peak);
+      var k = cMax / Math.min(L * (peak[1] / peak[0]), (1 - L) * (peak[1] / (1 - peak[0])));
+      var midS = 0.11516993 + 1 / (7.4477897 + 4.1590124 * b + a * (-2.19557347 + 1.75198401 * b +
+        a * (-2.13704948 - 10.02301043 * b + a * (-4.24894561 + 5.38770819 * b + 4.69891013 * a))));
+      var midT = 0.11239642 + 1 / (1.6132032 - 0.68124379 * b + a * (0.40370612 + 0.90148123 * b +
+        a * (-0.27087943 + 0.6122399 * b + a * (0.00299215 - 0.45399568 * b - 0.14661872 * a))));
+      var cMid = 0.9 * k * Math.sqrt(Math.sqrt(1 / (1 / Math.pow(L * midS, 4) + 1 / Math.pow((1 - L) * midT, 4))));
+      var c0 = Math.sqrt(1 / (1 / Math.pow(L * 0.4, 2) + 1 / Math.pow((1 - L) * 0.8, 2)));
+      return [c0, cMid, cMax];
+    };
+    // OKHSL (hue in degrees) to rounded sRGB.
+    var okhslColor = function(hue, saturation, lightness) {
+      var L = toOklabLightness(lightness);
+      var lab = [L, 0, 0];
+      if (L > 0 && L < 1 && saturation > 0) {
+        var angle = 2 * Math.PI * (((hue % 360) + 360) % 360) / 360;
+        var a = Math.cos(angle), b = Math.sin(angle);
+        var stops = chromaStops(L, a, b);
+        var c0 = stops[0], cMid = stops[1], cMax = stops[2];
+        var chroma, t, k1;
+        if (saturation < 0.8) {
+          t = 1.25 * saturation;
+          k1 = 0.8 * c0;
+          chroma = t * k1 / (1 - (1 - k1 / cMid) * t);
+        } else {
+          t = 5 * (saturation - 0.8);
+          k1 = 0.2 * cMid * cMid * 1.25 * 1.25 / c0;
+          chroma = cMid + t * k1 / (1 - (1 - k1 / (cMax - cMid)) * t);
+        }
+        lab = [L, chroma * a, chroma * b];
+      }
+      return toRgb(labToLinear(lab));
+    };
+    // sRGB to OKHSL (hue in degrees, 0 for grays).
+    var okhslOf = function(rgb) {
+      var lab = labOf(rgb);
+      var chroma = Math.hypot(lab[1], lab[2]);
+      var lightness = toOkhslLightness(lab[0]);
+      if (chroma < 1e-9 || lightness <= 0 || lightness >= 1) return { h: 0, s: 0, l: lightness };
+      var hue = (Math.atan2(lab[2], lab[1]) * 180 / Math.PI + 360) % 360;
+      var stops = chromaStops(lab[0], lab[1] / chroma, lab[2] / chroma);
+      var c0 = stops[0], cMid = stops[1], cMax = stops[2];
+      var saturation, k1;
+      if (chroma < cMid) {
+        k1 = 0.8 * c0;
+        saturation = 0.8 * (chroma / (k1 + (1 - k1 / cMid) * chroma));
+      } else {
+        k1 = 0.2 * cMid * cMid * 1.25 * 1.25 / c0;
+        var offset = chroma - cMid;
+        saturation = 0.8 + 0.2 * (offset / (k1 + (1 - k1 / (cMax - cMid)) * offset));
+      }
+      return { h: hue, s: Math.min(1, Math.max(0, saturation)), l: lightness };
+    };
+    // OKLCH, hue in degrees.
+    var lchOf = function(rgb) {
+      var lab = labOf(rgb);
+      return { l: lab[0], c: Math.hypot(lab[1], lab[2]), h: (Math.atan2(lab[2], lab[1]) * 180 / Math.PI + 360) % 360 };
+    };
+    var lightnessOf = function(rgb) { return labOf(rgb)[0]; };
+    // colors.ts's oklchColor: reduce chroma until the color fits sRGB.
+    // exact keeps fractional channels, for colors no terminal reports.
+    var oklchColor = function(l, c, hue, exact) {
+      var radians = hue * Math.PI / 180;
+      var cos = Math.cos(radians), sin = Math.sin(radians);
+      var at = function(chroma) { return labToLinear([l, chroma * cos, chroma * sin]); };
+      var fits = function(linear) {
+        // Exact colors must not clip: near black, a clipped -1e-7 moves L by 0.005.
+        var epsilon = exact ? 0 : 1e-7;
+        return linear.every(function(channel) { return channel >= -epsilon && channel <= 1 + epsilon; });
+      };
+      var direct = at(c);
+      if (fits(direct)) return toRgb(direct, exact);
+      var linear = at(0), low = 0, high = c;
+      for (var i = 0; i < 20; i++) {
+        var chroma = (low + high) / 2;
+        var candidate = at(chroma);
+        if (fits(candidate)) {
+          low = chroma;
+          linear = candidate;
+        } else {
+          high = chroma;
+        }
+      }
+      return toRgb(linear, exact);
+    };
+    // A terminal color's OKHSL channels and its OKLCH chroma.
+    var sourceOf = function(rgb) {
+      var hsl = okhslOf(rgb);
+      return { h: hsl.h, s: hsl.s, l: hsl.l, chroma: lchOf(rgb).c };
+    };
+    var luminance = function(rgb) {
+      var linear = function(channel) {
+        var value = channel / 255;
+        return value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * linear(rgb.r) + 0.7152 * linear(rgb.g) + 0.0722 * linear(rgb.b);
+    };
+    var wcagContrast = function(first, second) {
+      var a = luminance(first), b = luminance(second);
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    };
+    var WHITE = { r: 255, g: 255, b: 255 };
+    var BLACK = { r: 0, g: 0, b: 0 };
+    // Dark or light: the direction of the terminal's own foreground where
+    // text can be readable that way, otherwise whichever of white and black
+    // text has more contrast.
+    var appearanceOf = function(background, foreground) {
+      var whiteContrast = wcagContrast(WHITE, background);
+      var blackContrast = wcagContrast(BLACK, background);
+      if (foreground) {
+        var foregroundL = lightnessOf(foreground);
+        var backgroundL = lightnessOf(background);
+        if (Math.abs(foregroundL - backgroundL) > 0.05) {
+          var appearance = foregroundL > backgroundL ? 'dark' : 'light';
+          var best = appearance === 'dark' ? whiteContrast : blackContrast;
+          if (best >= TEXT_MINIMUM_WCAG_CONTRAST) return appearance;
+        }
+      }
+      return whiteContrast >= blackContrast ? 'dark' : 'light';
+    };
+    var bellWeight = function(lightness) {
+      var gaussian = function(x) { return Math.exp(-(x - 0.5) * (x - 0.5) / (2 * 0.25 * 0.25)); };
+      return (gaussian(lightness) - gaussian(0)) / (1 - gaussian(0));
+    };
+    // The target lightness for a level on a surface, or undefined where the level cannot be reached.
+    var levelTarget = function(level, appearance, surfaceL) {
+      var curve = LEVELS[level][appearance];
+      if (surfaceL < curve.reachable[0] || surfaceL > curve.reachable[1]) return undefined;
+      return curve.coefficients.reduce(function(sum, coefficient, power) {
+        return sum + coefficient * Math.pow(surfaceL, power);
+      }, 0);
+    };
+    // The source's saturation applies at its own lightness and falls off
+    // toward black and white along the family's curve, never rising above
+    // it; chroma is capped at the source's, with the same falloff.
+    var anchored = function(source, family, lightness) {
+      var anchor = piSaturation(family, source.l);
+      var falloff = anchor > 0 ? Math.min(1, piSaturation(family, lightness) / anchor) : 1;
+      var color = okhslColor(source.h, source.s * falloff, lightness);
+      var cap = source.chroma * falloff;
+      var lch = lchOf(color);
+      return lch.c <= cap ? color : oklchColor(lch.l, cap, source.h);
+    };
+    // Move a text color toward white or black until it reaches the WCAG minimum on every surface.
+    var withTextContrast = function(color, surfaces, lighter) {
+      var meets = function(candidate) {
+        return surfaces.every(function(surface) {
+          return wcagContrast(candidate, surface) >= TEXT_MINIMUM_WCAG_CONTRAST;
+        });
+      };
+      if (meets(color)) return color;
+      var hsl = sourceOf(color);
+      var at = function(lightness) { return okhslColor(hsl.h, hsl.s, lightness); };
+      var extreme = lighter ? 1 : 0;
+      if (!meets(at(extreme))) return at(extreme);
+      var low = hsl.l, high = extreme;
+      for (var i = 0; i < 20; i++) {
+        var middle = (low + high) / 2;
+        if (meets(at(middle))) high = middle;
+        else low = middle;
+      }
+      return at(high);
+    };
+
+    // input: { background, foreground, palette (16 colors) }. Returns the
+    // tokens' colors (the foreground where Pi keeps it), the appearance, how
+    // much the levels were relaxed (0 when not), and the generator's target
+    // and paint functions at that relaxation.
+    var generate = function(input) {
+      var background = input.background, foreground = input.foreground;
+      var palette = input.palette && input.palette.length === 16 ? input.palette.map(sourceOf) : null;
+      var appearance = appearanceOf(background, foreground);
+      var lighter = appearance === 'dark';
+      var extreme = lighter ? 1 : 0;
+      var backgroundL = lightnessOf(background);
+      var pick = function(values) { return lighter ? Math.max.apply(null, values) : Math.min.apply(null, values); };
+
+      var paint = function(token, oklabL) {
+        var lightness = toOkhslLightness(oklabL);
+        var familyName = TOKEN_FAMILIES[token];
+        var family = PI_FAMILIES[familyName];
+        if (!palette) {
+          return okhslColor(family.hue, family.min + (family.max - family.min) * bellWeight(lightness), lightness);
+        }
+        var slot = TOKEN_SLOTS[token] !== undefined ? TOKEN_SLOTS[token] : FAMILY_SLOTS[familyName];
+        return anchored(palette[slot], family, lightness);
+      };
+      // The lightness a rule needs on a surface, relaxed by t: from 0 to 1,
+      // levels stronger than the readable floor move toward it; from 1 to 2,
+      // all levels move toward the surface itself.
+      var target = function(level, surfaceL, t) {
+        var reached = levelTarget(level, appearance, surfaceL);
+        if (reached === undefined && t === 0) return undefined;
+        var distance = (reached === undefined ? extreme : reached) - surfaceL;
+        var floorL = levelTarget(READABLE_FLOOR[appearance], appearance, surfaceL);
+        var floor = (floorL === undefined ? extreme : floorL) - surfaceL;
+        var compressed = Math.abs(distance) > Math.abs(floor) ?
+          distance - (distance - floor) * Math.min(t, 1) : distance;
+        return surfaceL + compressed * (1 - Math.max(0, t - 1));
+      };
+      // Panels stay light (or dark) enough for white (or black) text.
+      var extremeText = lighter ? WHITE : BLACK;
+      var readable = function(color) { return wcagContrast(extremeText, color) >= TEXT_MINIMUM_WCAG_CONTRAST; };
+      var limitPanel = function(token, l) {
+        var color = paint(token, l);
+        if (readable(color)) return color;
+        var low = backgroundL, high = l;
+        for (var i = 0; i < 20; i++) {
+          var middle = (low + high) / 2;
+          if (readable(paint(token, middle))) low = middle;
+          else high = middle;
+        }
+        return paint(token, low);
+      };
+      var solve = function(t) {
+        var colors = { background: background };
+        for (var i = 0; i < SOLVE_ORDER.length; i++) {
+          var token = SOLVE_ORDER[i];
+          var targets = [];
+          for (var j = 0; j < RULES.length; j++) {
+            var rule = RULES[j];
+            if (rule.token !== token) continue;
+            for (var k = 0; k < rule.on.length; k++) {
+              var value = target(rule.level, lightnessOf(colors[rule.on[k]] || background), t);
+              if (value === undefined || value < 0 || value > 1) return null;
+              targets.push(value);
+            }
+          }
+          var l = pick(targets);
+          colors[token] = PANELS.indexOf(token) !== -1 ? limitPanel(token, l) : paint(token, l);
+        }
+        return colors;
+      };
+
+      var relaxation = 0;
+      var solved = solve(0);
+      if (!solved) {
+        // Mid-gray backgrounds cannot fit every level: relax as little as possible.
+        var low = 0, high = 2;
+        solved = solve(high);
+        for (var i = 0; i < 20; i++) {
+          var middle = (low + high) / 2;
+          var attempt = solve(middle);
+          if (attempt) {
+            high = middle;
+            solved = attempt;
+          } else {
+            low = middle;
+          }
+        }
+        relaxation = high;
+      }
+      var surfacesOf = function(token) {
+        var surfaces = [];
+        RULES.forEach(function(rule) {
+          if (rule.token !== token) return;
+          rule.on.forEach(function(surface) { surfaces.push(solved[surface] || background); });
+        });
+        return surfaces;
+      };
+      var colors = {};
+      Object.keys(TOKEN_FAMILIES).forEach(function(token) { colors[token] = solved[token]; });
+      var keepsForeground = {};
+      FOREGROUND_TOKENS.forEach(function(token) {
+        var surfaces = surfacesOf(token);
+        var text = solved[token];
+        if (foreground) {
+          var targets = surfaces.map(function(surface) {
+            return target(FOREGROUND_LEVEL, lightnessOf(surface), relaxation);
+          });
+          if (targets.every(function(value) { return value !== undefined && value >= 0 && value <= 1; })) {
+            var needed = pick(targets);
+            var foregroundL = lightnessOf(foreground);
+            if (lighter ? foregroundL >= needed : foregroundL <= needed) {
+              colors[token] = foreground;
+              keepsForeground[token] = true;
+              return;
+            }
+            text = anchored(sourceOf(foreground), PI_FAMILIES.neutral, toOkhslLightness(needed));
+          }
+        }
+        colors[token] = withTextContrast(text, surfaces, lighter);
+      });
+      return {
+        colors: colors, keepsForeground: keepsForeground, appearance: appearance, relaxation: relaxation,
+        target: function(level, surfaceL) { return target(level, surfaceL, relaxation); },
+        paint: paint
+      };
+    };
+
+    return {
+      LEVELS: LEVELS, RULES: RULES, TOKEN_FAMILIES: TOKEN_FAMILIES, generate: generate, levelTarget: levelTarget,
+      lightnessOf: lightnessOf, lchOf: lchOf, wcagContrast: wcagContrast, oklchColor: oklchColor,
+      appearanceOf: appearanceOf,
+      slotOf: function(token) {
+        return TOKEN_SLOTS[token] !== undefined ? TOKEN_SLOTS[token] : FAMILY_SLOTS[TOKEN_FAMILIES[token]];
+      }
+    };
+  })();
+
+  // The lightness Pi needs, as a chart for <figure data-lightness-curves>:
+  // the target-lightness curves of the contrast levels in the post's rules,
+  // over the lightness of the surface below. A vertical line is a surface,
+  // first the background, which can be dragged, then the panels, which Pi
+  // solves on it first: a panel's target, reflected by the diagonal, is
+  // where its line is. A rule's targets are dots where its level's curve
+  // crosses its surfaces' lines; the strictest is Pi's lightness for the
+  // color. On the right, the color Pi made (square) and the ANSI color it
+  // came from (circle). Below, a terminal shows the colors on every surface.
+  // data-pi-themes names the terminal themes (themes.json); the chart follows
+  // the demo's theme picker.
+  var CURVE_LEVELS = ['panel', 'subtle', 'readable', 'text'];
+  // The post's rules: panels first, then the colors on them.
+  var CURVE_RULES = [
+    { id: 'panels', label: 'panels', tokens: ['selectedBg', 'toolPendingBg', 'toolSuccessBg', 'toolErrorBg'] },
+    { id: 'accent', label: 'accent', tokens: ['accent'] },
+    { id: 'success', label: 'success', tokens: ['success'] },
+    { id: 'error', label: 'error', tokens: ['error'] },
+    { id: 'warning', label: 'warning', tokens: ['warning'] },
+    { id: 'dim', label: 'dim', tokens: ['dim'] }
+  ];
+  var CURVE_SURFACES = {
+    background: { name: 'the background', row: 'background' },
+    selectedBg: { name: 'the selected row', row: 'selected row' },
+    toolPendingBg: { name: 'the pending tool panel', row: 'tool, pending' },
+    toolSuccessBg: { name: 'the successful tool panel', row: 'tool, success' },
+    toolErrorBg: { name: 'the failed tool panel', row: 'tool, failed' },
+    customMessageBg: { name: 'custom messages', row: 'custom message' }
+  };
+  var PREVIEW_ROWS = ['background', 'selectedBg', 'toolPendingBg', 'toolSuccessBg', 'toolErrorBg'];
+  var PREVIEW_WORDS = ['accent', 'success', 'error', 'warning', 'dim'];
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var charts = [];
+
+  function rgbHex(rgb) {
+    return '#' + [rgb.r, rgb.g, rgb.b].map(function(value) {
+      return ('0' + Math.round(value).toString(16)).slice(-2);
+    }).join('');
+  }
+
+  function hexRgb(hex) {
+    var rgb = hexToRgb(hex);
+    return { r: Math.round(rgb[0] * 255), g: Math.round(rgb[1] * 255), b: Math.round(rgb[2] * 255) };
+  }
+
+  function escapeText(text) {
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function fixed(value) {
+    return value.toFixed(2);
+  }
+
+  // What the chart shows, in words; p has the details.
+  function curvesText(p) {
+    var text;
+    if (p.panels) {
+      text = 'Panels come first: the panel level on the background (L ' + p.surfaceL + ') makes them L ' +
+        p.target + ', a little ' + (p.lighter ? 'lighter' : 'darker') + '. Colors drawn on them start from that.';
+    } else {
+      text = p.token.charAt(0).toUpperCase() + p.token.slice(1) + ' needs the ' + p.level + ' level on the ' +
+        'background and ' + p.count + ' panels: L ' + p.onBackground + ' and L ' + p.range + '. The strictest, ' +
+        'on ' + p.surface + ', wins: L ' + p.target + ', ' + p.hex + '.';
+    }
+    if (p.unreached) text += ' The level is out of reach here, so Pi goes toward ' + (p.lighter ? 'white' : 'black') + '.';
+    return text;
+  }
+
+  // Every text the status can show, with the longest values.
+  var curvesReserved = null;
+  function curvesReserve() {
+    if (curvesReserved) return curvesReserved;
+    var longestSurface = Object.keys(CURVE_SURFACES).map(function(key) { return CURVE_SURFACES[key].name; })
+      .reduce(function(a, b) { return a.length >= b.length ? a : b; });
+    curvesReserved = [];
+    CURVE_RULES.forEach(function(rule) {
+      var panels = rule.id === 'panels';
+      var level = panels ? 'panel' : PI_THEME.RULES.filter(function(item) { return item.token === rule.id; })[0].level;
+      [true, false].forEach(function(lighter) {
+        [true, false].forEach(function(unreached) {
+          curvesReserved.push(curvesText({ panels: panels, lighter: lighter, level: level, unreached: unreached,
+            surfaceL: '0.00', target: '0.00', token: rule.label, count: 5, onBackground: '0.00',
+            range: '0.00 to 0.00', surface: longestSurface, hex: '#000000' }));
+        });
+      });
+    });
+    return curvesReserved;
+  }
+
+  function LightnessCurves(figure) {
+    var self = this;
+    this.figure = figure;
+    this.data = null;
+    this.theme = null;
+    this.rule = CURVE_RULES[3]; // error, as in the post
+    this.moved = null; // the background's lightness, once dragged
+    this.drag = null;
+
+    var fallback = figure.querySelector('.lightness-curves__fallback');
+    this.chart = document.createElement('div');
+    this.chart.className = 'lightness-curves__chart';
+    this.svg = document.createElementNS(SVG_NS, 'svg');
+    this.svg.setAttribute('role', 'img');
+    this.chart.appendChild(this.svg);
+    this.status = document.createElement('p');
+    this.status.className = 'lightness-curves__status';
+    this.status.setAttribute('aria-live', 'polite');
+    this.statusTexts = {};
+
+    // The rules, as in the post's code.
+    this.rules = document.createElement('div');
+    this.rules.className = 'color-space__recipe lightness-curves__rules';
+    this.rules.setAttribute('role', 'group');
+    this.rules.setAttribute('aria-label', 'Rule');
+    var rulesTitle = document.createElement('span');
+    rulesTitle.textContent = 'Rule';
+    this.rules.appendChild(rulesTitle);
+    this.ruleButtons = CURVE_RULES.map(function(rule) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = rule.label;
+      button.addEventListener('click', function() { self.setRule(rule.id); });
+      self.rules.appendChild(button);
+      return button;
+    });
+
+    // A terminal with Pi's colors on every surface the post names.
+    this.preview = document.createElement('div');
+    this.preview.className = 'lightness-curves__preview';
+    this.previewRows = PREVIEW_ROWS.map(function(surface) {
+      var label = document.createElement('span');
+      label.className = 'lightness-curves__row-label';
+      label.textContent = CURVE_SURFACES[surface].row;
+      var row = document.createElement('div');
+      row.className = 'lightness-curves__row';
+      var words = PREVIEW_WORDS.map(function(token) {
+        var word = document.createElement('button');
+        word.type = 'button';
+        word.className = 'lightness-curves__word';
+        word.textContent = token;
+        word.dataset.token = token;
+        word.addEventListener('click', function() { self.setRule(token); });
+        row.appendChild(word);
+        return word;
+      });
+      self.preview.appendChild(label);
+      self.preview.appendChild(row);
+      return { surface: surface, label: label, row: row, words: words };
+    });
+
+    // The background's lightness, keeping its hue and chroma where sRGB can.
+    this.slider = document.createElement('div');
+    this.slider.className = 'color-space__recipe lightness-curves__background';
+    var sliderLabel = document.createElement('label');
+    sliderLabel.className = 'color-space__slider';
+    var sliderTitle = document.createElement('span');
+    sliderTitle.textContent = 'Background L';
+    this.input = document.createElement('input');
+    this.input.type = 'range';
+    this.input.min = '0';
+    this.input.max = '1';
+    this.input.step = '0.005';
+    this.input.addEventListener('input', function() { self.moveBackground(Number(self.input.value)); });
+    this.value = document.createElement('output');
+    this.value.className = 'lightness-curves__value';
+    sliderLabel.appendChild(sliderTitle);
+    sliderLabel.appendChild(this.input);
+    sliderLabel.appendChild(this.value);
+    this.slider.appendChild(sliderLabel);
+    this.reset = document.createElement('button');
+    this.reset.type = 'button';
+    this.reset.textContent = 'Theme background';
+    this.reset.addEventListener('click', function() { self.moveBackground(null); });
+    this.slider.appendChild(this.reset);
+
+    this.themes = document.createElement('div');
+    this.themes.className = 'asciicast__themes';
+    this.themes.setAttribute('role', 'radiogroup');
+    this.themes.setAttribute('aria-label', 'Terminal theme');
+    this.themeButtons = [];
+    this.themes.addEventListener('keydown', function(event) { self.themeKey(event); });
+    this.themes.addEventListener('mouseleave', function() { self.showName(self.theme); });
+    this.themes.addEventListener('focusout', function() { self.showName(self.theme); });
+    this.name = document.createElement('p');
+    this.name.className = 'lightness-curves__theme-name';
+    this.name.setAttribute('aria-hidden', 'true');
+
+    var caption = figure.querySelector('figcaption');
+    [this.chart, this.status, this.rules, this.preview, this.slider, this.themes, this.name].forEach(function(node) {
+      figure.insertBefore(node, caption || null);
+    });
+    if (fallback) fallback.hidden = true;
+    var help = figure.querySelector('.color-space__help');
+    if (help) {
+      this.helpTip = helpTip(help.textContent.trim());
+      figure.appendChild(this.helpTip);
+    }
+    figure.classList.add('is-enhanced');
+
+    this.svg.addEventListener('pointerdown', function(event) { self.pointerDown(event); });
+    this.svg.addEventListener('pointermove', function(event) { self.pointerMove(event); });
+    this.svg.addEventListener('pointerup', function(event) { self.pointerUp(event); });
+    this.svg.addEventListener('pointercancel', function(event) { self.pointerUp(event); });
+    this.svg.addEventListener('click', function(event) {
+      var target = event.target.closest && event.target.closest('[data-hex]');
+      if (target) selectHex(target.getAttribute('data-hex'));
+    });
+    this.onTheme = function(event) {
+      var name = themeOf(event, self.onTheme);
+      if (name && !(self.theme && self.theme.name === name)) self.setTheme(name);
+    };
+    followThemes(this.onTheme);
+    if (typeof ResizeObserver === 'function') {
+      this.resizeObserver = new ResizeObserver(function() { self.render(); });
+      this.resizeObserver.observe(this.chart);
+    }
+    this.load(figure.getAttribute('data-pi-themes'));
+  }
+
+  LightnessCurves.prototype.load = function(url) {
+    var self = this;
+    if (!url || typeof fetch !== 'function') return;
+    fetch(url).then(function(response) { return response.json(); }).then(function(json) {
+      if (!json || !json.themes) return;
+      self.data = json;
+      self.buildThemes();
+      self.setTheme(currentTheme(json));
+    }).catch(function(error) {
+      if (window.console) console.warn('Lightness curves unavailable:', error);
+    });
+  };
+
+  LightnessCurves.prototype.findTheme = function(name) {
+    var themes = this.data ? this.data.themes : [];
+    return themes.filter(function(item) { return item.name === name; })[0] || themes[0] || null;
+  };
+
+  LightnessCurves.prototype.tokenColor = function(theme, token) {
+    return theme.palette[this.data.firstTokenIndex + this.data.tokens.indexOf(token)];
+  };
+
+  // As in the demo's picker: a row of dark themes and a row of light ones,
+  // each a tiny terminal in Pi's colors.
+  LightnessCurves.prototype.buildThemes = function() {
+    var self = this;
+    ['dark', 'light'].forEach(function(appearance) {
+      var group = document.createElement('div');
+      group.className = 'asciicast__theme-group';
+      var heading = document.createElement('span');
+      heading.className = 'asciicast__theme-heading';
+      heading.textContent = appearance === 'dark' ? 'Dark' : 'Light';
+      group.appendChild(heading);
+      self.data.themes.forEach(function(item) {
+        if (item.appearance !== appearance) return;
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'asciicast__theme';
+        button.dataset.name = item.name;
+        button.setAttribute('role', 'radio');
+        button.setAttribute('aria-label', item.name);
+        button.title = item.name;
+        button.style.setProperty('--swatch-bg', item.background);
+        var swatch = document.createElement('span');
+        swatch.className = 'asciicast__swatch';
+        ['accent', 'text', 'success'].forEach(function(token) {
+          var line = document.createElement('span');
+          line.className = 'asciicast__swatch-line';
+          line.style.background = self.tokenColor(item, token);
+          swatch.appendChild(line);
+        });
+        button.appendChild(swatch);
+        button.addEventListener('click', function() { self.pickTheme(item.name); });
+        button.addEventListener('mouseenter', function() { self.showName(item); });
+        button.addEventListener('focus', function() { self.showName(item); });
+        self.themeButtons.push(button);
+        group.appendChild(button);
+      });
+      self.themes.appendChild(group);
+    });
+  };
+
+  LightnessCurves.prototype.showName = function(theme) {
+    this.name.textContent = theme ? theme.name : '';
+  };
+
+  LightnessCurves.prototype.themeKey = function(event) {
+    var buttons = this.themeButtons;
+    var names = buttons.map(function(button) { return button.dataset.name; });
+    var position = names.indexOf(this.theme && this.theme.name);
+    var next = null;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (position + 1) % buttons.length;
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (position - 1 + buttons.length) % buttons.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = buttons.length - 1;
+    if (next === null || !buttons.length) return;
+    event.preventDefault();
+    this.pickTheme(names[next]);
+    buttons[next].focus();
+  };
+
+  // A theme the reader picked here, for every picker on the page.
+  LightnessCurves.prototype.pickTheme = function(name) {
+    this.setTheme(name);
+    announceTheme(name, this.onTheme);
+  };
+
+  LightnessCurves.prototype.setTheme = function(name) {
+    if (!this.data) return;
+    this.theme = this.findTheme(name);
+    this.moved = null;
+    this.update();
+  };
+
+  LightnessCurves.prototype.setRule = function(id) {
+    this.rule = CURVE_RULES.filter(function(rule) { return rule.id === id; })[0] || this.rule;
+    this.update();
+  };
+
+  LightnessCurves.prototype.moveBackground = function(lightness) {
+    if (!this.theme) return;
+    this.moved = lightness === null ? null : Math.min(1, Math.max(0, lightness));
+    this.update();
+  };
+
+  // Pi's colors for the theme with the background as it is now.
+  LightnessCurves.prototype.solve = function() {
+    var theme = this.theme;
+    var background = hexRgb(theme.background);
+    if (this.moved !== null) {
+      var lch = PI_THEME.lchOf(background);
+      // Unrounded: near black, 8-bit colors are far apart in lightness
+      // (#010101 is L 0.067), and the background would jump between them.
+      background = PI_THEME.oklchColor(this.moved, lch.c, lch.h, true);
+    }
+    var result = PI_THEME.generate({ foreground: hexRgb(theme.foreground), background: background,
+      palette: theme.palette.slice(0, 16).map(hexRgb) });
+    result.background = background;
+    result.lighter = result.appearance === 'dark';
+    return result;
+  };
+
+  // The selected rule's targets, one per surface, and the strictest.
+  LightnessCurves.prototype.targets = function(result) {
+    var L = PI_THEME.lightnessOf;
+    var entries = [];
+    this.rule.tokens.forEach(function(token) {
+      PI_THEME.RULES.forEach(function(rule) {
+        if (rule.token !== token) return;
+        rule.on.forEach(function(surface) {
+          var surfaceL = L(surface === 'background' ? result.background : result.colors[surface]);
+          var reached = PI_THEME.levelTarget(rule.level, result.appearance, surfaceL);
+          var target = result.target(rule.level, surfaceL);
+          entries.push({ token: token, surface: surface, level: rule.level, surfaceL: surfaceL,
+            target: target, reached: reached !== undefined });
+        });
+      });
+    });
+    var winner = entries.reduce(function(best, entry) {
+      if (!best) return entry;
+      return (result.lighter ? entry.target > best.target : entry.target < best.target) ? entry : best;
+    }, null);
+    return { entries: entries, winner: winner, level: entries.length ? entries[0].level : 'panel' };
+  };
+
+  LightnessCurves.prototype.update = function() {
+    if (!this.theme) return;
+    var self = this;
+    var result = this.result = this.solve();
+    var targets = this.picked = this.targets(result);
+    var background = rgbHex(result.background);
+    var backgroundL = PI_THEME.lightnessOf(result.background);
+    this.themeButtons.forEach(function(button) {
+      var checked = button.dataset.name === self.theme.name;
+      button.setAttribute('aria-checked', checked ? 'true' : 'false');
+      button.tabIndex = checked ? 0 : -1;
+    });
+    this.showName(this.theme);
+    this.ruleButtons.forEach(function(button, index) {
+      button.setAttribute('aria-pressed', CURVE_RULES[index] === self.rule ? 'true' : 'false');
+    });
+    this.input.value = String(backgroundL);
+    this.value.textContent = fixed(backgroundL);
+    this.reset.disabled = this.moved === null;
+    // The track: the background's hue at every lightness.
+    var lch = PI_THEME.lchOf(hexRgb(this.theme.background));
+    var stops = [];
+    for (var i = 0; i <= 16; i++) stops.push(rgbHex(PI_THEME.oklchColor(i / 16, lch.c, lch.h)));
+    this.input.style.setProperty('--track', 'linear-gradient(to right, ' + stops.join(', ') + ')');
+
+    var surfaces = {};
+    targets.entries.forEach(function(entry) { surfaces[entry.surface] = true; });
+    this.previewRows.forEach(function(row) {
+      var color = row.surface === 'background' ? result.background : result.colors[row.surface];
+      row.row.style.background = rgbHex(color);
+      var used = self.rule.id === 'panels' ? row.surface !== 'background' : !!surfaces[row.surface];
+      row.label.classList.toggle('is-active', used);
+      row.row.classList.toggle('is-active', used);
+      row.words.forEach(function(word) {
+        var token = word.dataset.token;
+        word.style.color = rgbHex(result.colors[token]);
+        word.setAttribute('aria-pressed', token === self.rule.id ? 'true' : 'false');
+        word.title = token + ' ' + rgbHex(result.colors[token]) + ' on ' + CURVE_SURFACES[row.surface].row;
+      });
+    });
+    this.preview.style.setProperty('--preview-bg', background);
+    // Stacked with every text it can show, so that it keeps one height.
+    var texts = { current: this.describe(result, targets) };
+    curvesReserve().forEach(function(reserve, index) { texts['reserve' + index] = reserve; });
+    stackTexts(this.status, this.statusTexts, texts, 'current');
+    this.svg.setAttribute('aria-label', texts.current);
+    this.render();
+  };
+
+  // What the chart shows, in words.
+  LightnessCurves.prototype.describe = function(result, targets) {
+    var winner = targets.winner;
+    if (!winner) return '';
+    var p = { panels: this.rule.id === 'panels', lighter: result.lighter, level: winner.level,
+      surfaceL: fixed(winner.surfaceL), target: fixed(winner.target),
+      unreached: targets.entries.some(function(entry) { return !entry.reached; }) };
+    if (!p.panels) {
+      var onBackground = targets.entries.filter(function(entry) { return entry.surface === 'background'; })[0];
+      var panels = targets.entries.filter(function(entry) { return entry.surface !== 'background'; });
+      var values = panels.map(function(entry) { return fixed(entry.target); });
+      var low = values.reduce(function(a, b) { return a < b ? a : b; });
+      var high = values.reduce(function(a, b) { return a > b ? a : b; });
+      p.token = this.rule.label;
+      p.count = panels.length;
+      p.onBackground = fixed(onBackground.target);
+      p.range = low === high ? low : result.lighter ? low + ' to ' + high : high + ' to ' + low;
+      p.surface = CURVE_SURFACES[winner.surface].name;
+      p.hex = rgbHex(result.colors[winner.token]);
+    }
+    return curvesText(p);
+  };
+
+  // The plot's geometry in CSS pixels, for the chart's width.
+  LightnessCurves.prototype.layout = function() {
+    var width = Math.max(260, this.chart.clientWidth || 560);
+    var narrow = width < 480;
+    var left = 54, right = narrow ? 104 : 136, top = 26, bottom = 46;
+    var plot = Math.min(width - left - right, 420);
+    var offset = Math.max(0, (width - left - right - plot) / 2);
+    var x0 = left + offset, x1 = x0 + plot;
+    return { width: width, height: top + plot + bottom, x0: x0, x1: x1, y0: top, y1: top + plot, narrow: narrow,
+      x: function(l) { return x0 + l * plot; },
+      y: function(l) { return top + (1 - l) * plot; },
+      lightness: function(px) { return (px - x0) / plot; } };
+  };
+
+  LightnessCurves.prototype.render = function() {
+    if (!this.result) return;
+    var g = this.geometry = this.layout();
+    var result = this.result, targets = this.picked, rule = this.rule;
+    var L = PI_THEME.lightnessOf;
+    var lighter = result.lighter;
+    var parts = [];
+    var title = function(value) { return '<title>' + escapeText(value) + '</title>'; };
+    var line = function(points, className, extra, tip) {
+      var path = '<path class="' + className + '" d="M' + points.map(function(p) {
+        return p[0].toFixed(1) + ',' + p[1].toFixed(1);
+      }).join('L') + '"' + (extra || '');
+      return tip ? path + '>' + title(tip) + '</path>' : path + '/>';
+    };
+    var text = function(x, y, value, className, anchor) {
+      return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" class="' + (className || '') + '"' +
+        (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + escapeText(value) + '</text>';
+    };
+
+    // Axes: gray ramps of OKLab lightness, ticks and titles.
+    var grays = [];
+    for (var i = 0; i <= 16; i++) {
+      grays.push('<stop offset="' + (i / 16) + '" stop-color="' + rgbHex(PI_THEME.oklchColor(i / 16, 0, 0)) + '"/>');
+    }
+    parts.push('<defs><linearGradient id="lc-x" x1="0" x2="1" y1="0" y2="0">' + grays.join('') +
+      '</linearGradient><linearGradient id="lc-y" x1="0" x2="0" y1="1" y2="0">' + grays.join('') +
+      '</linearGradient><marker id="lc-head" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="6" ' +
+      'markerHeight="6" orient="auto-start-reverse"><path d="M0,0L8,4L0,8z" class="lc-head"/></marker>' +
+      '<pattern id="lc-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+      '<path d="M0,0V6" class="lc-hatch-line"/></pattern></defs>');
+    parts.push('<rect class="lc-ramp" x="' + g.x0 + '" y="' + (g.y1 + 4) + '" width="' + (g.x1 - g.x0) +
+      '" height="6" rx="2" fill="url(#lc-x)"/>');
+    parts.push('<rect class="lc-ramp" x="' + (g.x0 - 10) + '" y="' + g.y0 + '" width="6" height="' + (g.y1 - g.y0) +
+      '" rx="2" fill="url(#lc-y)"/>');
+    [0.25, 0.5, 0.75].forEach(function(l) {
+      parts.push(line([[g.x(l), g.y0], [g.x(l), g.y1]], 'lc-grid'));
+      parts.push(line([[g.x0, g.y(l)], [g.x1, g.y(l)]], 'lc-grid'));
+    });
+    parts.push('<rect class="lc-frame" x="' + g.x0 + '" y="' + g.y0 + '" width="' + (g.x1 - g.x0) + '" height="' +
+      (g.y1 - g.y0) + '"/>');
+    [0, 0.5, 1].forEach(function(l) {
+      parts.push(text(g.x(l), g.y1 + 25, l === 0.5 ? '0.5' : String(l), 'lc-tick', 'middle'));
+      parts.push(text(g.x0 - 14, g.y(l) + 4, l === 0.5 ? '0.5' : String(l), 'lc-tick', 'end'));
+    });
+    parts.push(text((g.x0 + g.x1) / 2, g.y1 + 42, 'lightness of the surface', 'lc-axis', 'middle'));
+    parts.push('<text class="lc-axis" text-anchor="middle" transform="translate(' + (g.x0 - 40) +
+      ',' + ((g.y0 + g.y1) / 2) + ') rotate(-90)">lightness Pi needs</text>');
+
+    // Where the selected rule's level is out of reach with the curves as
+    // drawn, so Pi goes toward white (dark) or black (light): surfaces past
+    // where its dark curve ends, or before its light curve starts.
+    var active = rule.id === 'panels' ? 'panel' : targets.level;
+    var reach = PI_THEME.LEVELS[active][result.appearance].reachable;
+    [[0, reach[0]], [reach[1], 1]].forEach(function(band) {
+      if (band[1] - band[0] < 0.002) return;
+      var x = g.x(band[0]), width = g.x(band[1]) - x;
+      parts.push('<rect class="lc-unreachable" x="' + x.toFixed(1) + '" y="' + g.y0 + '" width="' +
+        width.toFixed(1) + '" height="' + (g.y1 - g.y0) + '" fill="url(#lc-hatch)">' +
+        title('The ' + active + ' level is out of reach on these surfaces, so Pi goes toward ' +
+          (lighter ? 'white' : 'black')) + '</rect>');
+      if (width >= 16) {
+        parts.push('<text class="lc-unreachable-label" text-anchor="end" transform="translate(' +
+          (x + width / 2 + 4.5).toFixed(1) + ',' + (g.y0 + 8) + ') rotate(-90)">out of reach</text>');
+      }
+    });
+
+    // Where the terminal turns from dark to light (or back) as the
+    // background moves, and the curves flip with it.
+    var segments = this.appearances();
+    segments.slice(1).forEach(function(segment, index) {
+      var x = g.x(segment.from);
+      parts.push(line([[x, g.y0], [x, g.y1]], 'lc-flip', '', 'Here the terminal turns ' + segment.appearance +
+        ', and the curves flip'));
+      // Above where dots at black sit.
+      parts.push(text(x - 4, g.y1 - 16, segments[index].appearance, 'lc-flip-label', 'end'));
+      parts.push(text(x + 4, g.y1 - 16, segment.appearance, 'lc-flip-label', 'start'));
+    });
+
+    // No contrast: a color as light as the surface.
+    parts.push(line([[g.x(0), g.y(0)], [g.x(1), g.y(1)]], 'lc-diagonal'));
+    // Along it, on the side without curves, away from the usual backgrounds.
+    var noteL = lighter ? 0.62 : 0.4;
+    // Text sits above its baseline, so below the diagonal it needs more room.
+    var noteX = g.x(noteL) + (lighter ? 12 : -4), noteY = g.y(noteL) + (lighter ? 12 : -4);
+    parts.push('<text class="lc-note" transform="translate(' + noteX.toFixed(1) + ',' + noteY.toFixed(1) +
+      ') rotate(-45)">no contrast</text>');
+
+    // The levels' curves for this appearance, where they can be reached.
+    var labels = [];
+    CURVE_LEVELS.forEach(function(level) {
+      var curve = PI_THEME.LEVELS[level][result.appearance];
+      var from = curve.reachable[0], to = curve.reachable[1];
+      var points = [];
+      for (var i = 0; i <= 96; i++) {
+        var x = from + (to - from) * i / 96;
+        var y = PI_THEME.levelTarget(level, result.appearance, x);
+        points.push([g.x(x), g.y(Math.min(1, Math.max(0, y)))]);
+      }
+      var className = 'lc-curve' + (level === active ? ' is-active' : level === 'panel' ? ' is-panel' : '');
+      parts.push(line(points, className, '', 'The ' + level + ' level'));
+      // Labeled away from the backgrounds: on dark, above where the curve
+      // starts at black; on light, left of where it starts, toward black.
+      var startY = PI_THEME.levelTarget(level, result.appearance, from);
+      labels.push({ level: level, x: g.x(from), y: g.y(startY), className: level === active ? ' is-active' : '' });
+    });
+    if (lighter) {
+      labels.sort(function(a, b) { return a.y - b.y; });
+      labels.forEach(function(label, index) {
+        if (index && label.y - labels[index - 1].y < 15) label.y = labels[index - 1].y + 15;
+        parts.push(text(g.x0 + 5, label.y - 5, label.level, 'lc-label' + label.className, 'start'));
+      });
+    } else {
+      // Left to right, each a row lower where it would run into the last.
+      labels.sort(function(a, b) { return a.x - b.x; });
+      var lastEnd = -Infinity, row = 0;
+      labels.forEach(function(label) {
+        var end = label.x - 5;
+        row = end - label.level.length * 7.5 < lastEnd + 4 ? row + 1 : 0;
+        lastEnd = end;
+        parts.push(text(end, label.y + 4 + row * 15, label.level, 'lc-label' + label.className, 'end'));
+      });
+    }
+
+    // The background and the panels Pi solves on it first: the panel level
+    // on the background, reflected by the diagonal, places their lines.
+    var backgroundL = L(result.background);
+    var panelL = result.target('panel', backgroundL);
+    var panels = rule.id === 'dim' ? ['selectedBg', 'customMessageBg'].concat(CURVE_RULES[0].tokens.slice(1)) :
+      CURVE_RULES[0].tokens;
+    panels.forEach(function(panel) {
+      var x = g.x(L(result.colors[panel]));
+      parts.push(line([[x, g.y0], [x, g.y1]], 'lc-surface is-panel', '',
+        CURVE_SURFACES[panel].row + ', L ' + fixed(L(result.colors[panel]))));
+    });
+    parts.push(line([[g.x(backgroundL), g.y(panelL)], [g.x(panelL), g.y(panelL)]], 'lc-reflect'));
+    var bx = g.x(backgroundL);
+    parts.push(line([[bx, g.y0], [bx, g.y1]], 'lc-surface'));
+    // Above the plot, each on the far side of its line from the other.
+    var panelX = g.x(L(result.colors.selectedBg));
+    var panelsRight = panelX >= bx;
+    parts.push(text(bx + (panelsRight ? -3 : 3), g.y0 - 8, 'background', 'lc-surface-label',
+      panelsRight ? 'end' : 'start'));
+    parts.push(text(panelX + (panelsRight ? 3 : -3), g.y0 - 8, 'panels', 'lc-surface-label',
+      panelsRight ? 'start' : 'end'));
+    parts.push('<circle class="lc-dot" cx="' + bx.toFixed(1) + '" cy="' + g.y(panelL).toFixed(1) + '" r="3.5" fill="' +
+      rgbHex(result.colors.selectedBg) + '">' + title('Panels: L ' + fixed(panelL)) + '</circle>');
+
+    // The rule's targets, one per surface, in the colors they would make.
+    var winner = targets.winner;
+    if (rule.id !== 'panels') {
+      targets.entries.forEach(function(entry) {
+        if (entry === winner) return;
+        var color = rgbHex(result.paint(entry.token, entry.target));
+        parts.push('<circle class="lc-dot" data-hex="' + color + '" cx="' + g.x(entry.surfaceL).toFixed(1) +
+          '" cy="' + g.y(entry.target).toFixed(1) + '" r="4" fill="' + color + '">' +
+          title(CURVE_SURFACES[entry.surface].row + ': L ' + fixed(entry.target)) + '</circle>');
+      });
+    }
+    var resultX = g.x1 + 18;
+    if (winner) {
+      parts.push(line([[g.x(winner.surfaceL), g.y(winner.target)], [resultX, g.y(winner.target)]], 'lc-winner-line'));
+      var winnerColor = rgbHex(result.paint(winner.token, winner.target));
+      parts.push('<circle class="lc-dot is-winner" data-hex="' + winnerColor + '" cx="' +
+        g.x(winner.surfaceL).toFixed(1) + '" cy="' + g.y(winner.target).toFixed(1) + '" r="5.5" fill="' +
+        winnerColor + '">' + title('Strictest, ' + CURVE_SURFACES[winner.surface].row + ': L ' +
+        fixed(winner.target)) + '</circle>');
+    }
+
+    // On the right: Pi's color and the terminal color it came from.
+    parts.push(line([[resultX, g.y0], [resultX, g.y1]], 'lc-result-axis'));
+    var marks = [];
+    if (rule.id === 'panels') {
+      var color = rgbHex(result.colors.selectedBg);
+      marks.push({ y: g.y(L(result.colors.selectedBg)), label: 'panels', hex: color, kind: 'output' });
+    } else {
+      var token = rule.tokens[0];
+      var made = result.colors[token];
+      var slot = PI_THEME.slotOf(token);
+      var source = this.theme.palette[slot];
+      var sourceY = g.y(L(hexRgb(source))), madeY = g.y(L(made));
+      if (Math.abs(sourceY - madeY) > 9) {
+        parts.push(line([[resultX, sourceY + (madeY > sourceY ? 6 : -6)], [resultX, madeY + (madeY > sourceY ? -8 : 8)]],
+          'lc-arrow', ' marker-end="url(#lc-head)"'));
+      }
+      marks.push({ y: sourceY, label: ANSI_NAMES[slot], hex: source, kind: 'source' });
+      marks.push({ y: madeY, label: token, hex: rgbHex(made), kind: 'output' });
+    }
+    var labelYs = marks.map(function(mark) { return mark.y; });
+    if (marks.length === 2 && Math.abs(labelYs[0] - labelYs[1]) < 16) {
+      var middle = (labelYs[0] + labelYs[1]) / 2, up = labelYs[0] <= labelYs[1] ? 0 : 1;
+      labelYs[up] = middle - 8;
+      labelYs[1 - up] = middle + 8;
+    }
+    marks.forEach(function(mark, index) {
+      var shape = mark.kind === 'source' ?
+        '<circle class="lc-mark" data-hex="' + mark.hex + '" cx="' + resultX + '" cy="' + mark.y.toFixed(1) +
+          '" r="5" fill="' + mark.hex + '">' :
+        '<rect class="lc-mark" data-hex="' + mark.hex + '" x="' + (resultX - 5.5) + '" y="' + (mark.y - 5.5).toFixed(1) +
+          '" width="11" height="11" rx="2" fill="' + mark.hex + '">';
+      parts.push(shape + title((mark.kind === 'source' ? 'Terminal\u2019s ' : 'Pi\u2019s ') + mark.label + ' ' +
+        mark.hex + ', L ' + fixed(L(hexRgb(mark.hex)))) + (mark.kind === 'source' ? '</circle>' : '</rect>'));
+      parts.push(text(resultX + 11, labelYs[index] + 4, mark.label, 'lc-mark-label' +
+        (mark.kind === 'source' ? ' is-source' : ''), 'start'));
+    });
+
+    this.svg.setAttribute('viewBox', '0 0 ' + g.width + ' ' + g.height);
+    this.svg.setAttribute('width', String(g.width));
+    this.svg.setAttribute('height', String(g.height));
+    this.svg.innerHTML = parts.join('');
+  };
+
+  // Where along the x axis the theme is dark and where light: the
+  // background keeps its hue and chroma, and the terminal's foreground
+  // decides, as in Pi, by bisection between samples.
+  LightnessCurves.prototype.appearances = function() {
+    var theme = this.theme;
+    if (this.segments && this.segments.theme === theme) return this.segments.list;
+    var lch = PI_THEME.lchOf(hexRgb(theme.background)), foreground = hexRgb(theme.foreground);
+    var at = function(l) { return PI_THEME.appearanceOf(PI_THEME.oklchColor(l, lch.c, lch.h), foreground); };
+    var list = [], start = 0, current = at(0), steps = 200;
+    for (var i = 1; i <= steps; i++) {
+      var next = at(i / steps);
+      if (next === current) continue;
+      var low = (i - 1) / steps, high = i / steps;
+      for (var k = 0; k < 12; k++) {
+        var middle = (low + high) / 2;
+        if (at(middle) === current) low = middle;
+        else high = middle;
+      }
+      list.push({ from: start, to: high, appearance: current });
+      start = high;
+      current = next;
+    }
+    list.push({ from: start, to: 1, appearance: current });
+    this.segments = { theme: theme, list: list };
+    return list;
+  };
+
+  // Dragging anywhere over the plot moves the background there.
+  LightnessCurves.prototype.pointerDown = function(event) {
+    if (event.button !== 0 || !this.geometry || !this.theme) return;
+    if (event.target.closest && event.target.closest('[data-hex]')) return;
+    var rect = this.svg.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    if (x < this.geometry.x0 - 12 || x > this.geometry.x1 + 6) return;
+    this.svg.setPointerCapture(event.pointerId);
+    this.drag = event.pointerId;
+    this.figure.classList.add('is-dragging');
+    this.pointerMove(event);
+  };
+
+  LightnessCurves.prototype.pointerMove = function(event) {
+    if (this.drag !== event.pointerId) return;
+    var rect = this.svg.getBoundingClientRect();
+    this.moveBackground(this.geometry.lightness(event.clientX - rect.left));
+  };
+
+  LightnessCurves.prototype.pointerUp = function(event) {
+    if (this.drag !== event.pointerId) return;
+    this.drag = null;
+    this.figure.classList.remove('is-dragging');
+  };
+
+  LightnessCurves.prototype.destroy = function() {
+    unfollowThemes(this.onTheme);
+    if (this.resizeObserver) this.resizeObserver.disconnect();
+    if (this.helpTip) this.helpTip.remove();
+  };
+
+  function initLightnessCurves() {
+    charts = charts.filter(function(chart) {
+      if (chart.figure.isConnected) return true;
+      chart.destroy();
+      return false;
+    });
+    document.querySelectorAll('[data-lightness-curves]').forEach(function(figure) {
+      if (figure.dataset.lightnessCurvesInitialized) return;
+      figure.dataset.lightnessCurvesInitialized = 'true';
+      charts.push(new LightnessCurves(figure));
+    });
+  }
+
   function initColorTools() {
     eyedroppers = eyedroppers.filter(function(picker) {
       if (picker.figure.isConnected) return true;
@@ -2605,6 +3963,7 @@
 
   function initColorSpaces() {
     initColorTools();
+    initLightnessCurves();
     instances.slice().forEach(function(instance) {
       if (!instance.figure.isConnected) instance.destroy();
     });

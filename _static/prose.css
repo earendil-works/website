@@ -1693,3 +1693,312 @@
     width: auto;
   }
 }
+
+/* Pi's lightness curves, <figure data-lightness-curves> (color-spaces.js):
+   an SVG chart, what it shows in words, the rules, a terminal with Pi's
+   colors on every surface, the background's lightness and the themes. */
+.lightness-curves {
+  position: relative;
+}
+
+.lightness-curves.is-enhanced .lightness-curves__fallback,
+.lightness-curves .color-space__help {
+  display: none;
+}
+
+.lightness-curves:not(.is-enhanced) figcaption {
+  display: none;
+}
+
+.lightness-curves__chart {
+  width: 100%;
+}
+
+.lightness-curves__chart svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  color: var(--prose-body);
+  cursor: ew-resize;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.lightness-curves.is-dragging .lightness-curves__chart svg {
+  cursor: grabbing;
+}
+
+.lightness-curves__chart text {
+  fill: var(--prose-captions);
+  font-size: 14px;
+}
+
+.lightness-curves__chart .lc-tick,
+.lightness-curves__chart .lc-note,
+.lightness-curves__chart .lc-flip-label,
+.lightness-curves__chart .lc-unreachable-label {
+  font-size: 12.5px;
+}
+
+/* Where the selected level is out of reach, faintly hatched, and where
+   the curves flip between dark and light. */
+.lightness-curves__chart .lc-hatch-line {
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 0.14;
+}
+
+.lightness-curves__chart .lc-unreachable-label {
+  fill: var(--prose-captions);
+  opacity: 0.8;
+}
+
+.lightness-curves__chart .lc-flip {
+  stroke: #d9454b;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 3;
+}
+
+.lightness-curves__chart .lc-flip-label {
+  fill: #d9454b;
+}
+
+.lightness-curves__chart .lc-grid {
+  stroke: var(--prose-hr);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.lightness-curves__chart .lc-frame {
+  fill: none;
+  stroke: var(--prose-hr);
+}
+
+.lightness-curves__chart .lc-ramp {
+  stroke: rgb(128 128 128 / 30%);
+  stroke-width: 0.5;
+}
+
+.lightness-curves__chart .lc-diagonal {
+  fill: none;
+  stroke: var(--prose-captions);
+  stroke-dasharray: 3 4;
+  stroke-width: 1;
+}
+
+.lightness-curves__chart .lc-curve {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: 0.3;
+}
+
+.lightness-curves__chart .lc-curve.is-panel {
+  opacity: 0.55;
+}
+
+.lightness-curves__chart .lc-curve.is-active {
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+.lightness-curves__chart .lc-label.is-active {
+  fill: var(--prose-body);
+  font-weight: 600;
+}
+
+.lightness-curves__chart .lc-surface {
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.lightness-curves__chart .lc-surface.is-panel {
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.6;
+}
+
+.lightness-curves__chart .lc-reflect,
+.lightness-curves__chart .lc-winner-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-dasharray: 1 3;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
+
+.lightness-curves__chart .lc-surface-label {
+  fill: var(--prose-body);
+}
+
+.lightness-curves__chart .lc-dot,
+.lightness-curves__chart .lc-mark {
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+
+.lightness-curves__chart [data-hex] {
+  cursor: pointer;
+}
+
+.lightness-curves__chart .lc-dot.is-winner {
+  stroke-width: 2.5;
+}
+
+.lightness-curves__chart .lc-result-axis {
+  stroke: var(--prose-hr);
+  stroke-width: 1;
+}
+
+.lightness-curves__chart .lc-arrow {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  opacity: 0.7;
+}
+
+.lightness-curves__chart .lc-head {
+  fill: currentColor;
+}
+
+.lightness-curves__chart .lc-mark-label {
+  fill: var(--prose-body);
+}
+
+.lightness-curves__chart .lc-mark-label.is-source {
+  fill: var(--prose-captions);
+}
+
+/* As tall as its longest text (stacked, see .color-space__captions), so
+   that dragging does not move the page. */
+.prose .lightness-curves__status {
+  max-width: 36em;
+  margin: 10px auto 0;
+  color: var(--prose-captions);
+  font-size: 0.95em;
+  line-height: 1.4285714;
+  text-align: center;
+}
+
+.prose .lightness-curves .color-space__recipe {
+  font-size: 0.85em;
+}
+
+.prose .lightness-curves .lightness-curves__rules {
+  margin: 14px 0 0;
+}
+
+.lightness-curves__rules > span {
+  align-self: center;
+}
+
+/* The terminal: one row per surface, labeled on the left. */
+.prose .lightness-curves__preview {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: stretch;
+  column-gap: 10px;
+  margin: 18px auto;
+  font-family: 'Commit Mono', ui-monospace, monospace;
+  font-size: 0.85em;
+}
+
+.lightness-curves__row-label {
+  align-self: center;
+  color: var(--prose-captions);
+  opacity: 0.6;
+  text-align: right;
+}
+
+.lightness-curves__row-label.is-active {
+  opacity: 1;
+}
+
+.lightness-curves__row {
+  display: flex;
+  gap: 1.5ch;
+  padding: 3px 1.5ch;
+  background: var(--preview-bg);
+}
+
+.lightness-curves__row:first-of-type {
+  border-radius: 4px 4px 0 0;
+}
+
+.lightness-curves__row:last-of-type {
+  border-radius: 0 0 4px 4px;
+}
+
+.lightness-curves__word {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lightness-curves__word[aria-pressed='true'] {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lightness-curves__word:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 1px;
+}
+
+.prose .lightness-curves .lightness-curves__background {
+  margin: 0;
+}
+
+.lightness-curves__background .color-space__slider > span {
+  flex: none;
+  white-space: nowrap;
+}
+
+.lightness-curves__background .color-space__slider input[type="range"] {
+  width: 180px;
+}
+
+.lightness-curves__value {
+  width: 4ch;
+  font-family: 'Commit Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.color-space__recipe button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.prose .lightness-curves__theme-name {
+  min-height: 1.35em;
+  margin: 10px 0 0;
+  color: var(--prose-captions);
+  font-size: 0.8em;
+  text-align: center;
+}
+
+/* Phones: each surface's name above its row. */
+@media (max-width: 600px) {
+  .prose .lightness-curves__preview {
+    grid-template-columns: auto;
+  }
+
+  .lightness-curves__row-label {
+    padding: 4px 0 2px;
+    text-align: left;
+  }
+
+  .lightness-curves__row,
+  .lightness-curves__row:first-of-type,
+  .lightness-curves__row:last-of-type {
+    gap: 1ch;
+    padding: 3px 1ch;
+    border-radius: 4px;
+  }
+}

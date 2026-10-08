@@ -21,7 +21,7 @@ function load() {
   });
   const source = readFileSync(new URL('../_static/color-spaces.js', `file://${__filename}`), 'utf8');
   vm.runInContext(source.replace('  initColorSpaces();', `
-    window.test = { GAMUTS, Picker, ColorReadout, ColorSpace, instances, SHAPES, PI_FAMILIES, PI_ROLES, piSaturation, piRangeSaturation, piFallbackSaturation,
+    window.test = { PI_THEME, GAMUTS, Picker, ColorReadout, ColorSpace, instances, SHAPES, PI_FAMILIES, PI_ROLES, piSaturation, piRangeSaturation, piFallbackSaturation,
       selectedOkhsl, okhslToOklch, okhslToRgb, selectHex, selectDefaultHex, previewOffset, rgbToOklch, oklchToLinear, encodeUnclipped, inGamut, select,
       selection: function() { return selection; } };
     initColorSpaces();`), context);
@@ -364,4 +364,28 @@ test('terminal readout handles selections made before player load and outside sR
   const oldValue = readout.value.textContent;
   api.selectHex('#cc92bd');
   assert.equal(readout.value.textContent, oldValue);
+});
+
+test('the lightness curves make the same colors as Pi for every theme in themes.json', () => {
+  const api = load();
+  const data = JSON.parse(readFileSync(new URL('../_static/posts/system-theme/themes.json', `file://${__filename}`), 'utf8'));
+  const rgb = (hex) => ({ r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16) });
+  const hex = ({ r, g, b }) => '#' + [r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('');
+  for (const theme of data.themes) {
+    const result = api.PI_THEME.generate({ foreground: rgb(theme.foreground), background: rgb(theme.background),
+      palette: theme.palette.slice(0, 16).map(rgb) });
+    assert.equal(result.appearance, theme.appearance, theme.name);
+    data.tokens.forEach((token, index) => {
+      assert.equal(hex(result.colors[token]), theme.palette[data.firstTokenIndex + index], `${theme.name} ${token}`);
+    });
+  }
+});
+
+test('the post\'s rules use the levels the lightness curves draw', () => {
+  const api = load();
+  const levelOf = (token) => [...api.PI_THEME.RULES].filter((rule) => rule.token === token).map((rule) => rule.level);
+  for (const token of ['accent', 'success', 'error', 'warning']) assert.deepEqual(levelOf(token), ['readable']);
+  assert.deepEqual(levelOf('dim'), ['subtle']);
+  assert.equal(levelOf('text')[0], 'text');
+  assert.deepEqual(levelOf('selectedBg'), ['panel']);
 });
