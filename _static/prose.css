@@ -1083,3 +1083,194 @@
 .prose :is(hr, h2, h3, h4) + * {
   margin-top: 0;
 }
+
+/* --- Color spaces --------------------------------------------------------- */
+
+/* Rotatable 3D color spaces, <figure data-color-space> (see script.js). The
+   fallback text is shown without WebGL. */
+.color-space__canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  max-height: 420px;
+  cursor: grab;
+  touch-action: pan-y;
+  outline: none;
+}
+
+.color-space.is-dragging .color-space__canvas {
+  cursor: grabbing;
+}
+
+.color-space__canvas:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.color-space.is-enhanced .color-space__fallback {
+  display: none;
+}
+
+.color-space:not(.is-enhanced) figcaption {
+  display: none;
+}
+
+/* The OKLCH color picker below each color space. All of them select the same
+   color, and every shape is cut open at it. Each track shows the colors its
+   slider would select. */
+.color-space__picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 18px;
+  margin-top: 12px;
+  color: var(--prose-captions);
+  font-size: 0.85em;
+}
+
+.color-space__swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgb(128 128 128 / 30%);
+}
+
+.color-space__slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-space__slider input[type="range"] {
+  width: 120px;
+  height: 8px;
+  margin: 0;
+  border-radius: 4px;
+  background: var(--track, var(--prose-hr));
+  box-shadow: inset 0 0 0 1px rgb(128 128 128 / 25%);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.color-space__slider input[type="range"]::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 45%), 0 1px 3px rgb(0 0 0 / 35%);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.color-space__slider input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 45%), 0 1px 3px rgb(0 0 0 / 35%);
+}
+
+.color-space__slider input[type="range"]::-moz-range-track {
+  background: transparent;
+}
+
+.color-space__slider input[type="range"]:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 4px;
+}
+
+.color-space__value {
+  /* Fixed: if its width followed the text, the centered sliders would move
+     under the pointer while dragging. "oklch(100.0% 0.370 360)" fits. */
+  width: 23ch;
+  font-family: 'Commit Mono', ui-monospace, monospace;
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+
+/* The canvas, with a lens over the selected color: a disc in the color
+   with a ring that shows on any background, faded while the shape hides the
+   color. A shape that cannot show the color gets a crossed-out red dot with
+   the reason instead. */
+.color-space__stage {
+  position: relative;
+}
+
+.color-space__lens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: var(--lens-color, transparent);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgb(0 0 0 / 45%), 0 2px 8px rgb(0 0 0 / 35%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.color-space__lens.is-placed {
+  opacity: 1;
+}
+
+.color-space__lens.is-placed.is-behind {
+  opacity: 0.35;
+}
+
+.color-space__lens.is-missing {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  background: #e5484d;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgb(0 0 0 / 35%), 0 2px 6px rgb(0 0 0 / 30%);
+}
+
+.color-space__lens.is-missing::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+  background: #fff;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.color-space__lens-label {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 65%);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+.color-space__lens.is-missing .color-space__lens-label {
+  display: block;
+}
+
+/* Phones: one slider per row. */
+@media (max-width: 600px) {
+  .color-space__slider {
+    flex: 1 1 100%;
+  }
+
+  .color-space__slider input[type="range"] {
+    flex: 1;
+    width: auto;
+  }
+}

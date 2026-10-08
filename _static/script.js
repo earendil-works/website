@@ -1323,6 +1323,29 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
   document.body.addEventListener('htmx:afterSettle', initAsciicasts);
 })();
 
+// Rotatable color spaces, <figure data-color-space> (color-spaces.js). The
+// script is only downloaded on pages that have one.
+(function() {
+  var loading = false;
+
+  function loadColorSpaces() {
+    if (loading || !document.querySelector('[data-color-space]')) return;
+    loading = true;
+    // htmx's head-support extension would drop the injected tag otherwise.
+    var script = document.createElement('script');
+    script.setAttribute('hx-preserve', 'true');
+    script.src = '/static/color-spaces.js';
+    script.onerror = function() {
+      script.remove(); // allow a retry
+      loading = false;
+    };
+    document.head.appendChild(script);
+  }
+
+  loadColorSpaces();
+  document.body.addEventListener('htmx:afterSettle', loadColorSpaces);
+})();
+
 // WebGL ocean rendering (runs once)
 (function() {
 if (window.__earendilInitialized) return;
