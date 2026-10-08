@@ -21,9 +21,10 @@
 // source's hue, with Pi's outputs on that side. The shapes' surfaces stay put and the GPU
 // discards them inside the cut; only the cut's faces are rebuilt. What the
 // cut removed stays as a ghost, a dotted pattern in its colors. A round
-// lens in the color marks it, faded while the shape hides it. A shape that
-// cannot show the color is not cut, and a crossed-out red dot marks where
-// the color would be, with the reason.
+// lens in the color marks it, faded while the shape hides it. For a color
+// a shape cannot show, the cut starts at the color outside the shape and
+// extends into it, with lines leading out to it, and a crossed-out red dot
+// marks the color, with the reason.
 //
 // Pi's range has no cut and does not take its source from the selection:
 // the source is the ANSI color a role uses in a terminal theme, as in Pi.
@@ -62,6 +63,7 @@
   var GAMUT_TOLERANCE = 1e-4; // chroma; slider steps land on the boundary
   var NOT_CUT = [-10, -10, -10]; // coordinates outside every cut
   var OPEN = 10; // cut size reaching past the end of an axis
+  var SLIVER = 0.02; // thinnest wall a cut leaves of the cube for a color outside it
   // system-theme.ts's complete FAMILIES recipe. Hue is only used when no
   // terminal palette is available; palette colors keep their own hue.
   var PI_FAMILIES = {
@@ -698,27 +700,29 @@
   // when the color changes, and cut(), which returns the cut at the selected color: the box in the
   // shape's coordinates to discard (from + size, the first coordinate
   // repeating every `wrap` if set), the faces that close it, and the color's
-  // position. For a color the shape cannot show, it returns no cut, where
-  // the color would be, and why it is missing.
+  // position. For a color the shape cannot show, the cut still starts at
+  // the color, outside the shape, and reaches into it; `missing` says why
+  // the color is not in the shape. A color at the far end of an axis leaves
+  // nothing to cut (NO_CUT).
   var NO_CUT = { from: [0, 0, 0], size: [0, 0, 0], wrap: 0 };
 
-  function missing(point, reason) {
-    return { from: NO_CUT.from, size: NO_CUT.size, wrap: 0, faces: new MeshBuilder(), point: point, missing: reason };
-  }
-
-  // A color at the far end of an axis leaves nothing to cut.
-  function uncut(point) {
-    return { from: NO_CUT.from, size: NO_CUT.size, wrap: 0, faces: new MeshBuilder(), point: point };
-  }
   var SHAPES = {
     // Red to the right, green up, blue toward the front. Colors change
     // linearly across each face, so two triangles per face are exact. The
     // same values mean P3's primaries in a P3 canvas. The cut is the box
-    // between the selected color and white.
+    // between the selected color and white. For a color outside the gamut,
+    // the box reaches out of the cube to it: below 0, a channel's side of
+    // the box starts outside the cube, so the cut goes all the way through
+    // along it, as it does for a channel so close to 0 that only a sliver of
+    // the cube's side would stand. Above 1, the box is past the cube along
+    // that channel and cuts nothing. The box's edges outside the cube lead
+    // out to the color.
     rgb: function(gamut) {
       var mesh = new MeshBuilder();
-      var squares = function(target, corner) {
+      // The cut's faces at the corner, skipping planes outside the cube.
+      var squares = function(target, corner, skip) {
         for (var axis = 0; axis < 3; axis++) {
+          if (skip && skip[axis]) continue;
           (corner ? [corner[axis]] : [0, 1]).forEach(function(value) {
             target.grid(1, 1, function(i, j) {
               var rgb = [0, 0, 0];
@@ -739,6 +743,34 @@
           });
         }
       };
+      // The edges of the box between a color outside the cube and white,
+      // where they are outside the cube; inside, the faces' edges show them.
+      var outsideEdges = function(target, corner) {
+        var lo = corner.map(function(value) { return Math.min(value, 1); });
+        var hi = corner.map(function(value) { return Math.max(value, 1); });
+        var within = function(value) { return value >= -1e-6 && value <= 1 + 1e-6; };
+        var ends = function(k) { return hi[k] - lo[k] < 1e-6 ? [lo[k]] : [lo[k], hi[k]]; };
+        for (var axis = 0; axis < 3; axis++) {
+          var u = (axis + 1) % 3, v = (axis + 2) % 3;
+          ends(u).forEach(function(a) {
+            ends(v).forEach(function(b) {
+              var spans = within(a) && within(b) ?
+                [[lo[axis], Math.min(hi[axis], 0)], [Math.max(lo[axis], 1), hi[axis]]] :
+                [[lo[axis], hi[axis]]];
+              spans.forEach(function(span) {
+                if (span[1] - span[0] < 1e-6) return;
+                target.line(span.map(function(value) {
+                  var point = [0, 0, 0];
+                  point[axis] = value;
+                  point[u] = a;
+                  point[v] = b;
+                  return point;
+                }));
+              });
+            });
+          });
+        }
+      };
       squares(mesh);
       return {
         gamut: gamut,
@@ -748,12 +780,22 @@
         cut: function() {
           var lch = selected();
           var rgb = oklchToLinear(lch[0], lch[1], lch[2], gamut).map(encodeUnclipped);
-          if (!inside(lch, gamut)) return missing(rgb, 'Outside ' + gamut.name);
-          rgb = rgb.map(function(value) { return Math.min(1, Math.max(0, value)); });
-          if (rgb.some(function(value) { return value >= 1 - 1e-6; })) return uncut(rgb);
+          var clamp = function(value) { return Math.min(1, Math.max(0, value)); };
+          var reason = inside(lch, gamut) ? undefined : 'Outside ' + gamut.name;
+          // Slider steps just past the boundary count as on it.
+          if (!reason) rgb = rgb.map(clamp);
           var faces = new MeshBuilder();
-          squares(faces, rgb);
-          return { from: rgb, size: [OPEN, OPEN, OPEN], wrap: 0, faces: faces, point: rgb };
+          if (reason) outsideEdges(faces, rgb);
+          // Channels below 0 do not limit the cut, nor do channels so close
+          // to 0 that they would only leave a sliver of the cube's side
+          // standing: the color is not on it. Above 1, nothing is cut.
+          var through = rgb.map(function(value) { return !!reason && value < SLIVER; });
+          var from = rgb.map(function(value, axis) { return through[axis] ? -1 : value; });
+          if (from.some(function(value) { return value >= 1 - 1e-6; })) {
+            return { from: NO_CUT.from, size: NO_CUT.size, wrap: 0, faces: faces, point: rgb, missing: reason };
+          }
+          squares(faces, from.map(clamp), through);
+          return { from: from, size: [OPEN, OPEN, OPEN], wrap: 0, faces: faces, point: rgb, missing: reason };
         }
       };
     },
@@ -829,9 +871,17 @@
           // Hue 360 is the far end of the axis, not 0.
           var t0 = Math.min(1, Math.max(0, selection.h / 360));
           var point = [l0, c0 * CHROMA_HEIGHT, t0 * HUE_DEPTH];
-          if (!inside(lch, gamut)) return missing(point, 'Outside ' + gamut.name);
-          if (t0 >= 1 - 1e-6 || l0 >= 1 - 1e-6) return uncut(point);
+          var reason = inside(lch, gamut) ? undefined : 'Outside ' + gamut.name;
           var faces = new MeshBuilder();
+          // A color outside the gamut is above the top: the corner of the cut
+          // reaches up to it.
+          if (reason) {
+            var below = chromaAt(t0, l0);
+            faces.line([[l0, below * CHROMA_HEIGHT, t0 * HUE_DEPTH], point]);
+          }
+          if (t0 >= 1 - 1e-6 || l0 >= 1 - 1e-6) {
+            return { from: NO_CUT.from, size: NO_CUT.size, wrap: 0, faces: faces, point: point, missing: reason };
+          }
           // The cut's floor, at the selected chroma, where the shape is higher.
           var ts = stepsFrom(t0, HUE_STEPS / 2);
           var ls = stepsFrom(l0, LIGHTNESS_STEPS / 2);
@@ -860,6 +910,12 @@
             };
             var keeps = tops.map(function(top) { return top - c0; });
             faces.line(points.map(function(point) { return place(point, c0); }), keeps);
+            // Above the top, the floor's edge leads from the color to where
+            // the cut enters the shape.
+            var enters = keeps.findIndex(function(keep) { return keep >= 0; });
+            if (reason && enters > 0) {
+              faces.line(points.slice(0, enters + 1).map(function(point) { return place(point, c0); }));
+            }
             faces.line(points.map(function(point, i) { return place(point, Math.max(c0, tops[i])); }), keeps);
           };
           edges(ts.map(function(t) { return [l0, t]; }));
@@ -873,7 +929,7 @@
             faces.line([[l0, c0 * CHROMA_HEIGHT, t * HUE_DEPTH], [l0, Math.max(c0, top) * CHROMA_HEIGHT, t * HUE_DEPTH]],
               [top - c0, top - c0]);
           });
-          return { from: [l0, t0, c0], size: [OPEN, OPEN, OPEN], wrap: 0, faces: faces, point: point };
+          return { from: [l0, t0, c0], size: [OPEN, OPEN, OPEN], wrap: 0, faces: faces, point: point, missing: reason };
         }
       };
     },
@@ -927,11 +983,14 @@
           var lch = selected();
           var hsl = selectedHsl();
           var s0 = hsl[1], l0 = hsl[2];
+          var point = position(hsl[0], s0, l0);
+          var reason;
           if (!inside(lch, GAMUTS.srgb)) {
             // Past the cylinder, further out the more chroma it lacks.
             var most = maxChroma(lch[0], lch[2], GAMUTS.srgb);
             var beyond = Math.min(1.3, 1 + (lch[1] - most) / Math.max(most, 0.05));
-            return missing(position(hsl[0], beyond, l0), 'Outside sRGB');
+            point = position(hsl[0], beyond, l0);
+            reason = 'Outside sRGB';
           }
           var range = pair && pair.__piRange;
           var h0 = ((range ? range.hue() : hsl[0]) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
@@ -952,10 +1011,12 @@
             faces.line([position(hue, 0, 0), position(hue, 1, 0), position(hue, 1, 1), position(hue, 0, 1)]);
           });
           faces.line([position(h0, 0, 0), position(h0, 0, 1)]);
+          // The cut goes on past the side, out to a color outside sRGB.
+          if (reason) faces.line([position(hsl[0], 1, l0), point]);
           // No ghost: the dots would cover the side.
           return {
             from: [h0, -1, -1], size: [WEDGE, OPEN, OPEN], wrap: 2 * Math.PI, faces: faces,
-            point: position(hsl[0], s0, l0), ghost: false, markers: markers
+            point: point, ghost: false, markers: markers, missing: reason
           };
         }
       };

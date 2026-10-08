@@ -389,3 +389,45 @@ test('the post\'s rules use the levels the lightness curves draw', () => {
   assert.equal(levelOf('text')[0], 'text');
   assert.deepEqual(levelOf('selectedBg'), ['panel']);
 });
+
+test('colors outside the gamut still cut the shapes, extending out to the color', () => {
+  const api = load();
+  // Past sRGB and Display P3, with red and blue below 0, green inside.
+  api.select({ l: 0.5, c: 0.3, h: 150 });
+  for (const [name, gamut] of [['rgb', api.GAMUTS.srgb], ['oklch', api.GAMUTS.srgb], ['oklch', api.GAMUTS.p3], ['okhsl', api.GAMUTS.srgb]]) {
+    const shape = api.SHAPES[name](gamut);
+    const cut = shape.cut();
+    assert.equal(cut.missing, 'Outside ' + gamut.name);
+    assert.ok(cut.size[0] > 0, `${name} is cut`);
+    const faces = cut.faces.build(shape.mesh.offset);
+    assert.ok(faces.lines > 0, `${name} has lines out to the color`);
+    assert.ok(faces.vertices.every(Number.isFinite));
+  }
+  // In the cube, the faces stay inside it; only lines leave it.
+  const cube = api.SHAPES.rgb(api.GAMUTS.srgb);
+  const cut = cube.cut();
+  assert.ok(cut.point.some(value => value < 0));
+  const v = cut.faces.vertices;
+  const triangleVertices = new Set(cut.faces.indices);
+  for (const index of triangleVertices) {
+    for (let k = 0; k < 3; k++) assert.ok(v[index * 10 + k] >= -1e-9 && v[index * 10 + k] <= 1 + 1e-9);
+  }
+  // Above 1, the box is past the cube: like a color on the cube's side just
+  // inside the gamut, it cuts nothing, and only lines lead out to it.
+  for (const gamut of Object.values(api.GAMUTS)) {
+    for (const color of [{ l: 0.65, c: 0.37, h: 250 }, { l: 0.525, c: 0.37, h: 288 }]) {
+      api.select(color);
+      const past = api.SHAPES.rgb(gamut).cut();
+      assert.ok(past.point.some(value => value > 1));
+      assert.ok(past.size.every(size => size === 0));
+      assert.equal(past.faces.indices.length, 0);
+      assert.ok(past.faces.lines.length > 0);
+    }
+  }
+  // Near black, outside the gamut, red and blue would only leave slivers of
+  // the cube's sides: the whole cube is cut.
+  api.select({ l: 0, c: 0.065, h: 318 });
+  const black = api.SHAPES.rgb(api.GAMUTS.p3).cut();
+  assert.deepEqual([...black.from], [-1, -1, -1]);
+  assert.equal(black.faces.indices.length, 0);
+});
