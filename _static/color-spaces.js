@@ -9,7 +9,7 @@
 // colorful color of each hue at mid lightness, inside OKHSL's cylinder.
 // Every point is drawn in its own color. Drag (or arrow keys) to rotate.
 //
-// Below each figure, an OKLCH color picker selects one color for all of
+// Below each figure, OKLCH and RGB sliders select one color for all of
 // them. Every shape is cut open at that color, in its own coordinates, so the
 // color sits in the inner corner of the cut: the cube loses the box between
 // the color and white, the landscape the block of higher lightness, hue and
@@ -118,6 +118,16 @@
     });
   }
 
+  function inverse3(m) {
+    var a = m[0], b = m[1], c = m[2];
+    var cross = function(u, v) {
+      return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    };
+    var x = cross(b, c), y = cross(c, a), z = cross(a, b);
+    var det = a[0] * x[0] + a[1] * x[1] + a[2] * x[2];
+    return [0, 1, 2].map(function(i) { return [x[i] / det, y[i] / det, z[i] / det]; });
+  }
+
   // The RGB spaces to draw in, by the canvas color space each needs. Both
   // encode with the sRGB transfer curve, so they differ only by their
   // primaries: the matrix from OKLab's LMS to linear RGB.
@@ -125,6 +135,10 @@
     srgb: { canvas: 'srgb', name: 'sRGB', fromLms: LMS_TO_SRGB },
     p3: { canvas: 'display-p3', name: 'Display P3', fromLms: multiply3(SRGB_TO_P3, LMS_TO_SRGB) }
   };
+
+  Object.keys(GAMUTS).forEach(function(key) {
+    GAMUTS[key].toLms = inverse3(GAMUTS[key].fromLms);
+  });
 
   // Display P3 where both the display and the browser's WebGL support it.
   function pickGamut(gl) {
@@ -156,6 +170,21 @@
   // Encoded RGB, as the canvas expects it.
   function oklchToRgb(lightness, chroma, hue, gamut) {
     return oklchToLinear(lightness, chroma, hue, gamut).map(linearToSrgb);
+  }
+
+  // Encoded RGB in the picker's gamut to OKLCH (hue in degrees).
+  function rgbToOklch(rgb, gamut, fallbackHue) {
+    var linear = rgb.map(function(v) {
+      return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    var lms = gamut.toLms.map(function(row) { return Math.cbrt(dot3(row, linear)); });
+    var L = dot3([0.2104542553, 0.7936177850, -0.0040720468], lms);
+    var a = dot3([1.9779984951, -2.4285922050, 0.4505937099], lms);
+    var b = dot3([0.0259040371, 0.7827717662, -0.8086757660], lms);
+    var chroma = Math.hypot(a, b);
+    // Gray has no hue: retain the selection's rather than amplifying noise.
+    return { l: Math.min(1, Math.max(0, L)), c: chroma < 1e-7 ? 0 : chroma,
+      h: chroma < 1e-7 ? fallbackHue : (Math.atan2(b, a) * 180 / Math.PI + 360) % 360 };
   }
 
   function inGamut(rgb) {
@@ -1263,7 +1292,7 @@
     if (index !== -1) instances.splice(index, 1);
   };
 
-  // An OKLCH color picker: lightness, chroma and hue sliders, each track
+  // An OKLCH and RGB color picker, each track
   // showing the colors it would select, and leaving out (transparent) those
   // its figure's gamut cannot show. Every figure has one, and they all
   // select the same color.
@@ -1271,6 +1300,12 @@
     { key: 'l', label: 'L', name: 'Lightness', max: 1, step: 0.005 },
     { key: 'c', label: 'C', name: 'Chroma', max: MAX_CHROMA, step: 0.001 },
     { key: 'h', label: 'H', name: 'Hue', max: 360, step: 1 }
+  ];
+
+  var RGB_SLIDERS = [
+    { key: 'r', label: 'R', name: 'Red', max: 255, step: 1 },
+    { key: 'g', label: 'G', name: 'Green', max: 255, step: 1 },
+    { key: 'b', label: 'B', name: 'Blue', max: 255, step: 1 }
   ];
 
   function css(l, c, h) {
@@ -1282,12 +1317,19 @@
     this.gamut = gamut;
     this.el = document.createElement('div');
     this.el.className = 'color-space__picker';
+    var lchRow = document.createElement('div');
+    lchRow.className = 'color-space__controls';
+    var rgbRow = document.createElement('div');
+    rgbRow.className = 'color-space__controls';
+    this.el.appendChild(lchRow);
+    this.el.appendChild(rgbRow);
     this.swatch = document.createElement('span');
     this.swatch.className = 'color-space__swatch';
     this.swatch.setAttribute('aria-hidden', 'true');
-    this.el.appendChild(this.swatch);
+    lchRow.appendChild(this.swatch);
     this.inputs = {};
-    SLIDERS.forEach(function(slider) {
+    SLIDERS.concat(RGB_SLIDERS).forEach(function(slider, index) {
+      var isRgb = index >= SLIDERS.length;
       var label = document.createElement('label');
       label.className = 'color-space__slider';
       var text = document.createElement('span');
@@ -1298,20 +1340,33 @@
       input.min = '0';
       input.max = String(slider.max);
       input.step = String(slider.step);
-      input.setAttribute('aria-label', slider.name);
+      input.setAttribute('aria-label', slider.name + (isRgb ? ' (' + gamut.name + ')' : ''));
       input.addEventListener('input', function() {
-        var next = { l: selection.l, c: selection.c, h: selection.h };
-        next[slider.key] = parseFloat(input.value);
-        select(next);
+        if (isRgb) {
+          // A shared OKLCH selection may be outside this figure's gamut.
+          // Editing RGB explicitly brings it back: cap all channels, not
+          // just the one being dragged, before converting to OKLCH.
+          var rgb = oklchToRgb(selection.l, selection.c, selection.h * Math.PI / 180, gamut);
+          rgb[index - SLIDERS.length] = Math.min(255, Math.max(0, parseFloat(input.value))) / 255;
+          select(rgbToOklch(rgb, gamut, selection.h));
+        } else {
+          var next = { l: selection.l, c: selection.c, h: selection.h };
+          next[slider.key] = parseFloat(input.value);
+          select(next);
+        }
       });
       label.appendChild(text);
       label.appendChild(input);
-      self.el.appendChild(label);
+      (isRgb ? rgbRow : lchRow).appendChild(label);
       self.inputs[slider.key] = input;
     });
     this.value = document.createElement('output');
     this.value.className = 'color-space__value';
-    this.el.appendChild(this.value);
+    lchRow.appendChild(this.value);
+    this.rgbValue = document.createElement('output');
+    this.rgbValue.className = 'color-space__value';
+    this.rgbValue.setAttribute('aria-label', gamut.name + ' color');
+    rgbRow.appendChild(this.rgbValue);
     this.update = function(color) { self.show(color); };
     listeners.push(this.update);
     this.show(selection);
@@ -1329,33 +1384,37 @@
     var shows = function(lch) {
       return inGamut(oklchToLinear(lch[0], lch[1], lch[2] * Math.PI / 180, gamut));
     };
-    var paint = function(lch) {
-      var rgb = oklchToRgb(lch[0], lch[1], lch[2] * Math.PI / 180, gamut);
+    var paintRgb = function(rgb) {
       if (gamut === GAMUTS.p3) return 'color(display-p3 ' + rgb.map(function(v) { return v.toFixed(4); }).join(' ') + ')';
       return 'rgb(' + rgb.map(function(v) { return (v * 255).toFixed(1); }).join(' ') + ')';
     };
+    var paint = function(lch) {
+      return paintRgb(oklchToRgb(lch[0], lch[1], lch[2] * Math.PI / 180, gamut));
+    };
     // Where the thumb's center is at t: it stops half its width from the ends.
     var at = function(t) { return 'calc(7px + (100% - 14px) * ' + t.toFixed(4) + ')'; };
-    var track = function(along, count) {
+    var track = function(along, count, contains, draw) {
+      contains = contains || shows;
+      draw = draw || paint;
       var stops = [];
       var before = null;
       for (var i = 0; i <= count; i++) {
         var t = i / count;
         var lch = along(t);
-        var inside = shows(lch);
+        var inside = contains(lch);
         if (before !== null && inside !== before.inside) {
           // A hard edge where the gamut ends, found by bisection.
           var low = before.t, high = t;
           for (var k = 0; k < 12; k++) {
             var mid = (low + high) / 2;
-            if (shows(along(mid)) === before.inside) low = mid;
+            if (contains(along(mid)) === before.inside) low = mid;
             else high = mid;
           }
-          var edge = before.inside ? paint(along(low)) : paint(along(high));
+          var edge = before.inside ? draw(along(low)) : draw(along(high));
           stops.push((before.inside ? edge : 'transparent') + ' ' + at(low));
           stops.push((before.inside ? 'transparent' : edge) + ' ' + at(low));
         }
-        stops.push((inside ? paint(lch) : 'transparent') + ' ' + at(t));
+        stops.push((inside ? draw(lch) : 'transparent') + ' ' + at(t));
         before = { t: t, inside: inside };
       }
       return 'linear-gradient(to right, ' + stops.join(', ') + ')';
@@ -1363,6 +1422,26 @@
     inputs.l.style.setProperty('--track', track(function(t) { return [t, color.c, color.h]; }, 60));
     inputs.c.style.setProperty('--track', track(function(t) { return [color.l, t * MAX_CHROMA, color.h]; }, 60));
     inputs.h.style.setProperty('--track', track(function(t) { return [color.l, color.c, t * 360]; }, 90));
+    // Use unclipped channels for the tracks: an out-of-gamut OKLCH color
+    // must not silently become a different, clipped color just by showing
+    // it in an RGB picker. Range thumbs stop at 0 and 255; tracks remain
+    // transparent wherever the other channels are outside the gamut.
+    var rgb = oklchToLinear(color.l, color.c, color.h * Math.PI / 180, gamut).map(encodeUnclipped);
+    var rgbInside = shows([color.l, color.c, color.h]);
+    RGB_SLIDERS.forEach(function(slider, index) {
+      var input = inputs[slider.key];
+      var channel = Math.round(Math.min(1, Math.max(0, rgb[index])) * 255);
+      if (parseFloat(input.value) !== channel) input.value = String(channel);
+      input.setAttribute('aria-valuetext', rgbInside ? String(channel) : 'Outside ' + gamut.name);
+      input.style.setProperty('--track', track(function(t) {
+        var next = rgb.slice();
+        next[index] = t;
+        return next;
+      }, 60, inGamut, paintRgb));
+    });
+    this.rgbValue.textContent = rgbInside ? (gamut === GAMUTS.p3 ? 'P3 ' : '') +
+      'rgb(' + rgb.map(function(v) { return Math.round(Math.min(1, Math.max(0, v)) * 255); }).join(' ') + ')' :
+      'Outside ' + gamut.name;
     this.swatch.style.background = css(color.l, color.c, color.h);
     // Fixed digits, in a box of fixed width (prose.css): if its width
     // changed, the centered sliders would move under the pointer.

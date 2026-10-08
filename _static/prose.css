@@ -1116,21 +1116,35 @@
   display: none;
 }
 
-/* The OKLCH color picker below each color space. All of them select the same
+/* The OKLCH and RGB picker below each color space. All of them select the same
    color, and every shape is cut open at it. Each track shows the colors its
    slider would select. */
 .color-space__picker {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 10px 18px;
+  flex-direction: column;
+  gap: 10px;
   margin-top: 12px;
   color: var(--prose-captions);
   font-size: 0.85em;
 }
 
+.color-space__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 18px;
+}
+
+/* Reserve the swatch column in the RGB row too, so both rows wrap alike. */
+.color-space__controls + .color-space__controls::before {
+  content: "";
+  flex: 0 0 22px;
+  height: 22px;
+}
+
 .color-space__swatch {
+  flex: 0 0 22px;
   width: 22px;
   height: 22px;
   border-radius: 4px;
@@ -1141,6 +1155,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.color-space__slider > span {
+  flex: 0 0 1em;
+  text-align: center;
 }
 
 .color-space__slider input[type="range"] {
@@ -1185,7 +1204,8 @@
 
 .color-space__value {
   /* Fixed: if its width followed the text, the centered sliders would move
-     under the pointer while dragging. "oklch(100.0% 0.370 360)" fits. */
+     under the pointer while dragging. Both OKLCH and RGB values fit. */
+  flex: 0 0 23ch;
   width: 23ch;
   font-family: 'Commit Mono', ui-monospace, monospace;
   font-size: 0.9em;
@@ -1265,6 +1285,10 @@
 
 /* Phones: one slider per row. */
 @media (max-width: 600px) {
+  .color-space__controls + .color-space__controls::before {
+    display: none;
+  }
+
   .color-space__slider {
     flex: 1 1 100%;
   }
