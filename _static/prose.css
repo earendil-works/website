@@ -1086,6 +1086,100 @@
 
 /* --- Color spaces --------------------------------------------------------- */
 
+/* Color references remain readable without JS; enhancement adds a swatch. */
+.prose .inline-color {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.15em;
+}
+
+.inline-color::before {
+  content: "";
+  display: inline-block;
+  align-self: center;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 2px;
+  background: var(--inline-color);
+  box-shadow: inset 0 0 0 1px rgb(128 128 128 / 35%);
+}
+
+.inline-color:focus-visible,
+.asciicast__eyedropper:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 3px;
+}
+
+[data-color-eyedropper] .asciicast__player {
+  position: relative;
+}
+
+.asciicast__eyedropper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 5px;
+  background: rgb(0 0 0 / 65%);
+  color: #fff;
+  cursor: pointer;
+}
+
+.asciicast__eyedropper[aria-pressed="true"] {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.asciicast__player.is-picking-color .ap-term,
+.asciicast__player.is-picking-color .ap-term * {
+  cursor: crosshair;
+}
+
+/* The poster's play overlay must not block sampling the terminal below it. */
+.asciicast__player.is-picking-color .ap-overlay {
+  pointer-events: none;
+}
+
+.asciicast__color-preview {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgb(0 0 0 / 50%);
+  pointer-events: none;
+}
+
+.asciicast__color-readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  margin-top: 12px;
+  color: var(--prose-captions);
+  font-family: 'Commit Mono', ui-monospace, monospace;
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+}
+
+.asciicast__color-readout[hidden],
+.asciicast__color-preview[hidden] {
+  display: none;
+}
+
 /* Rotatable 3D color spaces, <figure data-color-space> (see script.js). The
    fallback text is shown without WebGL. */
 .color-space__canvas {

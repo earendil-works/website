@@ -1307,6 +1307,7 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
           // so a failed theme load falls back like a failed player load.
           if (results[1]) new ThemePicker(cast, results[1]);
           figure.__asciicast = cast;
+          figure.dispatchEvent(new CustomEvent('asciicast:ready', { bubbles: true }));
           var observer = getCastObserver();
           if (observer) observer.observe(figure); else cast.start();
         })

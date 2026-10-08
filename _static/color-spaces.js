@@ -71,9 +71,12 @@
   // The selected color, shared by all figures. Hue in degrees.
   var selection = { l: 0.65, c: 0.1, h: 250 };
   var listeners = [];
+  var hasSelection = false;
+  var eyedroppers = [];
 
   function select(next) {
     selection = next;
+    hasSelection = true;
     listeners.forEach(function(listener) { listener(selection); });
     // Hold still while a color is picked, so the cut does not turn away.
     instances.forEach(function(instance) { instance.interact(); });
@@ -1454,7 +1457,204 @@
     if (index !== -1) listeners.splice(index, 1);
   };
 
+  // Article colors and the terminal eyedropper use sRGB, independently of
+  // the gamut used to draw a figure. They feed the same OKLCH selection.
+  function selectRgb(rgb) {
+    select(rgbToOklch(rgb, GAMUTS.srgb, selection.h));
+  }
+
+  function selectHex(hex) {
+    if (!/^#[\da-f]{6}$/i.test(hex)) return;
+    selectRgb([1, 3, 5].map(function(offset) {
+      return parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    }));
+  }
+
+  function ColorReadout() {
+    var self = this;
+    this.el = document.createElement('div');
+    this.el.className = 'asciicast__color-readout';
+    this.el.setAttribute('role', 'status');
+    this.swatch = document.createElement('span');
+    this.swatch.className = 'color-space__swatch';
+    this.swatch.setAttribute('aria-hidden', 'true');
+    this.value = document.createElement('output');
+    this.rgbValue = document.createElement('output');
+    this.el.appendChild(this.swatch);
+    this.el.appendChild(this.value);
+    this.el.appendChild(this.rgbValue);
+    this.update = function(color) { self.show(color); };
+    listeners.push(this.update);
+    this.show(selection);
+  }
+
+  ColorReadout.prototype.show = function(color) {
+    this.el.hidden = !hasSelection;
+    this.swatch.style.background = css(color.l, color.c, color.h);
+    this.value.textContent = 'oklch(' + (color.l * 100).toFixed(1) + '% ' +
+      color.c.toFixed(3) + ' ' + color.h.toFixed(0) + ')';
+    var rgb = oklchToLinear(color.l, color.c, color.h * Math.PI / 180, GAMUTS.srgb);
+    this.rgbValue.textContent = inGamut(rgb) ? 'rgb(' + rgb.map(function(v) {
+      return Math.round(linearToSrgb(v) * 255);
+    }).join(' ') + ')' : 'Outside sRGB';
+  };
+
+  ColorReadout.prototype.destroy = Picker.prototype.destroy;
+
+  // Sample the player's background canvas, or the foreground of a text
+  // glyph. Picking the actual text color avoids antialiased edge shades.
+  // Whitespace selects the panel behind it, not the span's text color.
+  function terminalColorAt(terminal, x, y) {
+    var canvas = terminal.querySelector('canvas');
+    var rect = canvas.getBoundingClientRect();
+    var background = getComputedStyle(terminal).borderTopColor;
+    var pixel;
+    if (x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom) {
+      pixel = canvas.getContext('2d').getImageData(
+        Math.floor((x - rect.left) / rect.width * canvas.width),
+        Math.floor((y - rect.top) / rect.height * canvas.height), 1, 1).data;
+      if (pixel[3]) background = 'rgb(' + Array.from(pixel).slice(0, 3).join(' ') + ')';
+    }
+    var node, offset;
+    if (document.caretPositionFromPoint) {
+      var caret = document.caretPositionFromPoint(x, y);
+      if (caret) { node = caret.offsetNode; offset = caret.offset; }
+    } else if (document.caretRangeFromPoint) {
+      var caretRange = document.caretRangeFromPoint(x, y);
+      if (caretRange) { node = caretRange.startContainer; offset = caretRange.startOffset; }
+    }
+    if (node && node.nodeType === 3 && terminal.contains(node) &&
+        node.parentElement.closest('.ap-term-text')) {
+      var range = document.createRange();
+      for (var i = Math.max(0, offset - 1); i <= offset && i < node.length; i++) {
+        if (/\s/.test(node.textContent[i])) continue;
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        var glyph = range.getBoundingClientRect();
+        if (x < glyph.left || x >= glyph.right || y < glyph.top || y >= glyph.bottom) continue;
+        var style = getComputedStyle(node.parentElement);
+        // Resolve CSS colors and blend faint text on the panel behind it.
+        var sample = document.createElement('canvas');
+        sample.width = sample.height = 1;
+        var ctx = sample.getContext('2d');
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, 1, 1);
+        ctx.globalAlpha = parseFloat(style.opacity);
+        ctx.fillStyle = style.color;
+        ctx.fillRect(0, 0, 1, 1);
+        var rgb = ctx.getImageData(0, 0, 1, 1).data;
+        return 'rgb(' + Array.from(rgb).slice(0, 3).join(' ') + ')';
+      }
+    }
+    return background;
+  }
+
+  // Flip near an edge and reserve space for the lens's outer ring, since
+  // the player clips its contents to rounded corners.
+  function previewOffset(pointer, extent, size) {
+    var inset = 4;
+    var offset = pointer + 16;
+    if (offset + size + inset > extent) offset = pointer - 16 - size;
+    return Math.max(inset, Math.min(extent - size - inset, offset));
+  }
+
+  function TerminalEyedropper(figure) {
+    var self = this;
+    this.figure = figure;
+    this.mount = figure.__asciicast.mount;
+    this.active = false;
+    this.button = document.createElement('button');
+    this.button.type = 'button';
+    this.button.className = 'asciicast__eyedropper';
+    this.button.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="m14 5 5 5M16 3a2 2 0 0 1 3 3l-3 3-2-2-7 7-2 5-2 2-1-1 2-2 1-5 7-7-2-2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+    this.button.setAttribute('aria-label', 'Pick a terminal color for the visualizations');
+    this.button.title = 'Pick a terminal color (Escape to cancel)';
+    this.button.setAttribute('aria-pressed', 'false');
+    this.mount.appendChild(this.button);
+    this.readout = new ColorReadout();
+    this.mount.insertAdjacentElement('afterend', this.readout.el);
+    this.preview = document.createElement('span');
+    this.preview.className = 'asciicast__color-preview';
+    this.preview.setAttribute('aria-hidden', 'true');
+    this.preview.hidden = true;
+    this.mount.appendChild(this.preview);
+    this.button.addEventListener('click', function() { self.toggle(!self.active); });
+    this.onClick = function(event) {
+      if (!self.active || !event.target.closest('.ap-term')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      var color = terminalColorAt(event.target.closest('.ap-term'), event.clientX, event.clientY);
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 1, 1);
+      selectRgb(Array.from(ctx.getImageData(0, 0, 1, 1).data).slice(0, 3).map(function(v) { return v / 255; }));
+      self.toggle(false);
+    };
+    this.mount.addEventListener('click', this.onClick, true);
+    this.mount.addEventListener('pointermove', function(event) {
+      var terminal = event.target.closest('.ap-term');
+      self.preview.hidden = !self.active || !terminal;
+      if (self.preview.hidden) return;
+      var rect = self.mount.getBoundingClientRect();
+      self.preview.style.left = previewOffset(event.clientX - rect.left,
+        rect.width, self.preview.offsetWidth) + 'px';
+      self.preview.style.top = previewOffset(event.clientY - rect.top,
+        rect.height, self.preview.offsetHeight) + 'px';
+      self.preview.style.background = terminalColorAt(terminal, event.clientX, event.clientY);
+    });
+    this.mount.addEventListener('pointerleave', function() { self.preview.hidden = true; });
+    this.onKey = function(event) {
+      if (!self.active || event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      self.toggle(false);
+    };
+    document.addEventListener('keydown', this.onKey, true);
+  }
+
+  TerminalEyedropper.prototype.toggle = function(active) {
+    this.active = active;
+    this.button.setAttribute('aria-pressed', String(active));
+    this.mount.classList.toggle('is-picking-color', active);
+    this.preview.hidden = true;
+  };
+
+  TerminalEyedropper.prototype.destroy = function() {
+    this.readout.destroy();
+    document.removeEventListener('keydown', this.onKey, true);
+  };
+
+  function initColorTools() {
+    eyedroppers = eyedroppers.filter(function(picker) {
+      if (picker.figure.isConnected) return true;
+      picker.destroy();
+      return false;
+    });
+    document.querySelectorAll('[data-select-color]').forEach(function(span) {
+      if (span.dataset.colorInitialized) return;
+      span.dataset.colorInitialized = 'true';
+      var hex = span.getAttribute('data-select-color');
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'inline-color';
+      button.innerHTML = span.innerHTML;
+      button.style.setProperty('--inline-color', hex);
+      button.setAttribute('aria-label', 'Show ' + hex + ' in the color visualizations');
+      button.title = 'Show this color in the visualizations';
+      button.addEventListener('click', function() { selectHex(hex); });
+      span.replaceChildren(button);
+    });
+    document.querySelectorAll('[data-color-eyedropper]').forEach(function(figure) {
+      if (!figure.__asciicast || figure.dataset.colorEyedropperInitialized) return;
+      figure.dataset.colorEyedropperInitialized = 'true';
+      eyedroppers.push(new TerminalEyedropper(figure));
+    });
+  }
+
   function initColorSpaces() {
+    initColorTools();
     instances.slice().forEach(function(instance) {
       if (!instance.figure.isConnected) instance.destroy();
     });
@@ -1475,4 +1675,5 @@
 
   initColorSpaces();
   document.body.addEventListener('htmx:afterSettle', initColorSpaces);
+  document.body.addEventListener('asciicast:ready', initColorTools);
 })();

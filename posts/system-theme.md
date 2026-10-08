@@ -13,7 +13,7 @@ At Earendil, we want to build products that respect the choices of the people us
 
 The result is the new system theme, which is now Pi's default. It asks your terminal for its colors and builds Pi's theme from them. In this post I want to share how it works.
 
-<figure class="post-figure asciicast" data-asciicast="/static/posts/system-theme/demo.cast.json" data-asciicast-themes="/static/posts/system-theme/themes.json" data-asciicast-poster="0:53.2" data-asciicast-loop>
+<figure class="post-figure asciicast" data-asciicast="/static/posts/system-theme/demo.cast.json" data-asciicast-themes="/static/posts/system-theme/themes.json" data-asciicast-poster="0:53.2" data-asciicast-loop data-color-eyedropper>
 <p class="asciicast__fallback">A Pi session in the terminal. With JavaScript enabled, it plays here and can be shown in 24 terminal themes.</p>
 </figure>
 
@@ -31,7 +31,7 @@ This isn't a flaw of the themes. The palette was made to color the output of sim
 
 Contrast is one of the most important aspects of color in user interfaces. If it is too low, people will have a hard time using your product. Contrast is mainly driven by lightness. Saturation affects it a little, but by far the most important factor is how light or dark a color is compared to the color behind it.
 
-RGB, the way we usually write colors, doesn't have a lightness axis. It was made for machines to display colors on a monitor, not for humans to understand them. As a 3D shape, it is a neat cube with one axis per channel. But colors that are close to each other in this cube aren't necessarily colors humans would describe as similar. `#0000ff` and `#00ff00`, for example, both have one channel at full strength, but on white, the blue has a WCAG contrast ratio of 8.6:1 and the green only 1.4:1.
+RGB, the way we usually write colors, doesn't have a lightness axis. It was made for machines to display colors on a monitor, not for humans to understand them. As a 3D shape, it is a neat cube with one axis per channel. But colors that are close to each other in this cube aren't necessarily colors humans would describe as similar. <span data-select-color="#0000ff"><code>#0000ff</code></span> and <span data-select-color="#00ff00"><code>#00ff00</code></span>, for example, both have one channel at full strength, but on white, the blue has a WCAG contrast ratio of 8.6:1 and the green only 1.4:1.
 
 <figure class="post-figure color-space" data-color-space="rgb">
 <p class="color-space__fallback">The RGB color space as a cube with one axis per channel: black and white at opposite corners, with red, green, blue and their mixes on the corners in between.</p>
@@ -78,7 +78,7 @@ That's why Pi builds its colors in OKHSL. OKHSL is built on the same foundation 
 <figcaption>What Pi makes of the most colorful color of each hue at other lightnesses, in OKHSL: lightness going up, saturation going out, and hue around. Saturation falls off toward black and white, inside OKHSL's full cylinder (outlined). Drag to rotate, and pick a color to cut it open there.</figcaption>
 </figure>
 
-But keeping the saturation the same doesn't keep a color equally colorful. Since saturation is relative to what the screen can display, the same percentage can mean very different amounts of chroma at different lightnesses. Shortly after the release, a bug report showed that Pi looked much more vivid than the terminal with Catppuccin Frappé. Catppuccin's pink, #f4b8e4, has an OKHSL saturation of 84%, but that is 84% of the little chroma a screen can show at such a high lightness. Pi's accent needs to be darker to be readable, and since the shape is much wider there, 84% saturation becomes #eb76d1, with about twice the chroma of the original pink. The fix was to also cap the chroma: a palette color can move to a different lightness, but it can never become more colorful than it is in your palette. With the cap, the accent becomes #cc92bd, which looks like Catppuccin again.
+But keeping the saturation the same doesn't keep a color equally colorful. Since saturation is relative to what the screen can display, the same percentage can mean very different amounts of chroma at different lightnesses. Shortly after the release, a bug report showed that Pi looked much more vivid than the terminal with Catppuccin Frappé. Catppuccin's pink, <span data-select-color="#f4b8e4">#f4b8e4</span>, has an OKHSL saturation of 84%, but that is 84% of the little chroma a screen can show at such a high lightness. Pi's accent needs to be darker to be readable, and since the shape is much wider there, 84% saturation becomes <span data-select-color="#eb76d1">#eb76d1</span>, with about twice the chroma of the original pink. The fix was to also cap the chroma: a palette color can move to a different lightness, but it can never become more colorful than it is in your palette. With the cap, the accent becomes <span data-select-color="#cc92bd">#cc92bd</span>, which looks like Catppuccin again.
 
 So in the end, the chroma of a palette color is limited three times: by what your screen can display, through OKHSL; by the falloff toward black and white; and by the chroma it has in your palette.
 
