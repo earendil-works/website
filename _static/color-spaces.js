@@ -5,12 +5,13 @@
 // data-color-space="oklch" draws the RGB gamut in OKLCH as a landscape:
 // lightness runs from black to white, hue runs along the other side, and the
 // height is the most chroma a color of that lightness and hue can have.
-// data-color-space="okhsl" draws the OKHSL colors Pi makes from the most
-// colorful color of each hue at mid lightness, inside OKHSL's cylinder.
+// data-color-space="okhsl" draws the full sRGB OKHSL cylinder.
+// data-color-space="pi-range" draws the selected source's output range for
+// a Pi color family, as a hue slice inside that cylinder's outline.
 // Every point is drawn in its own color. Drag (or arrow keys) to rotate.
 //
-// Below each figure, OKLCH and RGB sliders select one color for all of
-// them. Every shape is cut open at that color, in its own coordinates, so the
+// OKLCH and RGB sliders select one color for all figures; paired views
+// share one picker. The color spaces are cut open at that color, so the
 // color sits in the inner corner of the cut: the cube loses the box between
 // the color and white, the landscape the block of higher lightness, hue and
 // chroma, and the cylinder a wedge from the color's hue, above its lightness
@@ -19,7 +20,8 @@
 // cut removed stays as a ghost, a dotted pattern in its colors. A round
 // lens in the color marks it, faded while the shape hides it. A shape that
 // cannot show the color is not cut, and a crossed-out red dot marks where
-// the color would be, with the reason.
+// the color would be, with the reason. Pi's range has no cut: picking a
+// color reshapes its hue slice, including anchored falloff and chroma caps.
 //
 // On wide-gamut displays, with browsers that can draw WebGL in Display P3,
 // the cube and the landscape use Display P3 instead of sRGB: the cube's
@@ -50,12 +52,49 @@
   var GAMUT_TOLERANCE = 1e-4; // chroma; slider steps land on the boundary
   var NOT_CUT = [-10, -10, -10]; // coordinates outside every cut
   var OPEN = 10; // cut size reaching past the end of an axis
-  // Pi's saturation curve for its blue family: most of its color families
-  // fall off about the same (system-theme.ts, FAMILIES).
-  var PI_SATURATION = { min: 0.1, max: 0.68 };
-  // The palette color the OKHSL figure follows: the most colorful one of each
-  // hue (saturation 1) at mid lightness, where the curve peaks.
-  var PI_SOURCE_LIGHTNESS = 0.5;
+  // system-theme.ts's complete FAMILIES recipe. Hue is only used when no
+  // terminal palette is available; palette colors keep their own hue.
+  var PI_FAMILIES = {
+    neutral: { hue: 231.49, min: 0.02, max: 0.08, label: 'neutral' },
+    blue: { hue: 231.49, min: 0.1, max: 0.68, label: 'blue' },
+    green: { hue: 158.68, min: 0.1, max: 0.76, label: 'green' },
+    red: { hue: 20, min: 0.1, max: 0.92, label: 'red' },
+    yellow: { hue: 82.36, min: 0.5, max: 1, label: 'yellow' },
+    orange: { hue: 52, min: 0.12, max: 0.85, label: 'orange' },
+    violet: { hue: 295, min: 0.2, max: 0.6, label: 'violet' },
+    calamine: { hue: 202.43, min: 0.1, max: 0.74, label: 'calamine' },
+    thinkingSlate: { hue: 231.49, min: 0.08, max: 0.2, label: 'thinking slate' },
+    thinkingBlue: { hue: 231.49, min: 0.2, max: 0.45, label: 'thinking blue' },
+    thinkingPeriwinkle: { hue: 263.25, min: 0.3, max: 0.6, label: 'thinking periwinkle' },
+    thinkingViolet: { hue: 295, min: 0.4, max: 0.75, label: 'thinking violet' },
+    thinkingMagenta: { hue: 337.5, min: 0.5, max: 0.85, label: 'thinking magenta' },
+    thinkingRed: { hue: 20, min: 0.95, max: 1, label: 'thinking red' }
+  };
+
+  // Every distinct (family, ANSI slot) pair Pi uses (system-theme.ts,
+  // TOKEN_FAMILIES, TOKEN_SLOTS), named by its main role. Panels share their
+  // role's pair and only differ in lightness, which this figure does not model.
+  var PI_ROLES = [
+    { id: 'accent', label: 'Accent', group: 'Interface', family: 'violet', slot: 5 },
+    { id: 'link', label: 'Links and borders', group: 'Interface', family: 'blue', slot: 4 },
+    { id: 'success', label: 'Success', group: 'Interface', family: 'green', slot: 2 },
+    { id: 'error', label: 'Error', group: 'Interface', family: 'red', slot: 1 },
+    { id: 'warning', label: 'Warning', group: 'Interface', family: 'yellow', slot: 3 },
+    { id: 'search', label: 'Search match', group: 'Interface', family: 'orange', slot: 3 },
+    { id: 'muted', label: 'Muted text', group: 'Interface', family: 'neutral', slot: 8 },
+    { id: 'strings', label: 'Strings', group: 'Syntax', family: 'orange', slot: 2 },
+    { id: 'numbers', label: 'Numbers', group: 'Syntax', family: 'green', slot: 5 },
+    { id: 'variables', label: 'Variables', group: 'Syntax', family: 'calamine', slot: 6 },
+    { id: 'thinkingMinimal', label: 'Minimal', group: 'Thinking level', family: 'thinkingSlate', slot: 4 },
+    { id: 'thinkingLow', label: 'Low', group: 'Thinking level', family: 'thinkingBlue', slot: 4 },
+    { id: 'thinkingMedium', label: 'Medium', group: 'Thinking level', family: 'thinkingPeriwinkle', slot: 6 },
+    { id: 'thinkingHigh', label: 'High', group: 'Thinking level', family: 'thinkingViolet', slot: 5 },
+    { id: 'thinkingXhigh', label: 'Extra high', group: 'Thinking level', family: 'thinkingMagenta', slot: 13 },
+    { id: 'thinkingMax', label: 'Max', group: 'Thinking level', family: 'thinkingRed', slot: 1 }
+  ];
+  var ANSI_NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
+    'bright black', 'bright red', 'bright green', 'bright yellow', 'bright blue', 'bright magenta',
+    'bright cyan', 'bright white'];
   var FOV = 30 * Math.PI / 180;
   var IDLE_SPEED = 2 * Math.PI / 40000; // radians per ms, a turn in 40s
   var MIN_PITCH = -1.2;
@@ -316,14 +355,13 @@
     return [c0, cMid, cMax];
   }
 
-  // The share of a color's saturation Pi keeps at an OKHSL lightness
-  // (system-theme.ts, saturationCurve): all of it at mid lightness, falling
-  // off along a bell curve to min / max at black and white, so very dark and
-  // very light colors keep a hint of color.
-  function piSaturation(lightness) {
+  // A family's normalized curve (system-theme.ts, saturationCurve): 1 at
+  // mid OKHSL lightness, min / max at black and white. Palette colors use
+  // the target/source ratio; fallback colors multiply it by family.max.
+  function piSaturation(family, lightness) {
     var gaussian = function(x) { return Math.exp(-(x - 0.5) * (x - 0.5) / (2 * 0.25 * 0.25)); };
     var bell = (gaussian(lightness) - gaussian(0)) / (1 - gaussian(0));
-    var floor = PI_SATURATION.min / PI_SATURATION.max;
+    var floor = family.max > 0 ? family.min / family.max : 1;
     return floor + (1 - floor) * bell;
   }
 
@@ -372,24 +410,37 @@
     return [hue, Math.min(1, Math.max(0, saturation)), lightness];
   }
 
-  // How saturated Pi makes the source color (saturation 1 at
-  // PI_SOURCE_LIGHTNESS) of a hue at another OKHSL lightness, with the
-  // saturation setting at 1: system-theme.ts's anchored(), step by step. Its
-  // saturation falls off along the curve, relative to where the source sits
-  // on it, and its chroma is capped at the source's with the same falloff,
-  // so it never gets more colorful than the source. Pi works in 8-bit sRGB
-  // between the steps; this does not round.
-  var sourceChromas = {};
+  // system-theme.ts's anchored(): keep the source saturation at its own
+  // OKHSL lightness, attenuate it relative to that anchor, and cap chroma
+  // by the source's chroma with the same attenuation. The geometry uses
+  // continuous channels rather than Pi's intermediate 8-bit rounding.
+  function piRangeSaturation(source, family, lightness, multiplier) {
+    var anchor = piSaturation(family, source[2]);
+    var falloff = anchor > 0 ? Math.min(1, piSaturation(family, lightness) / anchor) : 1;
+    var saturation = source[1] * falloff * multiplier;
+    var lch = okhslToOklch(source[0], saturation, lightness);
+    var cap = source[3] * falloff * multiplier;
+    return lch[1] <= cap ? saturation : oklchToOkhsl(lch[0], cap, source[0])[1];
+  }
 
-  function piEdge(hue, lightness) {
-    var anchor = piSaturation(PI_SOURCE_LIGHTNESS);
-    var falloff = anchor > 0 ? Math.min(1, piSaturation(lightness) / anchor) : 1;
-    var lch = okhslToOklch(hue, falloff, lightness);
-    if (!(hue in sourceChromas)) sourceChromas[hue] = okhslToOklch(hue, 1, PI_SOURCE_LIGHTNESS)[1];
-    var cap = sourceChromas[hue] * falloff;
-    if (lch[1] <= cap) return falloff;
-    // Capped: the same OKLab lightness and hue, at the source's chroma.
-    return oklchToOkhsl(lch[0], cap, hue)[1];
+  function piFallbackSaturation(family, lightness, multiplier) {
+    return family.max * piSaturation(family, lightness) * multiplier;
+  }
+
+  function selectedOkhsl() {
+    var lch = selected();
+    var hsl = oklchToOkhsl(lch[0], Math.min(lch[1], maxChroma(lch[0], lch[2], GAMUTS.srgb)), lch[2]);
+    return [hsl[0], hsl[1], hsl[2], lch[1]];
+  }
+
+  function cylinderPosition(hue, saturation, lightness) {
+    return [saturation * CYLINDER_RADIUS * Math.cos(hue), lightness,
+      -saturation * CYLINDER_RADIUS * Math.sin(hue)];
+  }
+
+  function cylinderFacing() {
+    // Face the selected radial slice, with a little depth still visible.
+    return Math.PI - selectedOkhsl()[0] + 0.15;
   }
 
   // The selected color as [lightness, chroma, hue in radians], and whether
@@ -666,42 +717,26 @@
       };
     },
 
-    // The OKHSL colors Pi makes from the most colorful color of each hue at
-    // mid lightness (see piEdge), as a solid: lightness up, saturation out,
-    // hue around. Its side is how saturated Pi makes that color at each
-    // lightness: it reaches OKHSL's full cylinder at mid lightness and
-    // narrows toward black and white, and wherever a hue could be more
-    // colorful than at mid lightness, the chroma cap pulls it in further.
-    // The full cylinder is outlined around it. The cut is a wedge from the
-    // selected color's hue, above its lightness and outside its saturation.
+    // The full OKHSL cylinder, cut open at the selected color.
     okhsl: function(gamut) {
-      var position = function(hue, saturation, lightness) {
-        return [
-          saturation * CYLINDER_RADIUS * Math.cos(hue),
-          lightness,
-          -saturation * CYLINDER_RADIUS * Math.sin(hue)
-        ];
-      };
+      var position = cylinderPosition;
       var add = function(target, hue, saturation, lightness, coords, keep) {
         target.vertex(position(hue, saturation, lightness),
           okhslToRgb(hue, saturation, lightness, gamut), coords, keep);
       };
       // The selected color in OKHSL, with its chroma limited to sRGB's.
-      var selectedHsl = function() {
-        var lch = selected();
-        return oklchToOkhsl(lch[0], Math.min(lch[1], maxChroma(lch[0], lch[2], GAMUTS.srgb)), lch[2]);
-      };
+      var selectedHsl = selectedOkhsl;
 
       var mesh = new MeshBuilder();
       mesh.grid(SIDE_STEPS, LIGHTNESS_STEPS, function(i, j) {
         var hue = i / SIDE_STEPS * 2 * Math.PI, lightness = j / LIGHTNESS_STEPS;
-        var saturation = piEdge(hue, lightness);
+        var saturation = 1;
         add(mesh, hue, saturation, lightness, [hue, saturation, lightness]);
       });
       // White on top, black at the bottom.
       [0, 1].forEach(function(lightness) {
         mesh.grid(SIDE_STEPS, 1, function(i, j) {
-          var hue = i / SIDE_STEPS * 2 * Math.PI, saturation = piEdge(hue, lightness) * j;
+          var hue = i / SIDE_STEPS * 2 * Math.PI, saturation = j;
           mesh.vertex(position(hue, saturation, lightness), [lightness, lightness, lightness],
             [hue, saturation, lightness]);
         });
@@ -714,9 +749,7 @@
       });
 
       // Looking into the cut, a little from the side.
-      var facing = function() {
-        return -Math.PI / 2 - (selectedHsl()[0] + WEDGE / 2) + 0.4;
-      };
+      var facing = cylinderFacing;
       return {
         gamut: GAMUTS.srgb,
         mesh: mesh.build(null, true),
@@ -734,51 +767,194 @@
             var beyond = Math.min(1.3, 1 + (lch[1] - most) / Math.max(most, 0.05));
             return missing(position(h0, beyond, l0), 'Outside sRGB');
           }
-          if (s0 > piEdge(h0, l0) + GAMUT_TOLERANCE) {
-            return missing(position(h0, s0, l0), 'Beyond Pi\'s falloff');
-          }
           var faces = new MeshBuilder();
           var ls = steps(l0, 1, Math.max(2, Math.round(LIGHTNESS_STEPS / 2 * (1 - l0))));
           var hues = steps(h0, h0 + WEDGE, WEDGE_STEPS);
-          var edgeAt = function(hue) {
-            return ls.map(function(lightness) { return piEdge(hue, lightness); });
-          };
-          // Its sides, at the selected hue and a quarter turn on, out to the edge.
+          // The two radial sides of the cut.
           [h0, h0 + WEDGE].forEach(function(hue) {
-            var edges = edgeAt(hue);
             faces.grid(ls.length - 1, SATURATION_STEPS, function(j, k) {
-              add(faces, hue, s0 + Math.max(0, edges[j] - s0) * k / SATURATION_STEPS, ls[j], NOT_CUT, edges[j] - s0);
+              add(faces, hue, s0 + (1 - s0) * k / SATURATION_STEPS, ls[j], NOT_CUT);
             });
+            faces.line([position(hue, s0, l0), position(hue, s0, 1)]);
+            faces.line([position(hue, 1, l0), position(hue, 1, 1)]);
+            faces.line([position(hue, s0, l0), position(hue, 1, l0)]);
           });
-          // Its inner wall, at the selected saturation.
-          var walls = hues.map(edgeAt);
+          // The inner wall and the floor.
           faces.grid(hues.length - 1, ls.length - 1, function(i, j) {
-            add(faces, hues[i], s0, ls[j], NOT_CUT, walls[i][j] - s0);
+            add(faces, hues[i], s0, ls[j], NOT_CUT);
           });
-          // Its floor, at the selected lightness.
-          var floors = hues.map(function(hue) { return piEdge(hue, l0); });
           faces.grid(hues.length - 1, SATURATION_STEPS, function(i, k) {
-            add(faces, hues[i], s0 + Math.max(0, floors[i] - s0) * k / SATURATION_STEPS, l0, NOT_CUT, floors[i] - s0);
+            add(faces, hues[i], s0 + (1 - s0) * k / SATURATION_STEPS, l0, NOT_CUT);
           });
-          // The cut's edges: up its inner corners and outer rims, around its
-          // floor, wherever they are inside the shape.
-          [h0, h0 + WEDGE].forEach(function(hue) {
-            var edges = edgeAt(hue);
-            var keeps = edges.map(function(edge) { return edge - s0; });
-            faces.line(ls.map(function(lightness) { return position(hue, s0, lightness); }), keeps);
-            faces.line(ls.map(function(lightness, j) {
-              return position(hue, Math.max(s0, edges[j]), lightness);
-            }), keeps);
-          });
-          var last = floors.length - 1;
-          var floor = [position(h0, Math.max(s0, floors[0]), l0)]
-            .concat(hues.map(function(hue) { return position(hue, s0, l0); }))
-            .concat([position(h0 + WEDGE, Math.max(s0, floors[last]), l0)]);
-          faces.line(floor, [floors[0] - s0].concat(floors.map(function(edge) { return edge - s0; }), [floors[last] - s0]));
+          faces.line(hues.map(function(hue) { return position(hue, s0, l0); }));
+          faces.line(hues.map(function(hue) { return position(hue, 1, l0); }));
           return {
             from: [h0, s0, l0], size: [WEDGE, OPEN, OPEN], wrap: 2 * Math.PI, faces: faces,
             point: position(h0, s0, l0)
           };
+        }
+      };
+    },
+
+    // A radial slice, not a solid across hypothetical source hues. Its
+    // edge is the full-color output; the interior sweeps Pi's saturation
+    // multiplier from 0 to 1. Only the dynamic slice is rebuilt.
+    //
+    // The role picks the recipe and, from the demo's terminal theme, the
+    // source: its ANSI slot. "Reset to default" selects Pi's own color for
+    // the role instead, which Pi uses when the terminal reports no palette;
+    // that color follows the family's absolute curve, without a chroma cap.
+    // Any other selection is a custom palette color.
+    'pi-range': function(gamut) {
+      var role = PI_ROLES[0];
+      var mode = 'custom'; // 'theme', 'default' or 'custom'
+      var applying = false;
+      var themeName = '';
+      var apply = function(next) {
+        applying = true;
+        try {
+          next();
+        } finally {
+          applying = false;
+        }
+      };
+      // The demo's current ANSI palette, published by its theme picker.
+      var terminalTheme = function() {
+        var player = document.querySelector && document.querySelector('[data-color-palette]');
+        if (!player) return null;
+        var palette = player.dataset.colorPalette.split(' ');
+        return palette.length === 16 ? { name: player.dataset.colorTheme || 'the terminal theme', palette: palette } : null;
+      };
+      var selectDefault = function() {
+        var family = PI_FAMILIES[role.family];
+        var lch = okhslToOklch(family.hue * Math.PI / 180, family.max, 0.5);
+        mode = 'default';
+        apply(function() { select({ l: lch[0], c: lch[1], h: family.hue }); });
+      };
+      var selectRole = function() {
+        var theme = terminalTheme();
+        if (!theme) return selectDefault();
+        mode = 'theme';
+        themeName = theme.name;
+        apply(function() { selectHex(theme.palette[role.slot]); });
+      };
+      var onSelect = function() {
+        if (!applying) mode = 'custom';
+      };
+      // Switching the demo's theme follows the role into the new palette.
+      var onTheme = function() {
+        if (mode === 'theme') selectRole();
+      };
+      var reference = new MeshBuilder();
+      [0, 1].forEach(function(lightness) {
+        reference.line(steps(0, 2 * Math.PI, SIDE_STEPS).map(function(hue) {
+          return cylinderPosition(hue, 1, lightness);
+        }));
+      });
+      for (var i = 0; i < 8; i++) {
+        var hue = i / 8 * 2 * Math.PI;
+        reference.line([cylinderPosition(hue, 1, 0), cylinderPosition(hue, 1, 1)]);
+      }
+      reference.line([[0, 0, 0], [0, 1, 0]]);
+      return {
+        gamut: GAMUTS.srgb,
+        mesh: reference.build(null, true),
+        yaw: cylinderFacing(),
+        pitch: 0.45,
+        facing: cylinderFacing,
+        controls: function(changed) {
+          var row = document.createElement('div');
+          row.className = 'color-space__recipe';
+          var label = document.createElement('label');
+          var title = document.createElement('span');
+          title.textContent = 'Role';
+          var input = document.createElement('select');
+          var groups = {};
+          PI_ROLES.forEach(function(item) {
+            if (!groups[item.group]) {
+              groups[item.group] = document.createElement('optgroup');
+              groups[item.group].label = item.group;
+              input.appendChild(groups[item.group]);
+            }
+            var option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = item.label;
+            groups[item.group].appendChild(option);
+          });
+          input.value = role.id;
+          input.addEventListener('change', function() {
+            role = PI_ROLES.filter(function(item) { return item.id === input.value; })[0] || PI_ROLES[0];
+            selectRole();
+            changed();
+          });
+          label.appendChild(title);
+          label.appendChild(input);
+          row.appendChild(label);
+          var reset = document.createElement('button');
+          reset.type = 'button';
+          reset.textContent = 'Reset to default';
+          reset.addEventListener('click', function() {
+            selectDefault();
+            changed();
+          });
+          row.appendChild(reset);
+          listeners.push(onSelect);
+          document.body.addEventListener('asciicast:theme', onTheme);
+          return row;
+        },
+        destroy: function() {
+          var index = listeners.indexOf(onSelect);
+          if (index !== -1) listeners.splice(index, 1);
+          document.body.removeEventListener('asciicast:theme', onTheme);
+        },
+        cut: function() {
+          var lch = selected();
+          var source = selectedOkhsl();
+          var family = PI_FAMILIES[role.family];
+          var fallback = mode === 'default';
+          // Every variant for the current role and theme, so the caption keeps
+          // the height of the longest while the color changes.
+          var range = ' The edge is Pi’s full-color output; the slice includes lower saturation settings.';
+          var theme = terminalTheme();
+          var captions = {
+            theme: role.label + ' uses ' + (themeName || (theme ? theme.name : 'the terminal theme')) + '’s ANSI ' +
+              ANSI_NAMES[role.slot] + ' with Pi’s ' + family.label + ' recipe.' + range,
+            default: 'Pi’s default color for ' + role.label.toLowerCase() + ', used when the terminal reports no palette. ' +
+              'It follows the ' + family.label + ' curve without a source-chroma cap.',
+            custom: 'A custom color with the ' + role.label.toLowerCase() + ' role’s recipe (' + family.label + ').' + range,
+            outside: 'The selected color is outside sRGB, so it cannot be a terminal palette color.'
+          };
+          if (!fallback && !inside(lch, GAMUTS.srgb)) {
+            var unavailable = missing(cylinderPosition(source[0], 1.15, source[2]), 'Outside sRGB');
+            unavailable.captions = captions;
+            unavailable.caption = 'outside';
+            return unavailable;
+          }
+          var hue = fallback ? family.hue * Math.PI / 180 : source[0];
+          var at = function(lightness, multiplier) {
+            return fallback ? piFallbackSaturation(family, lightness, multiplier) :
+              piRangeSaturation(source, family, lightness, multiplier);
+          };
+          var ls = steps(0, 1, LIGHTNESS_STEPS);
+          // Put the source precisely on the edge, not between grid rows.
+          if (!fallback && source[2] > 0 && source[2] < 1) ls.push(source[2]);
+          ls.sort(function(a, b) { return a - b; });
+          var faces = new MeshBuilder();
+          faces.grid(ls.length - 1, SATURATION_STEPS, function(i, j) {
+            var saturation = at(ls[i], j / SATURATION_STEPS);
+            faces.vertex(cylinderPosition(hue, saturation, ls[i]),
+              okhslToRgb(hue, saturation, ls[i], gamut), NOT_CUT);
+          });
+          faces.line(ls.map(function(lightness) {
+            return cylinderPosition(hue, at(lightness, 1), lightness);
+          }));
+          faces.line([[0, 0, 0], [0, 1, 0]]);
+          var lightness = fallback ? 0.5 : source[2];
+          var point = cylinderPosition(hue, at(lightness, 1), lightness);
+          var marker = okhslToOklch(hue, at(lightness, 1), lightness);
+          return { from: NO_CUT.from, size: NO_CUT.size, wrap: 0, faces: faces,
+            point: point, color: css(marker[0], marker[1], hue * 180 / Math.PI),
+            captions: captions, caption: mode };
         }
       };
     }
@@ -957,9 +1133,20 @@
     this.stage.appendChild(this.lens);
     this.probe = { vertices: gl.createBuffer(), data: new Float32Array(STRIDE) };
     this.probe.data.set([0, 0, 0, 0, 0, 0].concat(NOT_CUT, [1]));
-    figure.insertBefore(this.stage, figure.firstChild);
-    this.picker = new Picker(this.shape.gamut);
-    figure.insertBefore(this.picker.el, figure.querySelector('figcaption'));
+    figure.insertBefore(this.stage, figure.querySelector('.color-space__fallback'));
+    this.pair = figure.closest('[data-color-space-pair]');
+    this.picker = null;
+    // A paired figure owns one shared source picker below both canvases.
+    if (!this.pair || !this.pair.__colorPicker) {
+      this.picker = new Picker(this.shape.gamut);
+      if (this.pair) {
+        this.pair.__colorPicker = this.picker;
+        this.pair.appendChild(this.picker.el);
+        this.pair.classList.add('is-enhanced');
+      } else {
+        figure.insertBefore(this.picker.el, figure.querySelector('figcaption'));
+      }
+    }
     figure.classList.add('is-enhanced');
 
     this.onSelect = function() {
@@ -968,6 +1155,9 @@
       self.schedule();
     };
     listeners.push(this.onSelect);
+    if (this.shape.controls) {
+      figure.insertBefore(this.shape.controls(this.onSelect), figure.querySelector('figcaption'));
+    }
 
     this.canvas.addEventListener('pointerdown', function(event) { self.pointerDown(event); });
     this.canvas.addEventListener('pointermove', function(event) { self.pointerMove(event); });
@@ -1033,7 +1223,31 @@
     this.cutProbed = false; // probe right away
     this.lens.classList.toggle('is-missing', !!cut.missing);
     this.lensLabel.textContent = cut.missing || '';
-    this.lens.style.setProperty('--lens-color', css(selection.l, selection.c, selection.h));
+    if (cut.captions) this.showCaption(cut.captions, cut.caption);
+    this.lens.style.setProperty('--lens-color', cut.color || css(selection.l, selection.c, selection.h));
+  };
+
+  // Stacks all caption variants in one grid cell (prose.css) and shows the
+  // active one: the caption is as tall as the longest, so switching between
+  // them does not move the controls below.
+  ColorSpace.prototype.showCaption = function(captions, active) {
+    var caption = this.figure.querySelector('figcaption');
+    if (!caption) return;
+    if (!this.captions) {
+      caption.textContent = '';
+      caption.classList.add('color-space__captions');
+      this.captions = {};
+    }
+    var self = this;
+    Object.keys(captions).forEach(function(key) {
+      var span = self.captions[key];
+      if (!span) {
+        span = self.captions[key] = document.createElement('span');
+        caption.appendChild(span);
+      }
+      if (span.textContent !== captions[key]) span.textContent = captions[key];
+      span.classList.toggle('is-active', key === active);
+    });
   };
 
   // How far the camera is: far enough that the shape's bounding cylinder
@@ -1112,7 +1326,7 @@
   };
 
   ColorSpace.prototype.idle = function(now) {
-    return !this.drag && !prefersReducedMotion() &&
+    return !this.pair && !this.drag && !prefersReducedMotion() &&
       now - this.lastInteraction > RESUME_IDLE_MS;
   };
 
@@ -1129,6 +1343,9 @@
 
   ColorSpace.prototype.tick = function(now) {
     this.frame = null;
+    // A passive peer may already have a queued frame. It must not cancel
+    // the active view's target animation when it redraws the shared camera.
+    var moving = this.animating();
     if (!this.figure.isConnected) {
       this.destroy();
       return;
@@ -1158,6 +1375,7 @@
       }
     }
     this.draw();
+    if (moving) this.syncView();
     if (this.animating()) this.schedule();
     else this.last = null;
   };
@@ -1223,6 +1441,21 @@
     this.placeLens(matrix, ratio);
   };
 
+  // Paired canvases share a camera, including drag inertia and keyboard
+  // rotation. Only the active view drives the animation.
+  ColorSpace.prototype.syncView = function() {
+    if (!this.pair) return;
+    var self = this;
+    instances.forEach(function(other) {
+      if (other === self || other.pair !== self.pair) return;
+      other.yaw = self.yaw;
+      other.pitch = self.pitch;
+      other.target = null;
+      other.velocity = 0;
+      if (other.visible) other.draw();
+    });
+  };
+
   ColorSpace.prototype.interact = function() {
     this.lastInteraction = performance.now();
   };
@@ -1235,6 +1468,7 @@
     this.target = null;
     this.interact();
     this.figure.classList.add('is-dragging');
+    this.syncView();
     this.schedule();
   };
 
@@ -1276,6 +1510,7 @@
     this.target = null;
     this.interact();
     this.draw();
+    this.syncView();
     this.schedule();
   };
 
@@ -1288,7 +1523,11 @@
     // Browsers cap live WebGL contexts, so free ours right away.
     var lose = this.gl.getExtension('WEBGL_lose_context');
     if (lose) lose.loseContext();
-    this.picker.destroy();
+    if (this.shape.destroy) this.shape.destroy();
+    if (this.picker) {
+      this.picker.destroy();
+      if (this.pair) delete this.pair.__colorPicker;
+    }
     var index = listeners.indexOf(this.onSelect);
     if (index !== -1) listeners.splice(index, 1);
     index = instances.indexOf(this);
@@ -1297,8 +1536,8 @@
 
   // An OKLCH and RGB color picker, each track
   // showing the colors it would select, and leaving out (transparent) those
-  // its figure's gamut cannot show. Every figure has one, and they all
-  // select the same color.
+  // its figure's gamut cannot show. Paired figures share a picker; every
+  // picker selects the same source color.
   var SLIDERS = [
     { key: 'l', label: 'L', name: 'Lightness', max: 1, step: 0.005 },
     { key: 'c', label: 'C', name: 'Chroma', max: MAX_CHROMA, step: 0.001 },

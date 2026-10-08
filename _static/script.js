@@ -1182,6 +1182,9 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     });
     this.showName(index);
     this.cast.figure.dataset.colorBackground = theme.background;
+    // The ANSI colors, for visualizations that use a theme's palette slots.
+    this.cast.figure.dataset.colorPalette = theme.palette.slice(0, 16).join(' ');
+    this.cast.figure.dataset.colorTheme = theme.name;
     this.cast.figure.dispatchEvent(new CustomEvent('asciicast:theme', { bubbles: true }));
     var colors = [theme.foreground, theme.background].concat(theme.palette);
     this.fadeTo(colors, prefersReducedMotion() ? 0 : fadeMs || 0);

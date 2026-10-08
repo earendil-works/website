@@ -1192,6 +1192,111 @@
   display: none;
 }
 
+/* A fixed color space beside the source-dependent transformation. */
+.color-space-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+}
+
+.prose .color-space-pair > figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.prose .color-space__title {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.color-space-pair .color-space__canvas {
+  aspect-ratio: 1;
+}
+
+.color-space-pair > .color-space__picker,
+.prose .color-space-pair__source {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.prose .color-space-pair__source {
+  color: var(--prose-captions);
+  font-size: 0.8em;
+  text-align: center;
+}
+
+.color-space-pair:not(.is-enhanced) .color-space-pair__source {
+  display: none;
+}
+
+.color-space__recipe {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+  margin: 8px 0;
+  color: var(--prose-captions);
+  font-size: 0.75em;
+}
+
+.color-space__recipe label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.color-space__recipe button,
+.color-space__recipe select {
+  /* The same box for both, whatever the platform's control defaults. */
+  box-sizing: border-box;
+  height: 2.2em;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 8px;
+  line-height: 1;
+  vertical-align: middle;
+  border: 1px solid var(--prose-hr);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.color-space__recipe button {
+  cursor: pointer;
+}
+
+/* Caption variants share one cell; only the active one is visible, and the
+   cell keeps the height of the longest. */
+.color-space__captions {
+  display: grid;
+}
+
+.color-space__captions > span {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+
+.color-space__captions > span.is-active {
+  visibility: visible;
+}
+
+@media (max-width: 600px) {
+  .color-space-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .color-space-pair .color-space__canvas {
+    aspect-ratio: 3 / 2;
+  }
+}
+
 /* Rotatable 3D color spaces, <figure data-color-space> (see script.js). The
    fallback text is shown without WebGL. */
 .color-space__canvas {
@@ -1222,9 +1327,8 @@
   display: none;
 }
 
-/* The OKLCH and RGB picker below each color space. All of them select the same
-   color, and every shape is cut open at it. Each track shows the colors its
-   slider would select. */
+/* OKLCH and RGB source pickers (shared by paired views). Each track shows
+   the colors its slider would select. */
 .color-space__picker {
   display: flex;
   flex-direction: column;
