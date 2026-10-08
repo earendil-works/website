@@ -2138,6 +2138,38 @@ function createProgram(gl, vertexShader, fragmentShader) {
   return program;
 }
 
+// Logo fade-in animation (skip if not on home page)
+function revealPage() {
+  if (document.body.classList.contains('skip-intro')) {
+    // Non-home page: show immediately
+    document.body.classList.add('loaded');
+  } else {
+    // Home page: fade in
+    setTimeout(() => {
+      const fadeDuration = LOGO_FADE_DURATION / 1000;
+      logo.style.transition = `opacity ${fadeDuration}s ease`;
+      logo.style.opacity = `${LOGO_FADE_TARGET}`;
+      const logoLinks = document.querySelector('.logo-links');
+      if (logoLinks) {
+        logoLinks.style.transition = `opacity ${fadeDuration}s ease`;
+        logoLinks.style.opacity = `${LOGO_FADE_TARGET}`;
+      }
+      // Mark body as loaded so HTMX swaps don't restart animation
+      setTimeout(() => {
+        document.body.classList.add('loaded');
+      }, fadeDuration * 1000);
+    }, LOGO_FADE_DELAY);
+  }
+}
+
+// Without WebGL (unsupported, turned off, or blocked by the browser, as
+// Chrome does after GPU trouble) there is no ocean, but the page still has
+// to fade in.
+if (!gl) {
+  revealPage();
+  return;
+}
+
 // Ocean wave program
 const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
 let oceanFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
@@ -2634,26 +2666,6 @@ function render(time) {
 
 requestAnimationFrame(render);
 
-// Logo fade-in animation (skip if not on home page)
-if (document.body.classList.contains('skip-intro')) {
-  // Non-home page: show immediately
-  document.body.classList.add('loaded');
-} else {
-  // Home page: fade in
-  setTimeout(() => {
-    const fadeDuration = LOGO_FADE_DURATION / 1000;
-    logo.style.transition = `opacity ${fadeDuration}s ease`;
-    logo.style.opacity = `${LOGO_FADE_TARGET}`;
-    const logoLinks = document.querySelector('.logo-links');
-    if (logoLinks) {
-      logoLinks.style.transition = `opacity ${fadeDuration}s ease`;
-      logoLinks.style.opacity = `${LOGO_FADE_TARGET}`;
-    }
-    // Mark body as loaded so HTMX swaps don't restart animation
-    setTimeout(() => {
-      document.body.classList.add('loaded');
-    }, fadeDuration * 1000);
-  }, LOGO_FADE_DELAY);
-}
+revealPage();
 
 })();
