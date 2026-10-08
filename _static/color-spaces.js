@@ -15,7 +15,8 @@
 // the color and white, the landscape the block of higher lightness, hue and
 // chroma, and the cylinder a wedge from the color's hue, above its lightness
 // and outside its saturation. The shapes' surfaces stay put and the GPU
-// discards them inside the cut; only the cut's faces are rebuilt. A round
+// discards them inside the cut; only the cut's faces are rebuilt. What the
+// cut removed stays as a ghost, a dotted pattern in its colors. A round
 // lens in the color marks it, faded while the shape hides it. A shape that
 // cannot show the color is not cut, and a crossed-out red dot marks where
 // the color would be, with the reason.
@@ -41,6 +42,11 @@
   var WEDGE_STEPS = 72;
   var OUTLINE_ALPHA = 0.35; // OKHSL's full cylinder
   var CUT_LINE_ALPHA = 0.7; // the cut's edges
+  // What the cut removed is drawn as a ghost: dots in its colors, on a grid
+  // fixed to the screen (CSS pixels).
+  var GHOST_SPACING = 4;
+  var GHOST_RADIUS = 0.9;
+  var GHOST_ALPHA = 0.7;
   var GAMUT_TOLERANCE = 1e-4; // chroma; slider steps land on the boundary
   var NOT_CUT = [-10, -10, -10]; // coordinates outside every cut
   var OPEN = 10; // cut size reaching past the end of an axis
@@ -768,7 +774,10 @@
 
   // Unlit: every point shows exactly its own color. Lines are drawn in a
   // single, premultiplied color instead. Fragments inside the cut, and the
-  // parts of the cut's faces outside the shape, are discarded.
+  // parts of the cut's faces outside the shape, are discarded. In the ghost
+  // pass it is the other way round: only the surfaces inside the cut are
+  // drawn, as soft round dots on a grid of `ghost.x` device pixels with a
+  // radius of `ghost.y`, at `ghost.z` opacity.
   var FRAGMENT_SHADER = [
     '#ifdef GL_FRAGMENT_PRECISION_HIGH',
     'precision highp float;',
@@ -779,6 +788,7 @@
     'uniform vec3 cutFrom;',
     'uniform vec3 cutSize;',
     'uniform float cutWrap;',
+    'uniform vec3 ghost;',
     'varying vec3 vColor;',
     'varying vec3 vCoords;',
     'varying float vKeep;',
@@ -786,7 +796,16 @@
     '  if (vKeep < 0.0) discard;',
     '  vec3 d = vCoords - cutFrom;',
     '  if (cutWrap > 0.0) d.x = mod(d.x, cutWrap);',
-    '  if (all(greaterThan(d, vec3(0.0))) && all(lessThan(d, cutSize))) discard;',
+    '  bool cut = all(greaterThan(d, vec3(0.0))) && all(lessThan(d, cutSize));',
+    '  if (ghost.z > 0.0) {',
+    '    if (!cut) discard;',
+    '    vec2 cell = mod(gl_FragCoord.xy, ghost.x) - 0.5 * ghost.x;',
+    '    float alpha = ghost.z * (1.0 - smoothstep(ghost.y - 0.6, ghost.y + 0.6, length(cell)));',
+    '    if (alpha <= 0.0) discard;',
+    '    gl_FragColor = vec4(vColor * alpha, alpha);',
+    '    return;',
+    '  }',
+    '  if (cut) discard;',
     '  gl_FragColor = outline.a > 0.0 ? outline : vec4(vColor, 1.0);',
     '}'
   ].join('\n');
@@ -860,7 +879,7 @@
     }
     gl.useProgram(program);
     this.uniforms = {};
-    ['matrix', 'depthBias', 'outline', 'cutFrom', 'cutSize', 'cutWrap'].forEach(function(name) {
+    ['matrix', 'depthBias', 'outline', 'cutFrom', 'cutSize', 'cutWrap', 'ghost'].forEach(function(name) {
       self.uniforms[name] = gl.getUniformLocation(program, name);
     });
     this.attributes = ['position', 'color', 'coords', 'keep'].map(function(name) {
@@ -1138,6 +1157,7 @@
     gl.uniform3fv(u.cutSize, cut.size);
     gl.uniform1f(u.cutWrap, cut.wrap);
     gl.uniform4f(u.outline, 0, 0, 0, 0);
+    gl.uniform3f(u.ghost, 0, 0, 0);
     var parts = [this.surfaces, cut.buffers];
     var self = this;
     gl.enable(gl.POLYGON_OFFSET_FILL);
@@ -1146,10 +1166,20 @@
       gl.drawElements(gl.TRIANGLES, buffers.triangles, gl.UNSIGNED_SHORT, 0);
     });
     gl.disable(gl.POLYGON_OFFSET_FILL);
-    // Lines in the figure's text color, so they follow day and night.
-    var rgba = (getComputedStyle(this.figure).color.match(/[\d.]+/g) || [128, 128, 128]).map(Number);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    // The ghost of what the cut removed: hidden by the shape in front of it,
+    // but not hiding the cut behind it.
+    if (cut.size[0] > 0) {
+      gl.depthMask(false);
+      gl.uniform3f(u.ghost, GHOST_SPACING * ratio, GHOST_RADIUS * ratio, GHOST_ALPHA);
+      this.bind(this.surfaces);
+      gl.drawElements(gl.TRIANGLES, this.surfaces.triangles, gl.UNSIGNED_SHORT, 0);
+      gl.uniform3f(u.ghost, 0, 0, 0);
+      gl.depthMask(true);
+    }
+    // Lines in the figure's text color, so they follow day and night.
+    var rgba = (getComputedStyle(this.figure).color.match(/[\d.]+/g) || [128, 128, 128]).map(Number);
     parts.forEach(function(buffers, index) {
       if (!buffers.lines) return;
       var alpha = (index ? CUT_LINE_ALPHA : OUTLINE_ALPHA) * (rgba.length > 3 ? rgba[3] : 1);
