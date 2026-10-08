@@ -1215,20 +1215,78 @@
   aspect-ratio: 1;
 }
 
-.color-space-pair > .color-space__picker,
-.prose .color-space-pair__source {
+.color-space-pair > .color-space__picker {
   grid-column: 1 / -1;
   margin: 0;
 }
 
-.prose .color-space-pair__source {
-  color: var(--prose-captions);
-  font-size: 0.8em;
-  text-align: center;
+/* Instructions, shown behind a "?" button (see helpTip). */
+.color-space__help {
+  display: none;
 }
 
-.color-space-pair:not(.is-enhanced) .color-space-pair__source {
-  display: none;
+/* In the top right corner of a figure, or of a pair of them. */
+.color-space,
+.color-space-pair {
+  position: relative;
+}
+
+.color-space__help-tip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+}
+
+.color-space__help-button {
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--prose-hr);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--prose-captions);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: help;
+}
+
+.color-space__help-button:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 2px;
+}
+
+.color-space__tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 2;
+  width: max-content;
+  max-width: 18em;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 85%);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s, visibility 0.15s;
+}
+
+.color-space__help-tip:hover .color-space__tooltip,
+.color-space__help-button:focus-visible + .color-space__tooltip,
+.color-space__help-tip.is-open .color-space__tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 
 .color-space__recipe {
@@ -1270,6 +1328,83 @@
 
 .color-space__recipe button {
   cursor: pointer;
+}
+
+/* Pi's range's panel, full width below both views: the terminal theme (as
+   in the demo's picker), then the ANSI colors Pi uses with the role and
+   palette switch. Whether Pi can make the picked color goes below the
+   sliders. */
+.color-space__source {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+/* The result below the sliders keeps the height of its longest text
+   (stacked, see .color-space__captions), so picking colors does not move
+   anything. */
+.prose .color-space__verdict {
+  grid-column: 1 / -1;
+  max-width: 36em;
+  margin: 0 auto;
+  color: var(--prose-captions);
+  font-size: 0.875em;
+  line-height: 1.4285714;
+  text-align: center;
+}
+
+.prose .color-space__verdict.is-outside {
+  color: #d9454b;
+}
+
+/* The theme's name, left of its colors, wide enough for the longest so
+   that hovering themes does not move the row. */
+.color-space__theme-name {
+  width: 8em;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-space__source .color-space__recipe {
+  align-items: center;
+  column-gap: 10px;
+  margin-top: 12px;
+}
+
+.color-space__ansi {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.color-space__ansi[hidden] {
+  display: none;
+}
+
+/* Over .color-space__recipe button, which sizes text buttons. */
+.color-space__recipe .color-space__ansi-color {
+  box-sizing: border-box;
+  width: 1.6em;
+  height: 1.6em;
+  padding: 0;
+  border: 1px solid rgb(128 128 128 / 30%);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.color-space__ansi-color[aria-pressed='true'] {
+  outline: 2px solid var(--prose-body);
+  outline-offset: 2px;
+}
+
+.color-space__ansi.is-off .color-space__ansi-color {
+  opacity: 0.3;
+}
+
+.color-space__recipe button[aria-pressed='true'] {
+  background: var(--prose-hr);
 }
 
 /* Caption variants share one cell; only the active one is visible, and the
@@ -1491,6 +1626,60 @@
 
 .color-space__lens.is-missing .color-space__lens-label {
   display: block;
+}
+
+/* The lens's own label, such as Pi's range's "Source": above it, clear of
+   the markers' labels beside them. */
+.color-space__lens.is-labeled .color-space__lens-label {
+  display: block;
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Markers in Pi's range: squares for the colors Pi made from the source,
+   labeled with their token, and a ring for the candidate color, labeled
+   with its hex, red when Pi cannot make it. */
+.color-space__lens.is-marker .color-space__lens-label {
+  display: block;
+  font-family: var(--mono-font);
+}
+
+.color-space__lens.is-output {
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 3px;
+}
+
+.color-space__lens.is-output.is-match {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+}
+
+.color-space__lens.is-candidate {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+}
+
+.color-space__lens.is-candidate.is-outside {
+  box-shadow: 0 0 0 2px #e5484d, 0 0 0 3px rgb(0 0 0 / 45%), 0 2px 8px rgb(0 0 0 / 35%);
+}
+
+.color-space__lens.is-candidate.is-outside .color-space__lens-label {
+  background: #b4232a;
+}
+
+.color-space__lens.is-label-left .color-space__lens-label {
+  left: auto;
+  right: calc(100% + 8px);
+}
+
+.color-space__lens.is-label-hidden .color-space__lens-label {
+  display: none;
 }
 
 /* Phones: one slider per row. */

@@ -35,14 +35,14 @@ RGB, the way we usually write colors, doesn't have a lightness axis. It was made
 
 <figure class="post-figure color-space" data-color-space="rgb">
 <p class="color-space__fallback">The RGB color space as a cube with one axis per channel: black and white at opposite corners, with red, green, blue and their mixes on the corners in between.</p>
-<figcaption>The RGB color space. Drag to rotate, and pick a color to cut it open there.</figcaption>
+<p class="color-space__help">The RGB color space. Drag to rotate, and pick a color to cut it open there.</p>
 </figure>
 
 Perceptual color spaces like OKLCH are built around human perception instead. Colors that are close to each other in OKLCH are also colors humans would describe as similar, and its axes are the ones humans use to describe color: lightness, chroma (how colorful a color is) and hue. Because it follows human perception rather than a monitor's hardware, its shape is a lot weirder than a cube.
 
 <figure class="post-figure color-space" data-color-space="oklch">
 <p class="color-space__fallback">The same colors in OKLCH as a landscape: lightness runs from black to white, hue runs front to back, and the height is how much chroma a color of that lightness and hue can have. Every hue peaks at a different lightness: blue close to black, yellow close to white.</p>
-<figcaption>The same colors in OKLCH: lightness from left to right, hue from front to back, and chroma as height. Drag to rotate, and pick a color to cut it open there.</figcaption>
+<p class="color-space__help">The same colors in OKLCH: lightness from left to right, hue from front to back, and chroma as height. Drag to rotate, and pick a color to cut it open there.</p>
 </figure>
 
 With a lightness axis, the idea behind the system theme is simple: Pi decides the lightness of every color based on contrast requirements, and takes the hue and chroma from your terminal's palette.
@@ -52,9 +52,12 @@ With a lightness axis, the idea behind the system theme is simple: Pi decides th
 To figure out what lightness each color needs, I wrote down every place in the UI where two colors meet. Every panel needs enough contrast with the terminal background to read as a separate area, but not so much that it distracts. Every foreground color needs enough contrast on every background it can appear on. An error message, for example, has to be readable on the background, on the selected row and on all three tool panels. In code, this is a list of rules:
 
 ```ts
+const COLORS = ["accent", "success", "error", "warning"];
+const SURFACES = ["background", "selectedBg", ...TOOL_PANELS];
+
 { token: "text", on: ["background"], level: "text" },
-...each(["accent", "success", "error", "warning"], ["background", "selectedBg", ...TOOL_PANELS], "readable"),
-{ token: "dim", on: ["background", "selectedBg", ...TOOL_PANELS], level: "subtle" },
+...each(COLORS, SURFACES, "readable"),
+{ token: "dim", on: SURFACES, level: "subtle" },
 ```
 
 A contrast algorithm normally takes two colors and returns the contrast between them. Here I need the reverse: I know the background and how much contrast I want, and need the color. I have reversed contrast algorithms before, and you can find implementations for both WCAG and perceptual contrast on GitHub. With a reversed algorithm, calculating the theme becomes a loop: starting with the panels, Pi calculates the lightness each color needs for each of its rules and takes the strictest one.
@@ -73,7 +76,7 @@ Pi keeps the hue of your palette colors as it is. Chroma is trickier. The weird 
 
 That's why Pi builds its colors in OKHSL. OKHSL is built on the same foundation as OKLCH and uses the same hues, but it stretches the weird shape back into a cylinder. Its saturation goes from 0% to 100%, where 100% always means "the most colorful this hue can be at this lightness". It tries to keep the best of both worlds: it stays as close to human perception as it can, while bringing back the simple geometry that makes RGB based color spaces easy to work with. Every combination of hue, saturation and lightness is a color your screen can display, which makes it a good fit for generating themes and palettes in general. Pi also lets saturation fall off toward black and white, so that very dark and very light colors, like a panel only slightly lighter than the background, get a hint of color rather than a bright block.
 
-But keeping the saturation the same doesn't keep a color equally colorful. Since saturation is relative to what the screen can display, the same percentage can mean very different amounts of chroma at different lightnesses. Shortly after the release, a bug report showed that Pi looked much more vivid than the terminal with Catppuccin Frappé. Catppuccin's pink, <span data-select-color="#f4b8e4">#f4b8e4</span>, has an OKHSL saturation of 84%, but that is 84% of the little chroma a screen can show at such a high lightness. Pi's accent needs to be darker to be readable, and since the shape is much wider there, 84% saturation becomes <span data-select-color="#eb76d1">#eb76d1</span>, with about twice the chroma of the original pink. The fix was to also cap the chroma: a palette color can move to a different lightness, but it can never become more colorful than it is in your palette. With the cap, the accent becomes <span data-select-color="#cc92bd">#cc92bd</span>, which looks like Catppuccin again.
+But keeping the saturation the same doesn't keep a color equally colorful. Since saturation is relative to what the screen can display, the same percentage can mean very different amounts of chroma at different lightnesses. Shortly after the release, a bug report showed that Pi looked much more vivid than the terminal with Catppuccin Frappé. Catppuccin's pink, <span data-select-color="#f4b8e4" data-pi-theme="Catppuccin Frappé" data-pi-role="accent">#f4b8e4</span>, has an OKHSL saturation of 84%, but that is 84% of the little chroma a screen can show at such a high lightness. Pi's accent needs to be darker to be readable, and since the shape is much wider there, 84% saturation becomes <span data-select-color="#eb76d1" data-pi-theme="Catppuccin Frappé" data-pi-role="accent">#eb76d1</span>, with about twice the chroma of the original pink. The fix was to also cap the chroma: a palette color can move to a different lightness, but it can never become more colorful than it is in your palette. With the cap, the accent becomes <span data-select-color="#cc92bd" data-pi-theme="Catppuccin Frappé" data-pi-role="accent">#cc92bd</span>, which looks like Catppuccin again.
 
 So in the end, the chroma of a palette color is limited three times: by what your screen can display, through OKHSL; by the falloff toward black and white; and by the chroma it has in your palette.
 
@@ -82,15 +85,15 @@ The two views below separate the color space from what Pi does inside it. OKHSL'
 <div class="post-figure color-space-pair" data-color-space-pair>
 <figure class="color-space" data-color-space="okhsl">
 <p class="color-space__title">OKHSL color space</p>
-<p class="color-space__fallback">The full OKHSL cylinder: lightness from black at the bottom to white at the top, saturation from gray at the center outward, and hue around. It is cut open at the selected source color.</p>
-<figcaption>The full sRGB OKHSL cylinder, cut open at the source color. Lightness goes up, saturation goes out, and hue goes around.</figcaption>
+<p class="color-space__fallback">The full OKHSL cylinder: lightness from black at the bottom to white at the top, saturation from gray at the center outward, and hue around. It is cut open at the selected color.</p>
+<figcaption>The sRGB OKHSL cylinder, cut open at the selected color.</figcaption>
 </figure>
-<figure class="color-space" data-color-space="pi-range">
-<p class="color-space__title">Pi's possible outputs</p>
-<p class="color-space__fallback">Pi's output range for the selected source and color family, as a colored hue slice inside the cylinder's outline. Its outer edge follows the anchored saturation falloff and source-chroma cap. Its interior shows outputs at lower saturation settings. Without a terminal palette, Pi uses the family's own hue and saturation curve instead.</p>
-<figcaption>At the source hue, the edge is Pi's full-color output. The slice includes lower saturation settings; the dot marks the source.</figcaption>
+<figure class="color-space" data-color-space="pi-range" data-pi-themes="/static/posts/system-theme/themes.json">
+<p class="color-space__title">What Pi makes from a palette color</p>
+<p class="color-space__fallback">Pi's output range for one ANSI color of a terminal theme and the role that uses it, as a colored hue slice inside the cylinder's outline. Its outer edge follows the anchored saturation falloff and source-chroma cap, and passes through the source itself at its own lightness. Its interior shows outputs at lower saturation settings. Without a terminal palette, Pi uses the family's own hue and saturation curve instead.</p>
+<figcaption>Every color Pi can make from the source, at its hue.</figcaption>
 </figure>
-<p class="color-space-pair__source">Pick a source color for both views. Drag either view to rotate both. A role selects its color in the demo's terminal theme above; "Reset to default" selects the color Pi uses when the terminal reports no palette.</p>
+<p class="color-space__help">Pick a color to check whether Pi can make it from the source, here or in the terminal above. The dot is the source; squares are the colors Pi uses in this theme. Drag either view to rotate both.</p>
 </div>
 
 ## The result
