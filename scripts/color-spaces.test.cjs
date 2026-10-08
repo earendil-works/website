@@ -6,7 +6,7 @@ const vm = require('node:vm');
 function load() {
   function element() {
     return {
-      children: [], attributes: {}, events: {}, value: '',
+      children: [], attributes: {}, events: {}, value: '', hidden: false,
       style: { setProperty(key, value) { this[key] = value; } },
       appendChild(child) { this.children.push(child); },
       setAttribute(key, value) { this.attributes[key] = value; },
@@ -19,7 +19,7 @@ function load() {
   });
   const source = readFileSync(new URL('../_static/color-spaces.js', `file://${__filename}`), 'utf8');
   vm.runInContext(source.replace('  initColorSpaces();', `
-    window.test = { GAMUTS, Picker, ColorReadout, selectHex, previewOffset, rgbToOklch, oklchToLinear, encodeUnclipped, inGamut, select,
+    window.test = { GAMUTS, Picker, ColorReadout, selectHex, selectDefaultHex, previewOffset, rgbToOklch, oklchToLinear, encodeUnclipped, inGamut, select,
       selection: function() { return selection; } };
     initColorSpaces();`), context);
   return context.window.test;
@@ -110,7 +110,7 @@ test('article hex colors select sRGB and synchronize every figure and terminal r
   const srgb = new api.Picker(api.GAMUTS.srgb);
   const p3 = new api.Picker(api.GAMUTS.p3);
   const readout = new api.ColorReadout();
-  assert.equal(readout.el.hidden, true);
+  assert.equal(readout.el.hidden, false);
   assert.equal(readout.el.children.length, 3); // swatch and outputs, no controls
   for (const hex of ['#0000ff', '#00ff00', '#f4b8e4', '#eb76d1', '#cc92bd', '#FFFFFF', '#000000']) {
     api.selectHex(hex);
@@ -125,6 +125,19 @@ test('article hex colors select sRGB and synchronize every figure and terminal r
   const selection = api.selection();
   for (const hex of ['not a color', '#123', '#1234567', '#gggggg']) api.selectHex(hex);
   assert.equal(api.selection(), selection);
+});
+
+test('theme backgrounds are shown by default and followed until an explicit selection', () => {
+  const api = load();
+  api.selectDefaultHex('#282c34');
+  const readout = new api.ColorReadout();
+  assert.equal(readout.el.hidden, false);
+  assert.equal(readout.rgbValue.textContent, 'rgb(40 44 52)');
+  api.selectDefaultHex('#eff1f5');
+  assert.equal(readout.rgbValue.textContent, 'rgb(239 241 245)');
+  api.selectHex('#f4b8e4');
+  api.selectDefaultHex('#282c34');
+  assert.equal(readout.rgbValue.textContent, 'rgb(244 184 228)');
 });
 
 test('eyedropper lens flips at player edges and keeps its outer ring inside', () => {

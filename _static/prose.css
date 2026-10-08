@@ -1175,7 +1175,19 @@
   font-variant-numeric: tabular-nums;
 }
 
-.asciicast__color-readout[hidden],
+/* Fixed output widths keep the readout's wrapping and reserved height stable. */
+.asciicast__color-readout output {
+  white-space: nowrap;
+}
+
+.asciicast__color-readout output:nth-child(2) {
+  flex: 0 0 23ch;
+}
+
+.asciicast__color-readout output:last-child {
+  flex: 0 0 17ch;
+}
+
 .asciicast__color-preview[hidden] {
   display: none;
 }

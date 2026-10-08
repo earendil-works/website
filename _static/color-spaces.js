@@ -74,9 +74,9 @@
   var hasSelection = false;
   var eyedroppers = [];
 
-  function select(next) {
+  function select(next, isDefault) {
     selection = next;
-    hasSelection = true;
+    if (!isDefault) hasSelection = true;
     listeners.forEach(function(listener) { listener(selection); });
     // Hold still while a color is picked, so the cut does not turn away.
     instances.forEach(function(instance) { instance.interact(); });
@@ -1459,15 +1459,20 @@
 
   // Article colors and the terminal eyedropper use sRGB, independently of
   // the gamut used to draw a figure. They feed the same OKLCH selection.
-  function selectRgb(rgb) {
-    select(rgbToOklch(rgb, GAMUTS.srgb, selection.h));
+  function selectRgb(rgb, isDefault) {
+    select(rgbToOklch(rgb, GAMUTS.srgb, selection.h), isDefault);
   }
 
-  function selectHex(hex) {
+  function selectHex(hex, isDefault) {
     if (!/^#[\da-f]{6}$/i.test(hex)) return;
     selectRgb([1, 3, 5].map(function(offset) {
       return parseInt(hex.slice(offset, offset + 2), 16) / 255;
-    }));
+    }), isDefault);
+  }
+
+  // Follow the active theme's background until a color is explicitly picked.
+  function selectDefaultHex(hex) {
+    if (!hasSelection) selectHex(hex, true);
   }
 
   function ColorReadout() {
@@ -1489,7 +1494,6 @@
   }
 
   ColorReadout.prototype.show = function(color) {
-    this.el.hidden = !hasSelection;
     this.swatch.style.background = css(color.l, color.c, color.h);
     this.value.textContent = 'oklch(' + (color.l * 100).toFixed(1) + '% ' +
       color.c.toFixed(3) + ' ' + color.h.toFixed(0) + ')';
@@ -1571,8 +1575,9 @@
     this.button.title = 'Pick a terminal color (Escape to cancel)';
     this.button.setAttribute('aria-pressed', 'false');
     this.mount.appendChild(this.button);
+    selectDefaultHex(figure.dataset.colorBackground);
     this.readout = new ColorReadout();
-    this.mount.insertAdjacentElement('afterend', this.readout.el);
+    figure.appendChild(this.readout.el);
     this.preview = document.createElement('span');
     this.preview.className = 'asciicast__color-preview';
     this.preview.setAttribute('aria-hidden', 'true');
@@ -1676,4 +1681,9 @@
   initColorSpaces();
   document.body.addEventListener('htmx:afterSettle', initColorSpaces);
   document.body.addEventListener('asciicast:ready', initColorTools);
+  document.body.addEventListener('asciicast:theme', function(event) {
+    if (event.target.hasAttribute('data-color-eyedropper')) {
+      selectDefaultHex(event.target.dataset.colorBackground);
+    }
+  });
 })();

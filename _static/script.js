@@ -1181,6 +1181,8 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
       button.tabIndex = checked ? 0 : -1;
     });
     this.showName(index);
+    this.cast.figure.dataset.colorBackground = theme.background;
+    this.cast.figure.dispatchEvent(new CustomEvent('asciicast:theme', { bubbles: true }));
     var colors = [theme.foreground, theme.background].concat(theme.palette);
     this.fadeTo(colors, prefersReducedMotion() ? 0 : fadeMs || 0);
   };
