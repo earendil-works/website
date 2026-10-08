@@ -137,6 +137,8 @@
   var FOLLOW_MS = 180; // how quickly a shape turns to follow its cut
   var PROBE_MS = 100; // how often the lens checks whether it is hidden
   var MAX_CHROMA = 0.37; // the picker's range, about Display P3's most
+  var THUMB_WIDTH = 8; // the sliders' thumbs, in CSS pixels (prose.css)
+  var SNAP_PX = 5; // how far past an edge a slider leaving a stretch holds on
   var instances = [];
 
   // The selected color, shared by all figures. Hue in degrees.
@@ -933,6 +935,16 @@
         instances.forEach(function(instance) {
           if (pair && instance.pair === pair && instance.shape.followsPair) instance.onSelect();
         });
+        if (pair && pair.__colorPicker) pair.__colorPicker.setRange(pickerRange);
+      };
+      // For the pair's picker: colors Pi can make from the source.
+      var pickerRange = {
+        allows: function(lch) {
+          if (!inside(lch, GAMUTS.srgb)) return false;
+          var kind = check(lch, sliceHue(), currentRange().at);
+          return kind === 'edge' || kind === 'inside';
+        },
+        hue: function() { return sliceHue() * 180 / Math.PI; }
       };
       var findTheme = function(name) {
         return (data && data.themes.filter(function(item) { return item.name === name; })[0]) || null;
@@ -1337,12 +1349,14 @@
           // Pi's outputs.
           pair = figure.closest('[data-color-space-pair]');
           if (pair) pair.__piRange = { hue: sliceHue, outputs: outputs };
+          if (pair && pair.__colorPicker) pair.__colorPicker.setRange(pickerRange);
           load(figure.getAttribute('data-pi-themes'));
           // The result for the picked color goes below the color sliders.
           return { el: box, below: status };
         },
         destroy: function() {
           if (pair && pair.__piRange && pair.__piRange.outputs === outputs) delete pair.__piRange;
+          if (pair && pair.__colorPicker && pair.__colorPicker.range === pickerRange) pair.__colorPicker.setRange(null);
           var index = listeners.indexOf(onSelect);
           if (index !== -1) listeners.splice(index, 1);
           index = sourceListeners.indexOf(onArticle);
@@ -2110,6 +2124,38 @@
     return 'oklch(' + l.toFixed(3) + ' ' + c.toFixed(3) + ' ' + h.toFixed(1) + ')';
   }
 
+  // Leaving a stretch of a track toward a less visible one (dimmed, or
+  // outside the gamut), a slider holds on at the edge for SNAP_PX: it helps
+  // to stay in the stretch it is in. A track with dimmed colors has two
+  // kinds of edges, one without only one. Inside a stretch, and entering
+  // one, every value stays reachable. The value goes on the slider's steps,
+  // rounded inward.
+  function snap(input, slider) {
+    var edges = input.__edges || [];
+    var width = input.clientWidth - THUMB_WIDTH;
+    var value = parseFloat(input.value);
+    var last = input.__last;
+    var t = value / slider.max;
+    var best = null;
+    if (last !== undefined && last !== value) {
+      var from = last / slider.max;
+      edges.forEach(function(edge) {
+        // The edge's visible side is above it for dir > 0, below otherwise.
+        var leaving = edge.dir > 0 ? from >= edge.t - 1e-6 && t < edge.t : from <= edge.t + 1e-6 && t > edge.t;
+        var distance = Math.abs(t - edge.t) * width;
+        if (leaving && distance <= SNAP_PX && (!best || distance < best.distance)) {
+          best = { edge: edge, distance: distance };
+        }
+      });
+    }
+    if (best) {
+      var steps = best.edge.t * slider.max / slider.step;
+      var snapped = (best.edge.dir > 0 ? Math.ceil(steps - 1e-9) : Math.floor(steps + 1e-9)) * slider.step;
+      input.value = String(Math.min(slider.max, Math.max(0, snapped)));
+    }
+    input.__last = parseFloat(input.value);
+  }
+
   function Picker(gamut) {
     var self = this;
     this.gamut = gamut;
@@ -2140,6 +2186,7 @@
       input.step = String(slider.step);
       input.setAttribute('aria-label', slider.name + (isRgb ? ' (' + gamut.name + ')' : ''));
       input.addEventListener('input', function() {
+        snap(input, slider);
         if (isRgb) {
           // A shared OKLCH selection may be outside this figure's gamut.
           // Editing RGB explicitly brings it back: cap all channels, not
@@ -2176,50 +2223,87 @@
       if (parseFloat(inputs[slider.key].value) !== color[slider.key]) {
         inputs[slider.key].value = String(color[slider.key]);
       }
+      inputs[slider.key].__last = parseFloat(inputs[slider.key].value); // for snap
     });
     var gamut = this.gamut;
     // Colors along a track, at(t) returning [l, c, h in degrees] for t 0-1.
     var shows = function(lch) {
       return inGamut(oklchToLinear(lch[0], lch[1], lch[2] * Math.PI / 180, gamut));
     };
-    var paintRgb = function(rgb) {
-      if (gamut === GAMUTS.p3) return 'color(display-p3 ' + rgb.map(function(v) { return v.toFixed(4); }).join(' ') + ')';
-      return 'rgb(' + rgb.map(function(v) { return (v * 255).toFixed(1); }).join(' ') + ')';
+    // An alpha of 0.2 dims the colors the picker's range rules out.
+    var paintRgb = function(rgb, alpha) {
+      var suffix = alpha < 1 ? ' / ' + alpha + ')' : ')';
+      if (gamut === GAMUTS.p3) return 'color(display-p3 ' + rgb.map(function(v) { return v.toFixed(4); }).join(' ') + suffix;
+      return 'rgb(' + rgb.map(function(v) { return (v * 255).toFixed(1); }).join(' ') + suffix;
     };
-    var paint = function(lch) {
-      return paintRgb(oklchToRgb(lch[0], lch[1], lch[2] * Math.PI / 180, gamut));
+    var paint = function(lch, alpha) {
+      return paintRgb(oklchToRgb(lch[0], lch[1], lch[2] * Math.PI / 180, gamut), alpha);
+    };
+    // A range (Pi's, beside it) may rule colors out: they stay visible, but
+    // dimmed, so the useful part of each track stands out.
+    var range = this.range;
+    var fromLch = function(lch) { return [lch[0], lch[1], lch[2] * Math.PI / 180]; };
+    var fromRgb = function(rgb) {
+      var lch = rgbToOklch(rgb, gamut, color.h);
+      return [lch.l, lch.c, lch.h * Math.PI / 180];
     };
     // Where the thumb's center is at t: it stops half its width from the ends.
-    var at = function(t) { return 'calc(7px + (100% - 14px) * ' + t.toFixed(4) + ')'; };
-    var track = function(along, count, contains, draw) {
+    var at = function(t) {
+      return 'calc(' + THUMB_WIDTH / 2 + 'px + (100% - ' + THUMB_WIDTH + 'px) * ' + t.toFixed(4) + ')';
+    };
+    // Each t is outside the gamut (0, transparent), ruled out (1, dimmed)
+    // or neither (2). Extra ts catch narrow allowed stretches, such as the
+    // current value and the range's hue.
+    var track = function(along, count, contains, draw, toLch, extra) {
       contains = contains || shows;
       draw = draw || paint;
+      toLch = toLch || fromLch;
+      var state = function(value) {
+        if (!contains(value)) return 0;
+        return range && !range.allows(toLch(value)) ? 1 : 2;
+      };
+      var colorAt = function(value, which) {
+        return which === 0 ? 'transparent' : draw(value, which === 1 ? 0.2 : 1);
+      };
+      var edges = [];
+      var ts = steps(0, 1, count).concat((extra || []).filter(function(t) { return t > 0 && t < 1; }));
+      ts.sort(function(a, b) { return a - b; });
       var stops = [];
       var before = null;
-      for (var i = 0; i <= count; i++) {
-        var t = i / count;
-        var lch = along(t);
-        var inside = contains(lch);
-        if (before !== null && inside !== before.inside) {
-          // A hard edge where the gamut ends, found by bisection.
+      ts.forEach(function(t) {
+        var value = along(t);
+        var which = state(value);
+        if (before !== null && which !== before.state) {
+          // A hard edge where the state changes, found by bisection.
           var low = before.t, high = t;
-          for (var k = 0; k < 12; k++) {
+          for (var k = 0; k < 14; k++) {
             var mid = (low + high) / 2;
-            if (contains(along(mid)) === before.inside) low = mid;
+            if (state(along(mid)) === before.state) low = mid;
             else high = mid;
           }
-          var edge = before.inside ? draw(along(low)) : draw(along(high));
-          stops.push((before.inside ? edge : 'transparent') + ' ' + at(low));
-          stops.push((before.inside ? 'transparent' : edge) + ' ' + at(low));
+          stops.push(colorAt(along(low), before.state) + ' ' + at(low));
+          stops.push(colorAt(along(high), state(along(high))) + ' ' + at(low));
+          // Where it snaps to: just on the more visible side.
+          var up = state(along(high)) > before.state;
+          edges.push({ t: up ? high : low, dir: up ? 1 : -1 });
         }
-        stops.push((inside ? draw(lch) : 'transparent') + ' ' + at(t));
-        before = { t: t, inside: inside };
-      }
-      return 'linear-gradient(to right, ' + stops.join(', ') + ')';
+        stops.push(colorAt(value, which) + ' ' + at(t));
+        before = { t: t, state: which };
+      });
+      return { gradient: 'linear-gradient(to right, ' + stops.join(', ') + ')', edges: edges };
     };
-    inputs.l.style.setProperty('--track', track(function(t) { return [t, color.c, color.h]; }, 60));
-    inputs.c.style.setProperty('--track', track(function(t) { return [color.l, t * MAX_CHROMA, color.h]; }, 60));
-    inputs.h.style.setProperty('--track', track(function(t) { return [color.l, color.c, t * 360]; }, 90));
+    // A track's colors, and its edges for snapping (see snap).
+    var paintTrack = function(input, result) {
+      input.style.setProperty('--track', result.gradient);
+      input.__edges = result.edges;
+    };
+    var hue = range ? [range.hue() / 360] : [];
+    paintTrack(inputs.l, track(function(t) { return [t, color.c, color.h]; }, 60,
+      null, null, null, [color.l]));
+    paintTrack(inputs.c, track(function(t) { return [color.l, t * MAX_CHROMA, color.h]; }, 60,
+      null, null, null, [color.c / MAX_CHROMA]));
+    paintTrack(inputs.h, track(function(t) { return [color.l, color.c, t * 360]; }, 90,
+      null, null, null, [color.h / 360].concat(hue)));
     // Use unclipped channels for the tracks: an out-of-gamut OKLCH color
     // must not silently become a different, clipped color just by showing
     // it in an RGB picker. Range thumbs stop at 0 and 255; tracks remain
@@ -2230,12 +2314,13 @@
       var input = inputs[slider.key];
       var channel = Math.round(Math.min(1, Math.max(0, rgb[index])) * 255);
       if (parseFloat(input.value) !== channel) input.value = String(channel);
+      input.__last = channel;
       input.setAttribute('aria-valuetext', rgbInside ? String(channel) : 'Outside ' + gamut.name);
-      input.style.setProperty('--track', track(function(t) {
+      paintTrack(input, track(function(t) {
         var next = rgb.slice();
         next[index] = t;
         return next;
-      }, 60, inGamut, paintRgb));
+      }, 60, inGamut, paintRgb, fromRgb, [rgb[index]]));
     });
     this.rgbValue.textContent = rgbInside ? (gamut === GAMUTS.p3 ? 'P3 ' : '') +
       'rgb(' + rgb.map(function(v) { return Math.round(Math.min(1, Math.max(0, v)) * 255); }).join(' ') + ')' :
@@ -2245,6 +2330,13 @@
     // changed, the centered sliders would move under the pointer.
     this.value.textContent = 'oklch(' + (color.l * 100).toFixed(1) + '% ' +
       color.c.toFixed(3) + ' ' + color.h.toFixed(0) + ')';
+  };
+
+  // A range that rules colors out, { allows(lch), hue() in degrees }, or
+  // null: its tracks dim what it rules out.
+  Picker.prototype.setRange = function(range) {
+    this.range = range;
+    this.show(selection);
   };
 
   Picker.prototype.destroy = function() {
