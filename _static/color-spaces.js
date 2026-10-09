@@ -1126,10 +1126,6 @@
         ['dark', 'light'].forEach(function(appearance) {
           var group = document.createElement('div');
           group.className = 'asciicast__theme-group';
-          var heading = document.createElement('span');
-          heading.className = 'asciicast__theme-heading';
-          heading.textContent = appearance === 'dark' ? 'Dark' : 'Light';
-          group.appendChild(heading);
           data.themes.forEach(function(item) {
             if (item.appearance !== appearance) return;
             var button = document.createElement('button');
@@ -1709,7 +1705,8 @@
     this.picker = null;
     // A paired figure owns one shared source picker below both canvases.
     if (!this.pair || !this.pair.__colorPicker) {
-      this.picker = new Picker(this.shape.gamut);
+      // The RGB cube is about RGB, so its RGB sliders come first.
+      this.picker = new Picker(this.shape.gamut, kind === 'rgb');
       // The instructions, behind a "?" in the top right corner: one for a
       // figure, or for a pair.
       var host = this.pair || figure;
@@ -2299,7 +2296,7 @@
     input.__last = parseFloat(input.value);
   }
 
-  function Picker(gamut) {
+  function Picker(gamut, rgbFirst) {
     var self = this;
     this.gamut = gamut;
     this.el = document.createElement('div');
@@ -2308,12 +2305,14 @@
     lchRow.className = 'color-space__controls';
     var rgbRow = document.createElement('div');
     rgbRow.className = 'color-space__controls';
-    this.el.appendChild(lchRow);
-    this.el.appendChild(rgbRow);
+    // The swatch goes at the start of the first row.
+    var firstRow = rgbFirst ? rgbRow : lchRow;
+    this.el.appendChild(firstRow);
+    this.el.appendChild(rgbFirst ? lchRow : rgbRow);
     this.swatch = document.createElement('span');
     this.swatch.className = 'color-space__swatch';
     this.swatch.setAttribute('aria-hidden', 'true');
-    lchRow.appendChild(this.swatch);
+    firstRow.appendChild(this.swatch);
     this.inputs = {};
     SLIDERS.concat(RGB_SLIDERS).forEach(function(slider, index) {
       var isRgb = index >= SLIDERS.length;
@@ -3504,10 +3503,6 @@
     ['dark', 'light'].forEach(function(appearance) {
       var group = document.createElement('div');
       group.className = 'asciicast__theme-group';
-      var heading = document.createElement('span');
-      heading.className = 'asciicast__theme-heading';
-      heading.textContent = appearance === 'dark' ? 'Dark' : 'Light';
-      group.appendChild(heading);
       self.data.themes.forEach(function(item) {
         if (item.appearance !== appearance) return;
         var button = document.createElement('button');

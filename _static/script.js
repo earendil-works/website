@@ -1088,9 +1088,6 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
     ['dark', 'light'].forEach(function(appearance) {
       var group = node('div', 'asciicast__theme-group');
-      var heading = node('span', 'asciicast__theme-heading');
-      heading.textContent = appearance === 'dark' ? 'Dark' : 'Light';
-      group.appendChild(heading);
       self.themes.forEach(function(theme, index) {
         if (theme.appearance === appearance) group.appendChild(self.button(theme, index));
       });
