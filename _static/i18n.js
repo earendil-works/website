@@ -24,7 +24,7 @@
 
   // Keep the site's existing day-month English style. Other languages use
   // their native Intl conventions.
-  var DATE_LOCALES = { en: 'en-GB' };
+  var DATE_LOCALES = { en: 'en-US' };
 
   // Extract message from English format { message: "...", context: "..." } or plain string
   function extractMessage(value) {
