@@ -118,6 +118,6 @@ If you haven't picked a theme, you are already using the system theme. Otherwise
 
 All numbers in this post that relate to contrast are estimates of how the average person sees contrast, as determined by existing contrast perception algorithms.  But there is no open data set that really tells us the story.  We are working on our own open source contrast algorithm, and for that we would love to see how real people perceive contrast on real screens.
 
-The survey takes about 3 minutes to complete, and at the end we'll show you how your answers compare to the different algorithms and to others who took the survey.
+The survey takes about 3 minutes to complete, and at the end we'll show you how your answers compare to others who took the survey.
 
 We would love for you to take it.  You can find it at [contrastsurvey.earendil.com](https://contrastsurvey.earendil.com/), and if you participate in it, we'll use your answers to train a contrast algorithm.
