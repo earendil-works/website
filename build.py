@@ -69,6 +69,8 @@ OG_IMAGE_SIZE = (1200, 630)
 OG_TITLE_MAX_WIDTH = 1000
 OG_TITLE_MAX_HEIGHT = 310
 OG_TITLE_MAX_LINES = 3
+# Baseline-to-baseline distance as a multiple of the font size.
+OG_TITLE_LINE_HEIGHT = 1.15
 OG_TEXT_COLOR = "#353431"
 OG_PAPER_PATH = STATIC_DIR / "paper.png"
 OG_LOGO_PATH = STATIC_DIR / "og" / "earendil-logo.png"
@@ -457,6 +459,14 @@ def _truncate_og_lines(
     return truncated
 
 
+def _og_line_spacing(draw: ImageDraw.ImageDraw, font: ImageFont.FreeTypeFont) -> int:
+    """Return Pillow's extra line spacing that yields OG_TITLE_LINE_HEIGHT."""
+    single = draw.multiline_textbbox((0, 0), "A", font=font, spacing=0)
+    double = draw.multiline_textbbox((0, 0), "A\nA", font=font, spacing=0)
+    natural_pitch = double[3] - single[3]
+    return max(0, round(font.size * OG_TITLE_LINE_HEIGHT) - natural_pitch)
+
+
 def generate_og_image(title: str, output_path: Path) -> None:
     """Generate a simple paper, logo, and article-title social card."""
     width, height = OG_IMAGE_SIZE
@@ -482,7 +492,7 @@ def generate_og_image(title: str, output_path: Path) -> None:
             _wrap_og_title(draw, title, candidate_font),
             candidate_font,
         )
-        candidate_spacing = round(font_size * 0.18)
+        candidate_spacing = _og_line_spacing(draw, candidate_font)
         candidate_text = "\n".join(candidate_lines)
         candidate_bbox = draw.multiline_textbbox(
             (0, 0),
@@ -511,7 +521,7 @@ def generate_og_image(title: str, output_path: Path) -> None:
             _wrap_og_title(draw, title, title_font),
             title_font,
         )
-        title_spacing = 7
+        title_spacing = _og_line_spacing(draw, title_font)
         title_bbox = draw.multiline_textbbox(
             (0, 0),
             "\n".join(title_lines),
