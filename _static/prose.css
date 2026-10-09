@@ -1454,7 +1454,9 @@
 .color-space__picker {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  /* More than the controls' own row gap, so the OKLCH and RGB groups read
+     as separate even when their sliders wrap. */
+  gap: 16px;
   margin-top: 12px;
   color: var(--prose-captions);
   font-size: 0.85em;
@@ -1465,7 +1467,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 10px 18px;
+  gap: 8px 18px;
 }
 
 /* Reserve the swatch column in the RGB row too, so both rows wrap alike. */
