@@ -5,7 +5,7 @@ template: updates
 aria_label: Earendil posts
 from: Maximilian Blazek <max@earendil.com>
 to: You
-date: Fri, 1 Jan 2100 00:00:00 +0000
+date: Fri, 9 Oct 2026 13:39:29 +0200
 subject: There are many themes, but this one is yours
 ---
 
