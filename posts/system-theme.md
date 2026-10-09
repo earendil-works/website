@@ -19,7 +19,7 @@ The result is the new system theme, which is now Pi's default. It asks your term
 
 Before you read the rest of the post, we want to spoil something: it's all about contrast.  Picking the colors in the terminal UI is a question of taste that the user has already answered.  From there, all other decisions come down to one question: how much does a color stand out from the background it's on?  If we get it wrong, we create a bad experience for the user.
 
-But the catch is that contrast is a matter of perception and not something we can trivially measure.  Two people can look at the same pair of colors and disagree about whether it's readable.  We built a small [interactive survey you can take](https://contrastsurvey.earendil.com/) to show you how you perceive that contrast, and how it scores against contrast algorithms.  You'll find details about that survey at the end of the post.
+But the catch is that contrast is a matter of perception and not something we can trivially measure.  Two people can look at the same pair of colors and disagree about whether it's readable.  We built a small [interactive survey you can take](https://contrastsurvey.earendil.com/) to show you how you perceive that contrast, and how it compares against other people.  You'll find details about that survey at the end of the post.
 
 ## Can you trust the ANSI palette?
 
