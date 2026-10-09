@@ -908,6 +908,103 @@
   border-radius: 0;
 }
 
+.asciicast.is-enhanced .asciicast__fallback {
+  display: none;
+}
+
+/* Theme picker below the player (figures with data-asciicast-themes). Each
+   swatch is a tiny terminal: the theme's background with Pi's accent, text
+   and success colors. */
+.page--post-detail .post-figure .asciicast__themes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.asciicast__theme-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.asciicast__theme {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--swatch-bg);
+  box-shadow: inset 0 0 0 1px rgb(128 128 128 / 30%);
+  cursor: pointer;
+  appearance: none;
+}
+
+.asciicast__theme[aria-checked="true"] {
+  outline: 2px solid var(--prose-body);
+  outline-offset: 2px;
+}
+
+.asciicast__theme:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 2px;
+}
+
+.asciicast__swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 18px;
+}
+
+.asciicast__swatch-line {
+  height: 2px;
+  border-radius: 1px;
+}
+
+.asciicast__swatch-line:nth-child(1) {
+  width: 55%;
+}
+
+.asciicast__swatch-line:nth-child(3) {
+  width: 35%;
+}
+
+/* Phones: swatches small enough that a row of twelve fits. */
+@media (max-width: 600px) {
+  .page--post-detail .post-figure .asciicast__themes {
+    row-gap: 12px;
+  }
+
+  .asciicast__theme-group {
+    gap: 5px;
+  }
+
+  .asciicast__theme {
+    width: 22px;
+    height: 18px;
+    border-radius: 3px;
+  }
+
+  .asciicast__swatch {
+    gap: 2px;
+    width: 13px;
+  }
+}
+
+.page--post-detail .post-figure .asciicast__theme-current {
+  min-height: 1.35em;
+  margin-top: 10px;
+}
+
 /* Room for two lines, so a longer caption does not move the page. */
 .page--post-detail .post-figure .asciicast__caption {
   min-height: 2.7em;
@@ -972,4 +1069,925 @@
 
 .prose :is(hr, h2, h3, h4) + * {
   margin-top: 0;
+}
+
+/* --- Color spaces --------------------------------------------------------- */
+
+/* Color references remain readable without JS; enhancement adds a swatch. */
+.prose .inline-color {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.15em;
+}
+
+.inline-color::before {
+  content: "";
+  display: inline-block;
+  align-self: center;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 2px;
+  background: var(--inline-color);
+  box-shadow: inset 0 0 0 1px rgb(128 128 128 / 35%);
+}
+
+.inline-color:focus-visible,
+.asciicast__eyedropper:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 3px;
+}
+
+[data-color-eyedropper] .asciicast__player {
+  position: relative;
+}
+
+.asciicast__eyedropper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 5px;
+  background: rgb(0 0 0 / 65%);
+  color: #fff;
+  cursor: pointer;
+}
+
+.asciicast__eyedropper[aria-pressed="true"] {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.asciicast__player.is-picking-color .ap-term,
+.asciicast__player.is-picking-color .ap-term * {
+  cursor: crosshair;
+}
+
+/* The poster's play overlay must not block sampling the terminal below it. */
+.asciicast__player.is-picking-color .ap-overlay {
+  pointer-events: none;
+}
+
+.asciicast__color-preview {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgb(0 0 0 / 50%);
+  pointer-events: none;
+}
+
+.asciicast__color-readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  margin-top: 12px;
+  color: var(--prose-captions);
+  font-family: 'Commit Mono', ui-monospace, monospace;
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fixed output widths keep the readout's wrapping and reserved height stable. */
+.asciicast__color-readout output {
+  white-space: nowrap;
+}
+
+.asciicast__color-readout output:nth-child(2) {
+  flex: 0 0 23ch;
+}
+
+.asciicast__color-readout output:last-child {
+  flex: 0 0 17ch;
+}
+
+.asciicast__color-preview[hidden] {
+  display: none;
+}
+
+/* A fixed color space beside the source-dependent transformation. */
+.color-space-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+}
+
+.prose .color-space-pair > figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.prose .color-space__title {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.color-space-pair .color-space__canvas {
+  aspect-ratio: 1;
+}
+
+.color-space-pair > .color-space__picker {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* Instructions, shown behind a "?" button (see helpTip). */
+.color-space__help {
+  display: none;
+}
+
+/* In the top right corner of a figure, or of a pair of them. */
+.color-space,
+.color-space-pair {
+  position: relative;
+}
+
+.color-space__help-tip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+}
+
+.color-space__help-button {
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--prose-hr);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--prose-captions);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: help;
+}
+
+.color-space__help-button:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 2px;
+}
+
+.color-space__tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 2;
+  width: max-content;
+  max-width: 18em;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 85%);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s, visibility 0.15s;
+}
+
+.color-space__help-tip:hover .color-space__tooltip,
+.color-space__help-button:focus-visible + .color-space__tooltip,
+.color-space__help-tip.is-open .color-space__tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.color-space__recipe {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+  margin: 8px 0;
+  color: var(--prose-captions);
+  font-size: 0.75em;
+}
+
+.color-space__recipe label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.color-space__recipe button,
+.color-space__recipe select {
+  /* The same box for both, whatever the platform's control defaults. */
+  box-sizing: border-box;
+  height: 2.2em;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 8px;
+  line-height: 1;
+  vertical-align: middle;
+  border: 1px solid var(--prose-hr);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.color-space__recipe button {
+  cursor: pointer;
+}
+
+/* Pi's range's panel, full width below both views: the terminal theme (as
+   in the demo's picker), then the ANSI colors Pi uses with the role and
+   palette switch. Whether Pi can make the picked color goes below the
+   sliders. */
+.color-space__source {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+/* The result below the sliders keeps the height of its longest text
+   (stacked, see .color-space__captions), so picking colors does not move
+   anything. */
+.prose .color-space__verdict {
+  grid-column: 1 / -1;
+  max-width: 36em;
+  margin: 0 auto;
+  color: var(--prose-captions);
+  font-size: 0.875em;
+  line-height: 1.4285714;
+  text-align: center;
+}
+
+.prose .color-space__verdict.is-outside {
+  color: #d9454b;
+}
+
+/* The theme's name, left of its colors, wide enough for the longest so
+   that hovering themes does not move the row. */
+.color-space__theme-name {
+  width: 8em;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-space__source .color-space__recipe {
+  align-items: center;
+  column-gap: 10px;
+  margin-top: 12px;
+}
+
+.color-space__ansi {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.color-space__ansi[hidden] {
+  display: none;
+}
+
+/* Over .color-space__recipe button, which sizes text buttons. */
+.color-space__recipe .color-space__ansi-color {
+  box-sizing: border-box;
+  width: 1.6em;
+  height: 1.6em;
+  padding: 0;
+  border: 1px solid rgb(128 128 128 / 30%);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.color-space__ansi-color[aria-pressed='true'] {
+  outline: 2px solid var(--prose-body);
+  outline-offset: 2px;
+}
+
+.color-space__ansi.is-off .color-space__ansi-color {
+  opacity: 0.3;
+}
+
+.color-space__recipe button[aria-pressed='true'] {
+  background: var(--prose-hr);
+}
+
+/* Caption variants share one cell; only the active one is visible, and the
+   cell keeps the height of the longest. */
+.color-space__captions {
+  display: grid;
+}
+
+.color-space__captions > span {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+
+.color-space__captions > span.is-active {
+  visibility: visible;
+}
+
+@media (max-width: 600px) {
+  .color-space-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .color-space-pair .color-space__canvas {
+    aspect-ratio: 3 / 2;
+  }
+}
+
+/* Rotatable 3D color spaces, <figure data-color-space> (see script.js). The
+   fallback text is shown without WebGL. */
+.color-space__canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  max-height: 420px;
+  cursor: grab;
+  touch-action: pan-y;
+  outline: none;
+}
+
+.color-space.is-dragging .color-space__canvas {
+  cursor: grabbing;
+}
+
+.color-space__canvas:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.color-space.is-enhanced .color-space__fallback {
+  display: none;
+}
+
+.color-space:not(.is-enhanced) figcaption {
+  display: none;
+}
+
+/* OKLCH and RGB source pickers (shared by paired views). Each track shows
+   the colors its slider would select. */
+.color-space__picker {
+  display: flex;
+  flex-direction: column;
+  /* More than the controls' own row gap, so the OKLCH and RGB groups read
+     as separate even when their sliders wrap. */
+  gap: 16px;
+  margin-top: 12px;
+  color: var(--prose-captions);
+  font-size: 0.85em;
+}
+
+.color-space__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 18px;
+}
+
+/* Reserve the swatch column in the RGB row too, so both rows wrap alike. */
+.color-space__controls + .color-space__controls::before {
+  content: "";
+  flex: 0 0 22px;
+  height: 22px;
+}
+
+.color-space__swatch {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgb(128 128 128 / 30%);
+}
+
+.color-space__slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-space__slider > span {
+  flex: 0 0 1em;
+  text-align: center;
+}
+
+/* The track shows the colors the slider selects; the thumb is a hollow
+   bar, so the color under it shows exactly. Its width is THUMB_WIDTH in
+   color-spaces.js, which places the track's colors under its center. */
+.color-space__slider input[type="range"] {
+  width: 120px;
+  height: 10px;
+  margin: 0;
+  border-radius: 3px;
+  background: var(--track, var(--prose-hr));
+  box-shadow: inset 0 0 0 1px rgb(128 128 128 / 25%);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.color-space__slider input[type="range"]::-webkit-slider-thumb {
+  box-sizing: border-box;
+  width: 8px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 45%), inset 0 0 0 1px rgb(0 0 0 / 45%), 0 1px 3px rgb(0 0 0 / 35%);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.color-space__slider input[type="range"]::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 8px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 45%), inset 0 0 0 1px rgb(0 0 0 / 45%), 0 1px 3px rgb(0 0 0 / 35%);
+}
+
+.color-space__slider input[type="range"]::-moz-range-track {
+  background: transparent;
+}
+
+.color-space__slider input[type="range"]:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 4px;
+}
+
+.color-space__value {
+  /* Fixed: if its width followed the text, the centered sliders would move
+     under the pointer while dragging. Both OKLCH and RGB values fit. */
+  flex: 0 0 23ch;
+  width: 23ch;
+  font-family: 'Commit Mono', ui-monospace, monospace;
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+
+/* The canvas, with a lens over the selected color: a disc in the color
+   with a ring that shows on any background, faded while the shape hides the
+   color. A shape that cannot show the color gets a crossed-out red dot with
+   the reason instead. */
+.color-space__stage {
+  position: relative;
+}
+
+.color-space__lens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: var(--lens-color, transparent);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgb(0 0 0 / 45%), 0 2px 8px rgb(0 0 0 / 35%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.color-space__lens.is-placed {
+  opacity: 1;
+}
+
+.color-space__lens.is-placed.is-behind {
+  opacity: 0.35;
+}
+
+.color-space__lens.is-missing {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  background: #e5484d;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgb(0 0 0 / 35%), 0 2px 6px rgb(0 0 0 / 30%);
+}
+
+.color-space__lens.is-missing::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+  background: #fff;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.color-space__lens-label {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 65%);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+.color-space__lens.is-missing .color-space__lens-label {
+  display: block;
+}
+
+/* Markers in Pi's range: squares for the colors Pi made from the source,
+   labeled with their token, and a ring for the candidate color, labeled
+   with its hex, red when Pi cannot make it. */
+.color-space__lens.is-marker .color-space__lens-label {
+  display: block;
+  font-family: var(--mono-font);
+}
+
+.color-space__lens.is-output {
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 3px;
+}
+
+.color-space__lens.is-output.is-match {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+}
+
+.color-space__lens.is-candidate {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+}
+
+.color-space__lens.is-candidate.is-outside {
+  box-shadow: 0 0 0 2px #e5484d, 0 0 0 3px rgb(0 0 0 / 45%), 0 2px 8px rgb(0 0 0 / 35%);
+}
+
+.color-space__lens.is-candidate.is-outside .color-space__lens-label {
+  background: #b4232a;
+}
+
+.color-space__lens.is-label-left .color-space__lens-label {
+  left: auto;
+  right: calc(100% + 8px);
+}
+
+.color-space__lens.is-label-hidden .color-space__lens-label {
+  display: none;
+}
+
+/* Narrower screens: one slider per row. */
+@media (max-width: 1100px) {
+  .color-space__controls + .color-space__controls::before {
+    display: none;
+  }
+
+  .color-space__slider {
+    flex: 1 1 100%;
+  }
+
+  .color-space__slider input[type="range"] {
+    flex: 1;
+    width: auto;
+  }
+}
+
+/* Pi's lightness curves, <figure data-lightness-curves> (color-spaces.js):
+   an SVG chart, what it shows in words, the rules, a terminal with Pi's
+   colors on every surface, the background's lightness and the themes. */
+.lightness-curves {
+  position: relative;
+}
+
+.lightness-curves.is-enhanced .lightness-curves__fallback,
+.lightness-curves .color-space__help {
+  display: none;
+}
+
+.lightness-curves:not(.is-enhanced) figcaption {
+  display: none;
+}
+
+.lightness-curves__chart {
+  width: 100%;
+}
+
+.lightness-curves__chart svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  color: var(--prose-body);
+  cursor: ew-resize;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.lightness-curves.is-dragging .lightness-curves__chart svg {
+  cursor: grabbing;
+}
+
+.lightness-curves__chart text {
+  fill: var(--prose-captions);
+  font-size: 14px;
+}
+
+.lightness-curves__chart .lc-tick,
+.lightness-curves__chart .lc-note,
+.lightness-curves__chart .lc-flip-label,
+.lightness-curves__chart .lc-unreachable-label {
+  font-size: 12.5px;
+}
+
+/* Where the selected level is out of reach, faintly hatched, and where
+   the curves flip between dark and light. */
+.lightness-curves__chart .lc-hatch-line {
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 0.14;
+}
+
+.lightness-curves__chart .lc-unreachable-label {
+  fill: var(--prose-captions);
+  opacity: 0.8;
+}
+
+.lightness-curves__chart .lc-flip {
+  stroke: #d9454b;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 3;
+}
+
+.lightness-curves__chart .lc-flip-label {
+  fill: #d9454b;
+}
+
+.lightness-curves__chart .lc-grid {
+  stroke: var(--prose-hr);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.lightness-curves__chart .lc-frame {
+  fill: none;
+  stroke: var(--prose-hr);
+}
+
+.lightness-curves__chart .lc-ramp {
+  stroke: rgb(128 128 128 / 30%);
+  stroke-width: 0.5;
+}
+
+.lightness-curves__chart .lc-diagonal {
+  fill: none;
+  stroke: var(--prose-captions);
+  stroke-dasharray: 3 4;
+  stroke-width: 1;
+}
+
+.lightness-curves__chart .lc-curve {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: 0.3;
+}
+
+.lightness-curves__chart .lc-curve.is-panel {
+  opacity: 0.55;
+}
+
+.lightness-curves__chart .lc-curve.is-active {
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+.lightness-curves__chart .lc-label.is-active {
+  fill: var(--prose-body);
+  font-weight: 600;
+}
+
+.lightness-curves__chart .lc-surface {
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.lightness-curves__chart .lc-surface.is-panel {
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.6;
+}
+
+.lightness-curves__chart .lc-reflect,
+.lightness-curves__chart .lc-winner-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-dasharray: 1 3;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
+
+.lightness-curves__chart .lc-surface-label {
+  fill: var(--prose-body);
+}
+
+.lightness-curves__chart .lc-dot,
+.lightness-curves__chart .lc-mark {
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+
+.lightness-curves__chart [data-hex] {
+  cursor: pointer;
+}
+
+.lightness-curves__chart .lc-dot.is-winner {
+  stroke-width: 2.5;
+}
+
+.lightness-curves__chart .lc-result-axis {
+  stroke: var(--prose-hr);
+  stroke-width: 1;
+}
+
+.lightness-curves__chart .lc-arrow {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  opacity: 0.7;
+}
+
+.lightness-curves__chart .lc-head {
+  fill: currentColor;
+}
+
+.lightness-curves__chart .lc-mark-label {
+  fill: var(--prose-body);
+}
+
+.lightness-curves__chart .lc-mark-label.is-source {
+  fill: var(--prose-captions);
+}
+
+/* As tall as its longest text (stacked, see .color-space__captions), so
+   that dragging does not move the page. */
+.prose .lightness-curves__status {
+  max-width: 36em;
+  margin: 10px auto 0;
+  color: var(--prose-captions);
+  font-size: 0.95em;
+  line-height: 1.4285714;
+  text-align: center;
+}
+
+.prose .lightness-curves .color-space__recipe {
+  font-size: 0.85em;
+}
+
+.prose .lightness-curves .lightness-curves__rules {
+  margin: 14px 0 0;
+}
+
+.lightness-curves__rules > span {
+  align-self: center;
+}
+
+/* The terminal: one row per surface, labeled on the left. */
+.prose .lightness-curves__preview {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: stretch;
+  column-gap: 10px;
+  margin: 18px auto;
+  font-family: 'Commit Mono', ui-monospace, monospace;
+  font-size: 0.85em;
+}
+
+.lightness-curves__row-label {
+  align-self: center;
+  color: var(--prose-captions);
+  opacity: 0.6;
+  text-align: right;
+}
+
+.lightness-curves__row-label.is-active {
+  opacity: 1;
+}
+
+.lightness-curves__row {
+  display: flex;
+  gap: 1.5ch;
+  padding: 3px 1.5ch;
+  background: var(--preview-bg);
+}
+
+.lightness-curves__row:first-of-type {
+  border-radius: 4px 4px 0 0;
+}
+
+.lightness-curves__row:last-of-type {
+  border-radius: 0 0 4px 4px;
+}
+
+.lightness-curves__word {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lightness-curves__word[aria-pressed='true'] {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lightness-curves__word:focus-visible {
+  outline: 2px solid var(--prose-links);
+  outline-offset: 1px;
+}
+
+.prose .lightness-curves .lightness-curves__background {
+  margin: 0;
+}
+
+.lightness-curves__background .color-space__slider > span {
+  flex: none;
+  white-space: nowrap;
+}
+
+.lightness-curves__background .color-space__slider input[type="range"] {
+  width: 180px;
+}
+
+.lightness-curves__value {
+  width: 4ch;
+  font-family: 'Commit Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.color-space__recipe button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.prose .lightness-curves__theme-name {
+  min-height: 1.35em;
+  margin: 10px 0 0;
+  color: var(--prose-captions);
+  font-size: 0.8em;
+  text-align: center;
+}
+
+/* Phones: each surface's name above its row. */
+@media (max-width: 600px) {
+  .prose .lightness-curves__preview {
+    grid-template-columns: auto;
+  }
+
+  .lightness-curves__row-label {
+    padding: 4px 0 2px;
+    text-align: left;
+  }
+
+  .lightness-curves__row,
+  .lightness-curves__row:first-of-type,
+  .lightness-curves__row:last-of-type {
+    gap: 1ch;
+    padding: 3px 1ch;
+    border-radius: 4px;
+  }
 }

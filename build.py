@@ -222,19 +222,16 @@ def copy_math_assets(static_dir: Path) -> None:
 
 
 def copy_asciinema_player_assets(static_dir: Path) -> None:
-    """Vendor the standalone asciinema-player bundle for terminal recordings.
+    """Copy the standalone asciinema-player bundle for terminal recordings.
 
-    script.js loads it lazily, only on pages that embed a recording.
+    The bundle is a patched build kept in _vendor/asciinema-player (see its
+    README). script.js loads it lazily, only on pages that embed a recording.
     """
-    player_dir = ROOT / "node_modules" / "asciinema-player"
-    bundle_dir = player_dir / "dist" / "bundle"
-    if not (bundle_dir / "asciinema-player.min.js").is_file():
-        raise RuntimeError("asciinema-player is not installed. Run `npm ci` before building.")
+    player_dir = ROOT / "_vendor" / "asciinema-player"
     target = static_dir / "asciinema-player"
     target.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(bundle_dir / "asciinema-player.min.js", target)
-    shutil.copy2(bundle_dir / "asciinema-player.css", target)
-    shutil.copy2(player_dir / "LICENSE", target)
+    for name in ("asciinema-player.min.js", "asciinema-player.css", "LICENSE"):
+        shutil.copy2(player_dir / name, target)
 
 
 class KatexTreeprocessor(Treeprocessor):

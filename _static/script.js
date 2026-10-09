@@ -836,11 +836,15 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 // asciinema-player with a caption below it: playback pauses at every chapter,
 // shows the chapter's caption, and continues after a short countdown. The
 // player is only downloaded on pages that embed a recording.
+//
+// Figures without chapters just play. data-asciicast-loop loops playback, and
+// data-asciicast-themes adds a theme picker below the player (see ThemePicker).
 (function() {
   var PLAYER_JS = '/static/asciinema-player/asciinema-player.min.js';
   var PLAYER_CSS = '/static/asciinema-player/asciinema-player.css';
   var FONT_FAMILY = "'Commit Mono', ui-monospace, monospace";
   var CHAPTER_PAUSE_MS = 2500;
+  var PICK_FADE_MS = 300; // fade when picking a terminal theme
   var playerLoad = null;
   var castObserver = null;
 
@@ -899,6 +903,14 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     return playerLoad;
   }
 
+  function loadThemes(url) {
+    if (!url) return Promise.resolve(null);
+    return fetch(url).then(function(response) {
+      if (!response.ok) throw new Error('Failed to load ' + url);
+      return response.json();
+    });
+  }
+
   // "1:14.8" -> 74.8
   function parseTime(value) {
     return String(value || '0').split(':').reduce(function(total, part) {
@@ -914,36 +926,40 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
   function Cast(figure, list) {
     this.figure = figure;
-    this.list = list;
-    this.chapters = Array.prototype.map.call(list.children, function(item) {
+    this.chapters = list ? Array.prototype.map.call(list.children, function(item) {
       return {
         time: parseTime(item.getAttribute('data-start')),
         label: item.textContent.trim(),
         html: item.innerHTML
       };
-    });
+    }) : [];
     this.chapter = -1;
     this.timer = null;
     this.player = null;
     this.started = false;
+    this.caption = null;
 
     this.mount = node('div', 'asciicast__player');
-    this.caption = node('figcaption', 'asciicast__caption');
-    this.captionText = node('span', 'asciicast__caption-text');
-    this.countdown = node('span', 'asciicast__countdown');
-    this.countdown.setAttribute('aria-hidden', 'true');
-    this.countdown.style.setProperty('--asciicast-pause', CHAPTER_PAUSE_MS + 'ms');
-    this.caption.setAttribute('aria-live', 'polite');
-    this.caption.appendChild(this.captionText);
-    this.caption.appendChild(this.countdown);
+    figure.insertBefore(this.mount, figure.firstChild);
 
-    figure.insertBefore(this.mount, list);
-    figure.appendChild(this.caption);
+    if (this.chapters.length) {
+      this.caption = node('figcaption', 'asciicast__caption');
+      this.captionText = node('span', 'asciicast__caption-text');
+      this.countdown = node('span', 'asciicast__countdown');
+      this.countdown.setAttribute('aria-hidden', 'true');
+      this.countdown.style.setProperty('--asciicast-pause', CHAPTER_PAUSE_MS + 'ms');
+      this.caption.setAttribute('aria-live', 'polite');
+      this.caption.appendChild(this.captionText);
+      this.caption.appendChild(this.countdown);
+      figure.appendChild(this.caption);
+    }
+
     figure.classList.add('is-enhanced');
     this.setChapter(0);
   }
 
   Cast.prototype.setChapter = function(index) {
+    if (!this.chapters.length) return;
     index = Math.max(0, Math.min(index, this.chapters.length - 1));
     if (index === this.chapter) return;
     this.chapter = index;
@@ -959,6 +975,7 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
   };
 
   Cast.prototype.syncChapter = function() {
+    if (!this.chapters.length) return;
     var self = this;
     Promise.resolve(this.player.getCurrentTime()).then(function(time) {
       self.setChapter(self.chapterAt(time || 0));
@@ -992,11 +1009,14 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
       theme: 'pi',
       terminalFontFamily: FONT_FAMILY,
       preload: true,
-      markers: this.chapters.slice(1).map(function(chapter) {
-        return [chapter.time, chapter.label];
-      }),
-      pauseOnMarkers: true
+      loop: this.figure.hasAttribute('data-asciicast-loop')
     };
+    if (this.chapters.length) {
+      options.markers = this.chapters.slice(1).map(function(chapter) {
+        return [chapter.time, chapter.label];
+      });
+      options.pauseOnMarkers = true;
+    }
     if (poster) options.poster = 'npt:' + poster;
     this.player = AsciinemaPlayer.create(
       this.figure.getAttribute('data-asciicast'), this.mount, options
@@ -1021,8 +1041,260 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     if (this.started || !this.player) return;
     this.started = true;
     if (castObserver) castObserver.unobserve(this.figure);
-    if (!prefersReducedMotion()) this.continueAfterPause();
+    if (prefersReducedMotion()) return;
+    if (this.chapters.length) this.continueAfterPause();
+    else this.player.play();
   };
+
+  // Rows of terminal themes below the player. Each theme is a full palette:
+  // the terminal's foreground, background and 16 ANSI colors, followed by the
+  // colors Pi's system theme generates from them, one 256-color index per
+  // Pi color token (scripts/pi-system-themes.mts). The recording draws Pi's
+  // tokens in those indices, so switching the palette recolors it like Pi
+  // would in that terminal, without interrupting playback. Themes come in
+  // display order.
+  //
+  // The picker follows the page: on a night page it shows a dark theme, on a
+  // day page a light one, starting with data.initial and switching when the
+  // page does. It remembers the last pick for each appearance.
+  function ThemePicker(cast, data) {
+    var self = this;
+    this.cast = cast;
+    this.themes = data.themes;
+    this.tokenIndex = {};
+    data.tokens.forEach(function(token, index) {
+      self.tokenIndex[token] = data.firstTokenIndex + index;
+    });
+    this.buttons = [];
+    this.selected = -1;
+    this.chosen = {};
+    this.shown = null; // colors on screen: foreground, background, palette
+    this.frame = null; // pending fade frame
+    ['dark', 'light'].forEach(function(appearance) {
+      var name = (data.initial || {})[appearance];
+      var index = -1;
+      self.themes.forEach(function(theme, i) {
+        if (theme.appearance !== appearance) return;
+        if (index === -1 || theme.name === name) index = i;
+      });
+      self.chosen[appearance] = index;
+    });
+
+    this.el = node('div', 'asciicast__themes');
+    this.el.setAttribute('role', 'radiogroup');
+    this.el.setAttribute('aria-label', 'Terminal theme');
+    this.label = node('figcaption', 'asciicast__theme-current');
+    this.label.setAttribute('aria-hidden', 'true');
+
+    ['dark', 'light'].forEach(function(appearance) {
+      var group = node('div', 'asciicast__theme-group');
+      self.themes.forEach(function(theme, index) {
+        if (theme.appearance === appearance) group.appendChild(self.button(theme, index));
+      });
+      self.el.appendChild(group);
+    });
+
+    // Arrow keys move through all themes, as in a radio group.
+    this.el.addEventListener('keydown', function(event) {
+      var order = self.buttons.map(function(button) { return Number(button.dataset.index); });
+      var position = order.indexOf(self.selected);
+      var next = null;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (position + 1) % order.length;
+      else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (position - 1 + order.length) % order.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = order.length - 1;
+      if (next === null) return;
+      event.preventDefault();
+      self.select(order[next], PICK_FADE_MS);
+      self.buttons[next].focus();
+    });
+    this.el.addEventListener('mouseleave', function() { self.showName(self.selected); });
+    this.el.addEventListener('focusout', function() { self.showName(self.selected); });
+
+    cast.figure.appendChild(this.el);
+    cast.figure.appendChild(this.label);
+    this.followPage();
+
+    // Themes picked in the post's other figures (pi:theme, color-spaces.js),
+    // so that every picker shows the same one. Selecting one announces it
+    // as asciicast:theme, which those figures ignore for their own theme.
+    this.onTheme = function(event) {
+      if (!cast.figure.isConnected) {
+        document.body.removeEventListener('pi:theme', self.onTheme);
+        return;
+      }
+      var name = event.detail && event.detail.name;
+      var index = self.themes.map(function(theme) { return theme.name; }).indexOf(name);
+      if (index !== -1 && index !== self.selected) self.select(index, PICK_FADE_MS);
+    };
+    document.body.addEventListener('pi:theme', this.onTheme);
+
+    // The site switches appearance by toggling theme-night on <body>.
+    var observer = new MutationObserver(function() {
+      if (!cast.figure.isConnected) {
+        observer.disconnect();
+        return;
+      }
+      self.followPage();
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  ThemePicker.prototype.followPage = function() {
+    var appearance = document.body.classList.contains('theme-night') ? 'dark' : 'light';
+    var current = this.themes[this.selected];
+    if (current && current.appearance === appearance) return;
+    this.select(this.chosen[appearance], pageFadeMs());
+  };
+
+  ThemePicker.prototype.color = function(theme, token) {
+    return theme.palette[this.tokenIndex[token]];
+  };
+
+  ThemePicker.prototype.button = function(theme, index) {
+    var self = this;
+    var button = node('button', 'asciicast__theme');
+    button.type = 'button';
+    button.dataset.index = String(index);
+    button.setAttribute('role', 'radio');
+    button.setAttribute('aria-label', theme.name);
+    button.title = theme.name;
+    // A tiny terminal: Pi's accent, text and success colors on the background.
+    button.style.setProperty('--swatch-bg', theme.background);
+    var swatch = node('span', 'asciicast__swatch');
+    ['accent', 'text', 'success'].forEach(function(token) {
+      var line = node('span', 'asciicast__swatch-line');
+      line.style.background = self.color(theme, token);
+      swatch.appendChild(line);
+    });
+    button.appendChild(swatch);
+    button.addEventListener('click', function() { self.select(index, PICK_FADE_MS); });
+    button.addEventListener('mouseenter', function() { self.showName(index); });
+    button.addEventListener('focus', function() { self.showName(index); });
+    this.buttons.push(button);
+    return button;
+  };
+
+  ThemePicker.prototype.showName = function(index) {
+    var theme = this.themes[index];
+    if (theme) this.label.textContent = theme.name;
+  };
+
+  // Switches to a theme, fading the colors over fadeMs (instantly without).
+  ThemePicker.prototype.select = function(index, fadeMs) {
+    var theme = this.themes[index];
+    if (!theme) return;
+    this.selected = index;
+    this.chosen[theme.appearance] = index;
+    this.buttons.forEach(function(button) {
+      var checked = Number(button.dataset.index) === index;
+      button.setAttribute('aria-checked', checked ? 'true' : 'false');
+      button.tabIndex = checked ? 0 : -1;
+    });
+    this.showName(index);
+    this.cast.figure.dataset.colorBackground = theme.background;
+    // The ANSI colors, for visualizations that use a theme's palette slots.
+    this.cast.figure.dataset.colorPalette = theme.palette.slice(0, 16).join(' ');
+    this.cast.figure.dataset.colorTheme = theme.name;
+    this.cast.figure.dispatchEvent(new CustomEvent('asciicast:theme', { bubbles: true }));
+    var colors = [theme.foreground, theme.background].concat(theme.palette);
+    this.fadeTo(colors, prefersReducedMotion() ? 0 : fadeMs || 0);
+  };
+
+  // Fades from the colors on screen to new ones: every animation frame sets a
+  // palette mixed in OKLab, so the recording keeps playing while it recolors.
+  // A fade that starts during another continues from the colors on screen.
+  ThemePicker.prototype.fadeTo = function(colors, duration) {
+    var self = this;
+    if (this.frame) cancelAnimationFrame(this.frame);
+    this.frame = null;
+    if (!this.shown || duration <= 0) {
+      this.show(colors);
+      return;
+    }
+    var from = this.shown.map(hexToOklab);
+    var to = colors.map(hexToOklab);
+    var start = null;
+    var step = function(now) {
+      if (!self.cast.figure.isConnected) return;
+      if (start === null) start = now;
+      var t = Math.min(1, (now - start) / duration);
+      if (t >= 1) {
+        self.frame = null;
+        self.show(colors);
+        return;
+      }
+      // The page's theme easing, cubic-bezier(1/3, 0, 2/3, 1), is smoothstep.
+      var eased = t * t * (3 - 2 * t);
+      self.show(from.map(function(a, i) {
+        var b = to[i];
+        return oklabToHex([
+          a[0] + (b[0] - a[0]) * eased,
+          a[1] + (b[1] - a[1]) * eased,
+          a[2] + (b[2] - a[2]) * eased
+        ]);
+      }));
+      self.frame = requestAnimationFrame(step);
+    };
+    this.frame = requestAnimationFrame(step);
+  };
+
+  // colors: foreground, background, then the palette.
+  ThemePicker.prototype.show = function(colors) {
+    this.shown = colors;
+    this.cast.mount.style.background = colors[1];
+    this.cast.player.setTheme({
+      foreground: colors[0],
+      background: colors[1],
+      palette: colors.slice(2)
+    });
+  };
+
+  function srgbToLinear(channel) {
+    var value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+  }
+
+  function linearToSrgb(value) {
+    var srgb = value <= 0.0031308 ? value * 12.92 : 1.055 * Math.pow(value, 1 / 2.4) - 0.055;
+    return Math.round(Math.min(1, Math.max(0, srgb)) * 255);
+  }
+
+  function hexToOklab(hex) {
+    var value = parseInt(hex.slice(1), 16);
+    var r = srgbToLinear((value >> 16) & 255);
+    var g = srgbToLinear((value >> 8) & 255);
+    var b = srgbToLinear(value & 255);
+    var l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    var m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    var s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    return [
+      0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+      1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+      0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s
+    ];
+  }
+
+  function oklabToHex(lab) {
+    var l = Math.pow(lab[0] + 0.3963377774 * lab[1] + 0.2158037573 * lab[2], 3);
+    var m = Math.pow(lab[0] - 0.1055613458 * lab[1] - 0.0638541728 * lab[2], 3);
+    var s = Math.pow(lab[0] - 0.0894841775 * lab[1] - 1.2914855480 * lab[2], 3);
+    var rgb = [
+      4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+    ];
+    return '#' + rgb.map(function(channel) {
+      return (linearToSrgb(channel) | 256).toString(16).slice(1);
+    }).join('');
+  }
+
+  // How long the page takes to fade between day and night (styles.css).
+  function pageFadeMs() {
+    var value = getComputedStyle(document.body).getPropertyValue('--theme-transition-duration').trim();
+    var ms = parseFloat(value) * (/ms$/.test(value) ? 1 : 1000);
+    return isFinite(ms) ? ms : 900;
+  }
 
   function getCastObserver() {
     if (castObserver || typeof IntersectionObserver !== 'function') return castObserver;
@@ -1040,28 +1312,56 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
     document.querySelectorAll('[data-asciicast]').forEach(function(figure) {
       if (figure.dataset.asciicastInitialized) return;
       var list = figure.querySelector('.asciicast__chapters');
-      if (!list || !list.children.length) return;
+      if (list && !list.children.length) return;
       figure.dataset.asciicastInitialized = 'true';
       var cast = new Cast(figure, list);
-      loadPlayer()
-        .then(function(AsciinemaPlayer) {
+      Promise.all([loadPlayer(), loadThemes(figure.getAttribute('data-asciicast-themes'))])
+        .then(function(results) {
           if (!figure.isConnected) return;
-          cast.create(AsciinemaPlayer);
+          cast.create(results[0]);
+          // Without its palettes, a recording made for them shows wrong colors,
+          // so a failed theme load falls back like a failed player load.
+          if (results[1]) new ThemePicker(cast, results[1]);
           figure.__asciicast = cast;
+          figure.dispatchEvent(new CustomEvent('asciicast:ready', { bubbles: true }));
           var observer = getCastObserver();
           if (observer) observer.observe(figure); else cast.start();
         })
         .catch(function() {
-          // Fall back to the chapter list.
+          // Fall back to the chapter list or fallback text.
           figure.classList.remove('is-enhanced');
           cast.mount.remove();
-          cast.caption.remove();
+          if (cast.caption) cast.caption.remove();
         });
     });
   }
 
   initAsciicasts();
   document.body.addEventListener('htmx:afterSettle', initAsciicasts);
+})();
+
+// Rotatable color spaces, <figure data-color-space>, and Pi's lightness
+// curves, <figure data-lightness-curves> (color-spaces.js). The script is
+// only downloaded on pages that have one.
+(function() {
+  var loading = false;
+
+  function loadColorSpaces() {
+    if (loading || !document.querySelector('[data-color-space], [data-lightness-curves]')) return;
+    loading = true;
+    // htmx's head-support extension would drop the injected tag otherwise.
+    var script = document.createElement('script');
+    script.setAttribute('hx-preserve', 'true');
+    script.src = '/static/color-spaces.js';
+    script.onerror = function() {
+      script.remove(); // allow a retry
+      loading = false;
+    };
+    document.head.appendChild(script);
+  }
+
+  loadColorSpaces();
+  document.body.addEventListener('htmx:afterSettle', loadColorSpaces);
 })();
 
 // WebGL ocean rendering (runs once)
@@ -1879,6 +2179,38 @@ function createProgram(gl, vertexShader, fragmentShader) {
   return program;
 }
 
+// Logo fade-in animation (skip if not on home page)
+function revealPage() {
+  if (document.body.classList.contains('skip-intro')) {
+    // Non-home page: show immediately
+    document.body.classList.add('loaded');
+  } else {
+    // Home page: fade in
+    setTimeout(() => {
+      const fadeDuration = LOGO_FADE_DURATION / 1000;
+      logo.style.transition = `opacity ${fadeDuration}s ease`;
+      logo.style.opacity = `${LOGO_FADE_TARGET}`;
+      const logoLinks = document.querySelector('.logo-links');
+      if (logoLinks) {
+        logoLinks.style.transition = `opacity ${fadeDuration}s ease`;
+        logoLinks.style.opacity = `${LOGO_FADE_TARGET}`;
+      }
+      // Mark body as loaded so HTMX swaps don't restart animation
+      setTimeout(() => {
+        document.body.classList.add('loaded');
+      }, fadeDuration * 1000);
+    }, LOGO_FADE_DELAY);
+  }
+}
+
+// Without WebGL (unsupported, turned off, or blocked by the browser, as
+// Chrome does after GPU trouble) there is no ocean, but the page still has
+// to fade in.
+if (!gl) {
+  revealPage();
+  return;
+}
+
 // Ocean wave program
 const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
 let oceanFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
@@ -2375,26 +2707,6 @@ function render(time) {
 
 requestAnimationFrame(render);
 
-// Logo fade-in animation (skip if not on home page)
-if (document.body.classList.contains('skip-intro')) {
-  // Non-home page: show immediately
-  document.body.classList.add('loaded');
-} else {
-  // Home page: fade in
-  setTimeout(() => {
-    const fadeDuration = LOGO_FADE_DURATION / 1000;
-    logo.style.transition = `opacity ${fadeDuration}s ease`;
-    logo.style.opacity = `${LOGO_FADE_TARGET}`;
-    const logoLinks = document.querySelector('.logo-links');
-    if (logoLinks) {
-      logoLinks.style.transition = `opacity ${fadeDuration}s ease`;
-      logoLinks.style.opacity = `${LOGO_FADE_TARGET}`;
-    }
-    // Mark body as loaded so HTMX swaps don't restart animation
-    setTimeout(() => {
-      document.body.classList.add('loaded');
-    }, fadeDuration * 1000);
-  }, LOGO_FADE_DELAY);
-}
+revealPage();
 
 })();
