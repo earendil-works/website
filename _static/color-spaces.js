@@ -39,16 +39,33 @@
 // corners are P3's primaries, and the landscape is P3's larger gamut.
 // Elsewhere they use sRGB. OKHSL is defined on sRGB, so its cylinder always
 // shows sRGB colors, converted for a P3 canvas.
+//
+// Memory: a figure's WebGL context holds its buffers only while the figure
+// is near the viewport; further away it is released and restored on the
+// way back (the same path as a context the browser loses). Canvases render
+// at the full device pixel ratio, without multisampling from 2x on, and
+// drop resolution if frames come in too slowly. Devices likely short on
+// memory get coarser grids.
 (function() {
   if (window.__colorSpaces) return;
   window.__colorSpaces = true;
 
-  var HUE_STEPS = 288; // landscape grid; stays below 65536 vertices
-  var LIGHTNESS_STEPS = 160;
+  // Devices likely short on memory get half as fine grids, a quarter of the
+  // vertices: touch-only devices, which report no memory (iOS) or little,
+  // and any reporting at most 2 GB. Chrome reports deviceMemory, capped at 8.
+  var LOW_MEMORY = (function() {
+    var touchOnly = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    var memory = navigator.deviceMemory;
+    return memory ? memory <= 2 || (touchOnly && memory <= 4) : touchOnly;
+  })();
+  var DETAIL = LOW_MEMORY ? 0.5 : 1;
+  // Halved, these keep their halves whole: cuts step at half the grid.
+  var HUE_STEPS = 288 * DETAIL; // landscape grid; stays below 65536 vertices
+  var LIGHTNESS_STEPS = 160 * DETAIL;
   var WALL_STEPS = 12; // grid rows on vertical walls
   var HUE_DEPTH = 1; // length of the hue axis, lightness spans 1 as well
   var CHROMA_HEIGHT = 3; // height per unit of chroma
-  var SIDE_STEPS = 216; // OKHSL cylinder grid around its side
+  var SIDE_STEPS = 216 * DETAIL; // OKHSL cylinder grid around its side
   var SATURATION_STEPS = 24; // and out from its axis on the cut's faces
   var CYLINDER_RADIUS = 0.55; // its height is 1
   var WEDGE = Math.PI / 2; // the cylinder's cut, from the selected hue on
@@ -141,6 +158,15 @@
   var MAX_CHROMA = 0.37; // the picker's range, about Display P3's most
   var THUMB_WIDTH = 8; // the sliders' thumbs, in CSS pixels (prose.css)
   var SNAP_PX = 5; // how far past an edge a slider leaving a stretch holds on
+  // Canvases hold their drawing buffers only near the viewport: further than
+  // this away, their WebGL contexts are released, and restored on the way back.
+  var KEEP_MARGIN = '100% 0px';
+  // Frame rate watch: frames come in this slowly on average over a window
+  // of continuous animation, and the canvases drop to the next resolution.
+  var SLOW_FRAME_MS = 40; // under 25 fps; a 30 fps cap (low power) passes
+  var FRAME_WINDOW_MS = 2000;
+  var RESOLUTIONS = [1, 0.75, 0.5]; // of the device pixel ratio
+  var COLOR_TRANSITION_MAX_MS = 3000; // in case a transition never ends
   var instances = [];
 
   // The selected color, shared by all figures. Hue in degrees.
@@ -196,6 +222,75 @@
   function prefersReducedMotion() {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
+
+  // Rendering resolution, shared by all canvases since they share the GPU.
+  // Full device pixels unless frames come in too slowly, then lower steps,
+  // but not below one pixel per CSS pixel. Never back up: that would only
+  // oscillate.
+  var resolution = { level: 0, frames: 0, time: 0, last: null };
+
+  function pixelRatio() {
+    var device = window.devicePixelRatio || 1;
+    return Math.max(Math.min(device, 1), device * RESOLUTIONS[resolution.level]);
+  }
+
+  // A frame of continuous animation, dt after the previous one. Figures
+  // animating together report the same frame once.
+  function watchFrame(now, dt) {
+    if (resolution.last === now) return;
+    resolution.last = now;
+    resolution.frames++;
+    resolution.time += dt;
+    if (resolution.time < FRAME_WINDOW_MS) return;
+    var slow = resolution.time / resolution.frames > SLOW_FRAME_MS;
+    resolution.frames = 0;
+    resolution.time = 0;
+    if (!slow || resolution.level >= RESOLUTIONS.length - 1 || pixelRatio() <= 1) return;
+    resolution.level++;
+    instances.forEach(function(instance) { instance.draw(); });
+  }
+
+  // A pause in animation: the next window starts over.
+  function resetFrameWatch() {
+    resolution.frames = 0;
+    resolution.time = 0;
+  }
+
+  // Lines are drawn in the figure's text color. Reading it is a style
+  // lookup, so it is cached until the theme changes. The theme fades the
+  // text color (a CSS transition): while it does, figures read it every
+  // frame and keep drawing.
+  var textColor = { epoch: 0, fading: [], until: 0 };
+
+  function fadingColor() {
+    if (textColor.fading.length && performance.now() > textColor.until) textColor.fading = [];
+    return textColor.fading.length > 0;
+  }
+
+  function themeChanged() {
+    textColor.epoch++;
+    instances.forEach(function(instance) { instance.schedule(); });
+  }
+
+  function aboveFigure(element) {
+    return instances.some(function(instance) { return element.contains(instance.figure); });
+  }
+
+  new MutationObserver(themeChanged).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('transitionrun', function(event) {
+    if (event.propertyName !== 'color' || !aboveFigure(event.target)) return;
+    if (textColor.fading.indexOf(event.target) === -1) textColor.fading.push(event.target);
+    textColor.until = performance.now() + COLOR_TRANSITION_MAX_MS;
+    themeChanged();
+  });
+  ['transitionend', 'transitioncancel'].forEach(function(type) {
+    document.addEventListener(type, function(event) {
+      var index = textColor.fading.indexOf(event.target);
+      if (event.propertyName !== 'color' || index === -1) return;
+      textColor.fading.splice(index, 1);
+      themeChanged();
+    });
+  });
 
   // The sRGB transfer curve without clipping, mirrored below 0, for where a
   // color outside the gamut would be in the cube.
@@ -1640,39 +1735,30 @@
     this.canvas.setAttribute('role', 'img');
     var fallback = figure.querySelector('.color-space__fallback');
     if (fallback) this.canvas.setAttribute('aria-label', fallback.textContent.trim());
-    var gl = this.canvas.getContext('webgl', { antialias: true, premultipliedAlpha: true });
+    // Multisampling quadruples the color and depth buffers. At two device
+    // pixels per CSS pixel and more, edges are fine enough without it.
+    var gl = this.canvas.getContext('webgl', {
+      antialias: (window.devicePixelRatio || 1) < 2, premultipliedAlpha: true
+    });
     if (!gl) throw new Error('WebGL unavailable');
     this.gl = gl;
-
-    var program = gl.createProgram();
-    gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX_SHADER));
-    gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER));
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      throw new Error(gl.getProgramInfoLog(program));
-    }
-    gl.useProgram(program);
-    this.uniforms = {};
-    ['matrix', 'depthBias', 'outline', 'cutFrom', 'cutSize', 'cutWrap', 'ghost'].forEach(function(name) {
-      self.uniforms[name] = gl.getUniformLocation(program, name);
-    });
-    this.attributes = ['position', 'color', 'coords', 'keep'].map(function(name) {
-      var location = gl.getAttribLocation(program, name);
-      gl.enableVertexAttribArray(location);
-      return location;
-    });
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
-    // Lines run along surfaces, so push the surfaces back a little.
-    gl.polygonOffset(1, 1);
-    gl.clearColor(0, 0, 0, 0);
+    this.loseContext = gl.getExtension('WEBGL_lose_context');
 
     var gamut = pickGamut(gl);
     figure.setAttribute('data-gamut', gamut.canvas);
+    this.canvasSpace = gamut.canvas; // set again on restore
     this.shape = SHAPES[kind](gamut, figure);
-    this.surfaces = this.upload(this.shape.mesh);
     this.cut = null; // set on the first draw
     this.cutChanged = true;
+    this.lineColor = null; // [r, g, b, a], cached per textColor.epoch
+    this.lineEpoch = -1;
+    // The context: ready to draw (set up), wanted (near the viewport; null
+    // until known), released by us to free its buffers, or between losing
+    // and restoring.
+    this.ready = false;
+    this.wanted = typeof IntersectionObserver === 'function' ? null : true;
+    this.released = false;
+    this.pending = false;
 
     this.yaw = this.shape.yaw;
     this.pitch = this.shape.pitch;
@@ -1698,8 +1784,6 @@
     this.lens.appendChild(this.lensLabel);
     this.stage.appendChild(this.lens);
     this.markerLenses = []; // for the cut's markers, which Pi's range has
-    this.probe = { vertices: gl.createBuffer(), data: new Float32Array(STRIDE) };
-    this.probe.data.set([0, 0, 0, 0, 0, 0].concat(NOT_CUT, [1]));
     figure.insertBefore(this.stage, figure.querySelector('.color-space__fallback'));
     this.pair = figure.closest('[data-color-space-pair]');
     this.picker = null;
@@ -1760,6 +1844,23 @@
     this.canvas.addEventListener('pointerup', function(event) { self.pointerUp(event); });
     this.canvas.addEventListener('pointercancel', function(event) { self.pointerUp(event); });
     this.canvas.addEventListener('keydown', function(event) { self.keyDown(event); });
+    // Lost by us, far from the viewport, or by the browser, which restores
+    // it on its own once allowed to (preventDefault). Either way, every
+    // resource is created again on restore.
+    this.canvas.addEventListener('webglcontextlost', function(event) {
+      event.preventDefault();
+      self.ready = false;
+      self.pending = false;
+      // The buffers went with the context; restoring makes new ones.
+      self.surfaces = self.probe = null;
+      if (self.cut) self.cut.buffers = null;
+      self.sync();
+    });
+    this.canvas.addEventListener('webglcontextrestored', function() {
+      self.released = false;
+      self.pending = false;
+      self.sync();
+    });
 
     if (typeof ResizeObserver === 'function') {
       this.resizeObserver = new ResizeObserver(function() { self.draw(); });
@@ -1771,21 +1872,100 @@
         self.schedule();
       });
       this.visibilityObserver.observe(this.canvas);
+      this.nearObserver = new IntersectionObserver(function(entries) {
+        self.wanted = entries[entries.length - 1].isIntersecting;
+        self.sync();
+      }, { rootMargin: KEEP_MARGIN });
+      this.nearObserver.observe(this.canvas);
     } else {
       this.visible = true;
     }
-    this.draw();
-    this.schedule();
+    this.sync();
   }
 
-  // Uploads a built mesh into buffers, or into existing ones.
-  ColorSpace.prototype.upload = function(mesh, buffers) {
+  // Creates everything the context holds: the program and its state, the
+  // surfaces' buffers, and the lens's probe. The cut's buffers follow on
+  // the next draw. Runs once the figure comes near the viewport, and again
+  // whenever the context is restored.
+  ColorSpace.prototype.setup = function() {
+    var self = this;
     var gl = this.gl;
+    var program = gl.createProgram();
+    gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX_SHADER));
+    gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(gl.getProgramInfoLog(program));
+    }
+    gl.useProgram(program);
+    this.uniforms = {};
+    ['matrix', 'depthBias', 'outline', 'cutFrom', 'cutSize', 'cutWrap', 'ghost'].forEach(function(name) {
+      self.uniforms[name] = gl.getUniformLocation(program, name);
+    });
+    this.attributes = ['position', 'color', 'coords', 'keep'].map(function(name) {
+      var location = gl.getAttribLocation(program, name);
+      gl.enableVertexAttribArray(location);
+      return location;
+    });
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    // Lines run along surfaces, so push the surfaces back a little.
+    gl.polygonOffset(1, 1);
+    gl.clearColor(0, 0, 0, 0);
+    if (this.canvasSpace !== 'srgb') gl.drawingBufferColorSpace = this.canvasSpace;
+    // The surfaces never change. Their vertices stay in memory, compact,
+    // for restoring; building them again would be slower.
+    this.surfaces = this.upload(this.shape.mesh, null, gl.STATIC_DRAW);
+    this.probe = { vertices: gl.createBuffer(), data: new Float32Array(STRIDE) };
+    this.probe.data.set([0, 0, 0, 0, 0, 0].concat(NOT_CUT, [1]));
+    this.cutChanged = true;
+    this.width = this.height = 0; // the drawing buffer is new
+    this.ready = true;
+  };
+
+  // Moves the context toward what is wanted: set up near the viewport,
+  // released far from it, and restored on the way back. One change at a
+  // time; the context events call back when one is done. A context the
+  // browser lost comes back on its own.
+  ColorSpace.prototype.sync = function() {
+    var lose = this.loseContext;
+    if (this.pending || !this.figure.isConnected) return;
+    var lost = this.gl.isContextLost();
+    if (this.wanted && !this.ready) {
+      if (!lost) {
+        try {
+          this.setup();
+        } catch (error) {
+          if (window.console) console.warn('Color space figure unavailable:', error);
+          return;
+        }
+        this.draw();
+        this.schedule();
+      } else if (this.released && lose) {
+        this.pending = true;
+        lose.restoreContext();
+      }
+    } else if (this.wanted === false && !lost && lose) {
+      if (this.frame !== null) cancelAnimationFrame(this.frame);
+      if (this.probeTimer) clearTimeout(this.probeTimer);
+      this.frame = this.probeTimer = null;
+      this.last = null;
+      this.ready = false;
+      this.released = true;
+      this.pending = true;
+      lose.loseContext();
+    }
+  };
+
+  // Uploads a built mesh into buffers, or into existing ones.
+  ColorSpace.prototype.upload = function(mesh, buffers, usage) {
+    var gl = this.gl;
+    usage = usage || gl.DYNAMIC_DRAW;
     buffers = buffers || { vertices: gl.createBuffer(), indices: gl.createBuffer() };
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.vertices);
-    gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, usage);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, usage);
     buffers.triangles = mesh.triangles;
     buffers.lines = mesh.lines;
     return buffers;
@@ -1993,7 +2173,7 @@
 
   ColorSpace.prototype.animating = function() {
     return this.drag || this.target !== null || Math.abs(this.velocity) > 1e-5 ||
-      this.idle(performance.now());
+      this.idle(performance.now()) || fadingColor();
   };
 
   // Turns to a yaw the short way round, as one solid object: the cut has
@@ -2015,7 +2195,7 @@
 
   ColorSpace.prototype.schedule = function() {
     var self = this;
-    if (this.frame !== null || !this.visible) return;
+    if (this.frame !== null || !this.visible || !this.ready) return;
     this.frame = requestAnimationFrame(function(now) { self.tick(now); });
   };
 
@@ -2028,6 +2208,7 @@
       this.destroy();
       return;
     }
+    if (this.last !== null && moving) watchFrame(now, now - this.last);
     var dt = this.last === null ? 0 : Math.min(now - this.last, 100);
     this.last = now;
     if (!this.drag) {
@@ -2049,13 +2230,29 @@
     }
     this.draw();
     if (moving) this.syncView();
-    if (this.animating()) this.schedule();
-    else this.last = null;
+    if (this.animating()) {
+      this.schedule();
+    } else {
+      this.last = null;
+      resetFrameWatch();
+    }
+  };
+
+  // The figure's text color for lines, as [r, g, b, a] in 0-255 and 0-1.
+  ColorSpace.prototype.textColor = function() {
+    if (this.lineEpoch !== textColor.epoch || fadingColor()) {
+      var rgba = (getComputedStyle(this.figure).color.match(/[\d.]+/g) || [128, 128, 128]).map(Number);
+      if (rgba.length < 4) rgba[3] = 1;
+      this.lineColor = rgba;
+      this.lineEpoch = textColor.epoch;
+    }
+    return this.lineColor;
   };
 
   ColorSpace.prototype.draw = function() {
+    if (!this.ready) return;
     var gl = this.gl;
-    var ratio = window.devicePixelRatio || 1;
+    var ratio = pixelRatio();
     var width = Math.round(this.canvas.clientWidth * ratio);
     var height = Math.round(this.canvas.clientHeight * ratio);
     if (!width || !height) return;
@@ -2102,10 +2299,10 @@
       gl.depthMask(true);
     }
     // Lines in the figure's text color, so they follow day and night.
-    var rgba = (getComputedStyle(this.figure).color.match(/[\d.]+/g) || [128, 128, 128]).map(Number);
+    var rgba = this.textColor();
     parts.forEach(function(buffers, index) {
       if (!buffers.lines) return;
-      var alpha = (index ? CUT_LINE_ALPHA : OUTLINE_ALPHA) * (rgba.length > 3 ? rgba[3] : 1);
+      var alpha = (index ? CUT_LINE_ALPHA : OUTLINE_ALPHA) * rgba[3];
       gl.uniform4f(u.outline, rgba[0] / 255 * alpha, rgba[1] / 255 * alpha, rgba[2] / 255 * alpha, alpha);
       self.bind(buffers);
       gl.drawElements(gl.LINES, buffers.lines, gl.UNSIGNED_SHORT, buffers.triangles * 2);
@@ -2193,9 +2390,10 @@
     this.frame = null;
     if (this.resizeObserver) this.resizeObserver.disconnect();
     if (this.visibilityObserver) this.visibilityObserver.disconnect();
+    if (this.nearObserver) this.nearObserver.disconnect();
     // Browsers cap live WebGL contexts, so free ours right away.
-    var lose = this.gl.getExtension('WEBGL_lose_context');
-    if (lose) lose.loseContext();
+    this.ready = false;
+    if (this.loseContext && !this.gl.isContextLost()) this.loseContext.loseContext();
     if (this.shape.destroy) this.shape.destroy();
     if (this.panel) this.panel.remove();
     if (this.below) this.below.remove();
