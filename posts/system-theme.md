@@ -9,13 +9,17 @@ date: Fri, 1 Jan 2100 00:00:00 +0000
 subject: There are many themes, but this one is yours
 ---
 
-At Earendil, we want to build products that respect the choices of the people using them. So when I was refreshing Pi's themes, I also wanted to work on a theme that adapts to the terminal it runs in. Most people who spend their day in a terminal have picked a theme for it at some point. So why not make Pi look like that theme?
+At Earendil, we want to build products that respect the choices of the people using them. So when we were refreshing Pi's themes, we wanted a theme that adapts to the terminal it runs in. Most people who spend their day in a terminal have picked their own themes for it. Why not make Pi reflect their choices?
 
-The result is the new system theme, which is now Pi's default. It asks your terminal for its colors and builds Pi's theme from them. In this post I want to share how it works.
+The result is the new system theme, which is now Pi's default. It asks your terminal for its colors and builds Pi's theme from them. In this post we share how it works.
 
 <figure class="post-figure asciicast" data-asciicast="/static/posts/system-theme/demo.cast.json" data-asciicast-themes="/static/posts/system-theme/themes.json" data-asciicast-poster="0:53.2" data-asciicast-loop data-color-eyedropper>
 <p class="asciicast__fallback">A Pi session in the terminal. With JavaScript enabled, it plays here and can be shown in 24 terminal themes.</p>
 </figure>
+
+## Contrast Survey
+
+Before we get into things, we want to let you know that we are working on our own contrast algorithm, which we will open source. We would love for you to help provide us data that train that algorithm by completing a quick survey here.
 
 ## Can you trust the ANSI palette?
 
@@ -23,9 +27,9 @@ Every terminal theme defines 16 ANSI colors, and the simplest way to match your 
 
 The eight bright variants aren't part of the standard. Quite a few terminals rendered bold text in a brighter color, which effectively gave them eight more colors. The codes to select bright colors directly were added later by IBM's aixterm and adopted by other terminals like xterm.
 
-Since the bright colors started out as bold text, I would assume that "bright" was meant to stand out more. And since early terminals mostly showed light text on a dark screen, brighter also meant more contrast. I looked at the more than 460 themes that come with Ghostty, and today this only sort of holds. In dark themes, the bright variant has more contrast in about 60% of cases. In light themes, it's only about a quarter, since bright usually still means lighter, which on a light background means less contrast. Individual themes don't agree either: in Gruvbox Dark, bright blue has more contrast than blue, in Catppuccin Mocha it has less, and in Tokyo Night they are the same color. The contrast against the background also varies a lot. I measured it with the WCAG 2 contrast ratio, which compares the luminance of two colors and ranges from 1:1 (no contrast) to 21:1 (black on white). Normal text should reach at least 4.5:1, and large text and UI elements 3:1. Bright black, which a lot of software uses for secondary text, doesn't even reach 3:1 in most dark themes.
+Since the bright colors started out as bold text, we would assume that "bright" was meant to stand out more. And since early terminals mostly showed light text on a dark screen, brighter also meant more contrast. We looked at the more than 460 themes that come with Ghostty, and today this only sort of holds. In dark themes, the bright variant has more contrast in about 60% of cases. In light themes, it's only about a quarter, since bright usually still means lighter, which on a light background means less contrast. Individual themes don't agree either: in Gruvbox Dark, bright blue has more contrast than blue, in Catppuccin Mocha it has less, and in Tokyo Night they are the same color. The contrast against the background also varies a lot. We measured it with the WCAG 2 contrast ratio, which compares the luminance of two colors and ranges from 1:1 (no contrast) to 21:1 (black on white). Normal text should reach at least 4.5:1, and large text and UI elements 3:1. Bright black, which a lot of software uses for secondary text, doesn't even reach 3:1 in most dark themes.
 
-This isn't a flaw of the themes. The palette was made to color the output of simple applications, like a red error or a green success message, and many themes are designed to look good rather than to meet contrast minimums. But it makes it hard to build an accessible, more complex TUI on top of it. Pi has around 60 color roles, from body text and dim text to panels behind tool calls and red text on a red error panel. I wanted to use your colors and still guarantee that all of them stay readable.
+This isn't a flaw of the themes. The palette was made to color the output of simple applications, like a red error or a green success message, and many themes are designed to look good rather than to meet contrast minimums. But it makes it hard to build an accessible, more complex TUI on top of it. Pi has around 60 color roles, from body text and dim text to panels behind tool calls and red text on a red error panel. We wanted to use your colors and still guarantee that all of them stay readable.
 
 ## Contrast is all you need
 
@@ -49,7 +53,7 @@ With a lightness axis, the idea behind the system theme is simple: Pi decides th
 
 ## Lightness
 
-To figure out what lightness each color needs, I wrote down every place in the UI where two colors meet. Every panel needs enough contrast with the terminal background to read as a separate area, but not so much that it distracts. Every foreground color needs enough contrast on every background it can appear on. An error message, for example, has to be readable on the background, on the selected row and on all three tool panels. In code, this is a list of rules:
+To figure out what lightness each color needs, we wrote down every place in the UI where two colors meet. Every panel needs enough contrast with the terminal background to read as a separate area, but not so much that it distracts. Every foreground color needs enough contrast on every background it can appear on. An error message, for example, has to be readable on the background, on the selected row and on all three tool panels. In code, this is a list of rules:
 
 ```ts
 const COLORS = ["accent", "success", "error", "warning"];
@@ -60,11 +64,11 @@ const SURFACES = ["background", "selectedBg", ...TOOL_PANELS];
 { token: "dim", on: [...SURFACES, "customMessageBg"], level: "subtle" },
 ```
 
-A contrast algorithm normally takes two colors and returns the contrast between them. Here I need the reverse: I know the background and how much contrast I want, and need the color. I have reversed contrast algorithms before, and you can find implementations for both WCAG and perceptual contrast on GitHub. With a reversed algorithm, calculating the theme becomes a loop: starting with the panels, Pi calculates the lightness each color needs for each of its rules and takes the strictest one.
+A contrast algorithm normally takes two colors and returns the contrast between them. Here we need the reverse: we know the background and how much contrast we want, and need the color. I have reversed contrast algorithms before, and you can find implementations for both WCAG and perceptual contrast on GitHub. With a reversed algorithm, calculating the theme becomes a loop: starting with the panels, Pi calculates the lightness each color needs for each of its rules and takes the strictest one.
 
 ## The Algorithm
 
-My first prototype did exactly that, together with a review app in which I tuned the contrast minimums. The app can render Pi with any of the themes that come with Ghostty, so I could check a sample of very different themes to make sure the system holds up beyond the default one.
+Our first prototype did exactly that, together with a review app in which we tuned the contrast minimums. The app can render Pi with any of the themes that come with Ghostty, so we could check a sample of very different themes to make sure the system holds up beyond the default one.
 
 That prototype used a well known perceptual contrast algorithm and that reference implementation. We then used that against a large number of ghostty themes and ensured that it looked good against all the themes. We then did not want to ship that algorithm itself. We tried to use simpler measures but were unable to approximate the results. In the end we had a coding agent do the fitting. For each contrast level in the reference the agent ran the original algorithm on every gray background from white to black and recorded the lightness and fitted a polynomial to the results. It settled on a fifth degree polynomial which was found to stay close enough to the reference lightness. Pi now only ships with those coefficients.
 
