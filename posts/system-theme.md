@@ -3,7 +3,7 @@ title: There are many themes, but this one is yours
 description: Pi's new system theme asks your terminal for its colors and builds Pi's theme from them. How it works.
 template: updates
 aria_label: Earendil posts
-from: Earendil <rfc@earendil.com>
+from: Maximilian Blazek <max@earendil.com>
 to: You
 date: Fri, 1 Jan 2100 00:00:00 +0000
 subject: There are many themes, but this one is yours
@@ -17,9 +17,9 @@ The result is the new system theme, which is now Pi's default. It asks your term
 <p class="asciicast__fallback">A Pi session in the terminal. With JavaScript enabled, it plays here and can be shown in 24 terminal themes.</p>
 </figure>
 
-## Contrast Survey
+Before you read the rest of the post, we want to spoil something: it's all about contrast.  Picking the colors in the terminal UI is a question of taste that the user has already answered.  From there, all other decisions come down to one question: how much does a color stand out from the background it's on?  If we get it wrong, we create a bad experience for the user.
 
-Before we get into things, we want to let you know that we are working on our own contrast algorithm, which we will open source. We would love for you to help provide us data that train that algorithm by completing a quick survey here.
+But the catch is that contrast is a matter of perception and not something we can trivially measure.  Two people can look at the same pair of colors and disagree about whether it's readable.  We built a small [interactive survey you can take](https://contrastsurvey.earendil.com/) to show you how you perceive that contrast, and how it scores against contrast algorithms.  You'll find details about that survey at the end of the post.
 
 ## Can you trust the ANSI palette?
 
@@ -113,3 +113,11 @@ The two views below separate the color space from what Pi does inside it. OKHSL'
 Pi asks the terminal for its foreground, background and ANSI colors on startup, and rebuilds the theme when the terminal switches between light and dark. If a terminal only reports its background, Pi uses its own hues. If it reports nothing, Pi falls back to the ANSI colors and lets the terminal draw them. The generated colors keep the hues of your terminal, but their lightness is adjusted to a similar contrast. Gruvbox's dark red becomes a lot lighter, Catppuccin Latte's red a little darker, and Nord's colors barely move.
 
 If you haven't picked a theme, you are already using the system theme. Otherwise, you can switch to it in /settings under Theme. If your terminal theme looks off in Pi, please open an issue with the name of the theme.
+
+## The survey
+
+All numbers in this post that relate to contrast are estimates of how the average person sees contrast, as determined by existing contrast perception algorithms.  But there is no open data set that really tells us the story.  We are working on our own open source contrast algorithm, and for that we would love to see how real people perceive contrast on real screens.
+
+The survey takes about 3 minutes to complete, and at the end we'll show you how your answers compare to the different algorithms and to others who took the survey.
+
+We would love for you to take it.  You can find it at [contrastsurvey.earendil.com](https://contrastsurvey.earendil.com/), and if you participate in it, we'll use your answers to train a contrast algorithm.
