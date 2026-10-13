@@ -804,9 +804,9 @@ read the
 the over thirty
 [examples](https://github.com/earendil-works/pi/tree/main/packages/durable/test/examples),
 the [small coding agent on Pi
-Durable](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/src/experimental/durable),
+Durable](https://github.com/earendil-works/pi/tree/v1.0.0/packages/coding-agent/src/experimental/durable),
 or this beautiful [vacation planning
-agent](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/src/experimental/vacation),
+agent](https://github.com/earendil-works/pi/tree/v1.0.0/packages/coding-agent/src/experimental/vacation),
 and get building.
 
 The vacation planner is about 1,300 lines of TypeScript, most of them the TUI.
@@ -829,6 +829,7 @@ components from the Pi coding agent.
 To run both demos from a Pi checkout:
 
 ```bash
+git checkout v1.0.0
 npm install && npm run build
 node packages/coding-agent/src/experimental/durable/main.ts
 node packages/coding-agent/src/experimental/vacation/main.ts
