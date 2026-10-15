@@ -11,7 +11,7 @@ subject: Pi Durable on Cloudflare
 
 Many AI agents respond to user requests or other external events, do their work and then sit idle for long periods. Keeping a machine running around the clock wastes compute and quickly gets expensive. With Cloudflare Durable Objects we have an alternative, providing a stateful object that shuts down when idle and starts up again when a request, WebSocket message, or alarm arrives.
 
-Pi Durable is a harness designed for long-running agents. Read the [announcement](http://earendil.com/posts/pi-durable/) explaining its concepts and storage model in detail. In this post we will build a chat agent that stores every session in its own Durable Object, manages multiple conversations per session, survives hibernation, wakes up for scheduled work, and uses a subagent to search across conversations.
+Pi Durable is a harness designed for long-running agents. Read the [announcement](/posts/pi-durable/) explaining its concepts and storage model in detail. In this post we will build a chat agent that stores every session in its own Durable Object, manages multiple conversations per session, survives hibernation, wakes up for scheduled work, and uses a subagent to search across conversations.
 
 We’ll run with 90s vibes for the interface but make it multiplayer because it’s 2026: multiple participants connected to the same chat session.
 
@@ -348,7 +348,7 @@ This example is deliberately small, but it shows the key capabilities of Pi Dura
 Start building your agents on Pi Durable. We’d love to hear what you think and how you use it.
 
 - [Sample repository](https://github.com/earendil-works/pi-durable-cloudflare)  
-- [Introducing Pi Durable](https://earendil.com/posts/pi-durable/)  
+- [Introducing Pi Durable](/posts/pi-durable/)  
 - [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/)  
 - [Durable Object alarms](https://developers.cloudflare.com/durable-objects/api/alarms/)  
 - [WebSocket hibernation](https://developers.cloudflare.com/durable-objects/best-practices/websockets/)
