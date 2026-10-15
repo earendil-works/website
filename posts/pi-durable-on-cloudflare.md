@@ -15,7 +15,14 @@ Pi Durable is a harness designed for long-running agents. Read the [announcement
 
 We’ll run with 90s vibes for the interface but make it multiplayer because it’s 2026: multiple participants connected to the same chat session.
 
-\[TBD: Add a short demo GIF showing two participants, two conversations, a search subagent, and a scheduled instruction waking the session.\]
+<figure class="post-figure post-video">
+<video controls muted playsinline preload="metadata" width="1520" height="988" poster="/static/posts/pi-durable-on-cloudflare/multiplayer-poster.webp" aria-describedby="multiplayer-demo-caption" style="display:block;width:100%;max-width:100%;height:auto;margin-inline:auto">
+<source src="/static/posts/pi-durable-on-cloudflare/multiplayer.mp4" type="video/mp4">
+<source src="/static/posts/pi-durable-on-cloudflare/multiplayer.webm" type="video/webm">
+<a href="/static/posts/pi-durable-on-cloudflare/multiplayer.mp4">Download the multiplayer demonstration.</a>
+</video>
+<figcaption id="multiplayer-demo-caption">Multiplayer chat agent built with Pi Durable. Both conversation events and application-defined presence updates share the same WebSockets.</figcaption>
+</figure>
 
 ## One Pi session per Durable Object
 
@@ -112,6 +119,15 @@ This is the minimum integration of the harness. The full implementation also str
 
 The session is the durable boundary, but it is not one giant transcript. Participants can create independent conversations or fork a conversation from a committed user or assistant entry.
 
+<figure class="post-figure post-video">
+<video controls muted playsinline preload="metadata" width="1520" height="1282" poster="/static/posts/pi-durable-on-cloudflare/fork-poster.webp" aria-describedby="fork-demo-caption" style="display:block;width:100%;max-width:100%;height:auto;margin-inline:auto;border-radius:2.6% / 3.1%">
+<source src="/static/posts/pi-durable-on-cloudflare/fork.mp4" type="video/mp4">
+<source src="/static/posts/pi-durable-on-cloudflare/fork.webm" type="video/webm">
+<a href="/static/posts/pi-durable-on-cloudflare/fork.mp4">Download the conversation forking demonstration.</a>
+</video>
+<figcaption id="fork-demo-caption">A session can contain independent conversations and forks that share history up to a selected message.</figcaption>
+</figure>
+
 If the connection drops before the server replies, the client resends the command with the same request ID. To avoid creating a second conversation, the server stores a receipt under that request ID in the same commit that creates the conversation:
 
 ```ts
@@ -191,6 +207,15 @@ After restoring the live views, the session inspects the persisted task set. Fut
 
 This agent is given a `schedule` tool for it to act later, for example to check the weather after a couple of minutes. Behind the scenes, this is turned into a durable Pi task that sleeps until its deadline.
 
+<figure class="post-figure post-video">
+<video controls muted playsinline preload="metadata" width="1520" height="1284" poster="/static/posts/pi-durable-on-cloudflare/schedule-poster.webp" aria-describedby="schedule-demo-caption" style="display:block;width:100%;max-width:100%;height:auto;margin-inline:auto;border-radius:2.6% / 3.1%">
+<source src="/static/posts/pi-durable-on-cloudflare/schedule.mp4" type="video/mp4">
+<source src="/static/posts/pi-durable-on-cloudflare/schedule.webm" type="video/webm">
+<a href="/static/posts/pi-durable-on-cloudflare/schedule.mp4">Download the scheduled task demonstration.</a>
+</video>
+<figcaption id="schedule-demo-caption">A scheduled instruction is persisted and later resumed through the Durable Object alarm.</figcaption>
+</figure>
+
 Pi can track any number of deadlines, but a Durable Object has only one alarm. A newly scheduled task brings the alarm forward if its deadline comes first. Each time the object wakes, it rebuilds the alarm from Pi's tasks. Work still in progress gets a short recovery alarm, so an evicted object comes back to finish it:
 
 ```ts
@@ -243,6 +268,15 @@ Child conversation
     ▼
 Final answer returned to parent
 ```
+
+<figure class="post-figure post-video">
+<video controls muted playsinline preload="metadata" width="1520" height="1284" poster="/static/posts/pi-durable-on-cloudflare/search-poster.webp" aria-describedby="search-demo-caption" style="display:block;width:100%;max-width:100%;height:auto;margin-inline:auto;border-radius:2.6% / 3.1%">
+<source src="/static/posts/pi-durable-on-cloudflare/search.mp4" type="video/mp4">
+<source src="/static/posts/pi-durable-on-cloudflare/search.webm" type="video/webm">
+<a href="/static/posts/pi-durable-on-cloudflare/search.mp4">Download the conversation search demonstration.</a>
+</video>
+<figcaption id="search-demo-caption">A subagent gets its own conversation and searches across all other conversations within the session.</figcaption>
+</figure>
 
 A subagent is an ordinary Pi conversation owned by the tool task that created it. The tool creates or reuses that conversation, restricts it to the search extension, submits the question, and waits for its answer. The tool is marked as replay-safe, so if the Durable Object is evicted mid-call, Pi reruns it on the next start instead of reporting it as interrupted:
 
