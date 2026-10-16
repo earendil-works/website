@@ -905,6 +905,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         # Revalidate every asset so live reloads also pick up @import-ed CSS.
         if self.path != "/sse":
             self.send_header("Cache-Control", "no-cache")
+            self.send_header("Accept-Ranges", "bytes")
         super().end_headers()
 
     def do_GET(self):
@@ -957,7 +958,8 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         # Check if this looks like an HTML request
         path = self.path.split('?')[0]
         if not (path.endswith('.html') or path.endswith('/') or path == '/' or '.' not in path.split('/')[-1]):
-            super().do_GET()
+            if not self.handle_range_request():
+                super().do_GET()
             return
         
         # For HTML requests, we need to intercept the response
@@ -990,6 +992,60 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             self.wfile.write(encoded)
         except Exception:
             super().do_GET()
+
+    def handle_range_request(self) -> bool:
+        """Serve one byte range for media seeking in preview browsers."""
+        range_header = self.headers.get("Range")
+        if not range_header:
+            return False
+
+        match = re.fullmatch(r"bytes=(\d*)-(\d*)", range_header.strip())
+        if not match or (not match.group(1) and not match.group(2)):
+            return False
+
+        fs_path = self.translate_path(self.path)
+        if not os.path.isfile(fs_path):
+            return False
+
+        size = os.path.getsize(fs_path)
+        start_text, end_text = match.groups()
+        if start_text:
+            start = int(start_text)
+            end = int(end_text) if end_text else size - 1
+        else:
+            suffix_length = int(end_text)
+            if suffix_length == 0:
+                self.send_error(416, "Requested Range Not Satisfiable")
+                return True
+            start = max(0, size - suffix_length)
+            end = size - 1
+
+        if start >= size or start > end:
+            self.send_response(416)
+            self.send_header("Content-Range", f"bytes */{size}")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return True
+
+        end = min(end, size - 1)
+        length = end - start + 1
+        self.send_response(206)
+        self.send_header("Content-Type", self.guess_type(fs_path))
+        self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.send_header("Content-Length", str(length))
+        self.send_header("Last-Modified", self.date_time_string(os.path.getmtime(fs_path)))
+        self.end_headers()
+
+        with open(fs_path, "rb") as source:
+            source.seek(start)
+            remaining = length
+            while remaining:
+                chunk = source.read(min(64 * 1024, remaining))
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+                remaining -= len(chunk)
+        return True
 
     def log_message(self, format, *args):
         pass
