@@ -119,7 +119,7 @@ This is the minimum integration of the harness. The full implementation also str
 
 ## Run multiple conversations in one shared session
 
-The session is the durable boundary, but it is not one giant transcript. Chat participants can create independent conversations or fork them from a committed user or assistant entry.
+The session is the durable boundary, but it is not one giant transcript. Chat participants can create independent conversations within the same session, or fork them from a committed user or assistant entry.
 
 <figure class="post-figure post-video">
 <video controls muted playsinline preload="metadata" width="1520" height="1282" poster="/static/posts/pi-durable-on-cloudflare/fork-poster.webp" aria-describedby="fork-demo-caption" style="display:block;width:100%;max-width:100%;height:auto;margin-inline:auto;border-radius:2.6% / 3.1%">
@@ -348,9 +348,9 @@ return {
 };
 ```
 
-Ownership gives the child a durable identity. If the tool is interrupted and replayed, it finds the conversation created by the original task instead of creating another one. The child submission uses the task ID as its request ID for the same reason: a retry reacquires the existing submission.
+Ownership gives the child a durable identity. If the tool is interrupted and replayed, it finds the conversation created by the original task and continues.
 
-The `search_conversations` tool in this example uses a deliberately simple substring search. Raw matches and intermediate tool calls remain isolated in the subagent conversation. The parent conversation receives only the final answer.
+The `search_conversations` tool, the only tool given to the subagent, uses a deliberately simple substring search in this sample implementation. Raw matches and intermediate tool calls remain isolated in the subagent conversation. The parent conversation receives only the final answer.
 
 ## Run locally
 
