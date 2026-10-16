@@ -5,7 +5,7 @@ template: updates
 aria_label: Earendil posts
 from: Earendil Engineering <rfc@earendil.com>
 to: You
-date: Thu, 15 Oct 2026 17:45:00 +0100
+date: Thu, 16 Oct 2026 13:45:00 +0100
 subject: Pi Durable on Cloudflare
 ---
 
@@ -47,13 +47,13 @@ The Worker creates a session ID and returns a shareable URL that clients connect
 
 ## Persist Pi session data in Durable Object storage
 
-Pi Durable makes no assumption about where sessions are stored. You can bring your own storage backend if the built-in memory, JSONL or SQLite support is not exactly what you need. The SQLite implementation defines a runtime-neutral, asynchronous database interface and includes an adapter for Node.js using `node:sqlite`, as well as an adapter for Cloudflare Durable Objects using the synchronous storage `SqlStorage` API through `ctx.storage.sql`.
+Pi Durable makes no assumption about where sessions are stored. You can bring your own storage backend if the built-in memory, JSONL or SQLite support is not exactly what you need. The SQLite implementation defines a runtime-neutral, asynchronous database interface and includes an adapter for Node.js, as well as an adapter for Cloudflare Durable Objects using the synchronous storage `SqlStorage` API through `ctx.storage.sql`.
 
 ```ts
 await openDurableObjectSqliteStorage(ctx.storage)
 ```
 
-If you bring your own SQLite adapter or a different storage backend, use Pi Durable’s conformance suite to check that it behaves correctly. It works with any Vitest- or Jest-compatible test runner. For a Durable Object, use it with the [Cloudflare Workers Vitest integration](https://developers.cloudflare.com/workers/testing/vitest-integration/):
+If your requires rolling your own SQLite adapter or a different storage backend, use Pi Durable’s conformance suite to check that it behaves correctly. It works with any Vitest- or Jest-compatible test runner. For a Durable Object, use it with the [Cloudflare Workers Vitest integration](https://developers.cloudflare.com/workers/testing/vitest-integration/):
 
 ```ts
 registerStorageConformance(
@@ -70,7 +70,7 @@ registerStorageConformance(
 
 ## Open Pi when the Durable Object starts
 
-The `Session` Durable Object uses the WebSocket Hibernation API. Cloudflare runs the constructor every time the object starts: when it gets first created, and again after hibernation or eviction when a request, alarm, or WebSocket message arrives. All events are held back until the initialization is complete.
+The harness gets initialized with the `Session` Durable Object. Cloudflare runs the constructor every time the object starts: when it gets first created, and again after hibernation or eviction when a request, alarm, or WebSocket message arrives. All events are held back until the initialization is complete.
 
 ```ts
 export class Session extends DurableObject<Env> {
@@ -117,7 +117,7 @@ This is the minimum integration of the harness. The full implementation also str
 
 ## Run multiple conversations in one shared session
 
-The session is the durable boundary, but it is not one giant transcript. Participants can create independent conversations or fork a conversation from a committed user or assistant entry.
+The session is the durable boundary, but it is not one giant transcript. Chat participants can create independent conversations or fork them from a committed user or assistant entry.
 
 <figure class="post-figure post-video">
 <video controls muted playsinline preload="metadata" width="1520" height="1282" poster="/static/posts/pi-durable-on-cloudflare/fork-poster.webp" aria-describedby="fork-demo-caption" style="display:block;width:100%;max-width:100%;height:auto;margin-inline:auto;border-radius:2.6% / 3.1%">
@@ -128,7 +128,7 @@ The session is the durable boundary, but it is not one giant transcript. Partici
 <figcaption id="fork-demo-caption">A session can contain independent conversations and forks that share history up to a selected message.</figcaption>
 </figure>
 
-If the connection drops before the server replies, the client resends the command with the same request ID. To avoid creating a second conversation, the harness stores a receipt under that request ID in the same commit that creates the conversation:
+To avoid creating duplicates, for instance after dropping the WebSocket connection, the harness stores a receipt with the request ID in the same commit that creates the conversation:
 
 ```ts
 const conversationId = await this.#harness.commit(async (tx) => {
@@ -141,7 +141,7 @@ const conversationId = await this.#harness.commit(async (tx) => {
 }, BACKGROUND_CONTEXT);
 ```
 
-A fork receives the parent's history up to the selected entry without copying it:
+Creating a fork is similar, only that it receives the parent's history up to the selected entry:
 
 ```ts
 const fork = await tx.forkConversation(parentConversationId, entryId, {
@@ -149,7 +149,7 @@ const fork = await tx.forkConversation(parentConversationId, entryId, {
 });
 ```
 
-When a chat participant sends a message, the server attributes it with the display name and submits it as a follow-up prompt.
+When a chat participant sends a message, the session attributes it with the display name and submits it as a follow-up prompt.
 
 ```ts
 const conversation = await this.#harness.conversation(conversationId, BACKGROUND_CONTEXT);
@@ -168,7 +168,7 @@ If several people send messages while the model or a tool is running, the messag
 
 ### Stream durable conversation state
 
-For each connected client, the server opens Pi's event stream for the selected conversation. The stream begins with an atomic snapshot and then emits events for committed transcript changes, streaming output, tools, compaction, resets, and inbox changes.
+For each connected client, the session opens Pi's event stream for the selected conversation. The stream begins with an atomic snapshot and then emits events for committed transcript changes, streaming output, tools, compaction, resets, and inbox changes.
 
 ```ts
 const stream = await watchEvents(
