@@ -40,7 +40,7 @@ aria_i18n_key: values
   <summary class="disclosure-summary"><em><span class="disclosure-title" data-i18n="content.values.family.title">Family First</span></em></summary>
   <ul class="icon-list icon-list--star">
     <li data-i18n="content.values.family.1">Our family could be our closest friends, our parents, siblings, our spouse and kids, or our dogs. These are the relationships that will define our lives. They come first</li>
-    <li data-i18n="content.values.family.2">We pursue our work with intensity and high standards, but we refuse to sacrifice one for the other. In conflicts, family takes precedence.</li>
+    <li data-i18n="content.values.family.2">We possess innate intensity that drives us to continually do better and seek excellence. It is this intensity that drives our success even as we put family first.</li>
   </ul>
 </details>
 
