@@ -128,7 +128,7 @@ The session is the durable boundary, but it is not one giant transcript. Partici
 <figcaption id="fork-demo-caption">A session can contain independent conversations and forks that share history up to a selected message.</figcaption>
 </figure>
 
-If the connection drops before the server replies, the client resends the command with the same request ID. To avoid creating a second conversation, the server stores a receipt under that request ID in the same commit that creates the conversation:
+If the connection drops before the server replies, the client resends the command with the same request ID. To avoid creating a second conversation, the harness stores a receipt under that request ID in the same commit that creates the conversation:
 
 ```ts
 const conversationId = await this.#harness.commit(async (tx) => {
@@ -168,7 +168,7 @@ If several people send messages while the model or a tool is running, the messag
 
 ### Stream durable conversation state
 
-For each connected client, the server opens Pi's `watchEvents()` stream for the selected conversation. The stream begins with an atomic snapshot and then emits events for committed transcript changes, streaming output, tools, compaction, resets, and inbox changes.
+For each connected client, the server opens Pi's event stream for the selected conversation. The stream begins with an atomic snapshot and then emits events for committed transcript changes, streaming output, tools, compaction, resets, and inbox changes.
 
 ```ts
 const stream = await watchEvents(
@@ -205,7 +205,7 @@ After restoring the live views, the session inspects the persisted task set. Fut
 
 ### Map Pi deadlines to the Durable Object alarm
 
-This agent is given a `schedule` tool for it to act later, for example to check the weather after a couple of minutes. Behind the scenes, this is turned into a durable Pi task that sleeps until its deadline.
+This agent is given a `schedule` tool for it to act later, for example to check the weather after a couple of minutes. Behind the scenes, this is turned into a durable Pi task that sleeps until the task deadline.
 
 <figure class="post-figure post-video">
 <video controls muted playsinline preload="metadata" width="1520" height="1284" poster="/static/posts/pi-durable-on-cloudflare/schedule-poster.webp" aria-describedby="schedule-demo-caption" style="display:block;width:100%;max-width:100%;height:auto;margin-inline:auto;border-radius:2.6% / 3.1%">
@@ -252,9 +252,9 @@ Because alarms have at-least-once execution, the handler must be idempotent. `#r
 
 ## Search conversation history with a durable subagent
 
-With several conversations in one session, a participant may ask about something outside the selected conversation’s context. Rather than loading every transcript into the parent conversation, the `search_history` tool delegates retrieval to a child agent.
+With several conversations in one session, a participant may ask about something outside the selected conversation’s context. Rather than loading every transcript into the parent conversation, the `search_history` tool delegates retrieval to a subagent. In Pi Durable, a subagent is an ordinary conversation owned by the tool task that created it.
 
-The subagent searches user and assistant messages from top-level conversations, including earlier messages in the conversation that initiated the search. It cannot search subagent work or messages created by previous searches, preventing generated search results from becoming evidence for future searches.
+It searches user and assistant messages from top-level conversations, including earlier messages in the conversation that initiated the search. It cannot search its own conversation or messages created by previous searches, preventing generated search results from becoming evidence for future searches.
 
 ```
 Parent conversation
@@ -278,7 +278,7 @@ Final answer returned to parent
 <figcaption id="search-demo-caption">A subagent gets its own conversation and searches across all other conversations within the session.</figcaption>
 </figure>
 
-A subagent is an ordinary Pi conversation owned by the tool task that created it. The tool creates or reuses that conversation, restricts it to the search extension, submits the question, and waits for its answer. The tool is marked as replay-safe, so if the Durable Object is evicted mid-call, Pi reruns it on the next start instead of reporting it as interrupted:
+The tool is marked as replay-safe, so if the Durable Object is evicted mid-call, Pi reruns it on the next start instead of reporting it as interrupted:
 
 ```ts
 const childId = await api.commit(async (tx) => {
@@ -348,9 +348,7 @@ return {
 
 Ownership gives the child a durable identity. If the tool is interrupted and replayed, it finds the conversation created by the original task instead of creating another one. The child submission uses the task ID as its request ID for the same reason: a retry reacquires the existing submission.
 
-The parent receives only the child’s final answer. Raw matches and intermediate tool calls remain isolated in the child conversation, where they are still durable and inspectable from the interface.
-
-The `search_conversations` tool in this example uses a deliberately simple, bounded substring search.
+The `search_conversations` tool in this example uses a deliberately simple substring search. Raw matches and intermediate tool calls remain isolated in the subagent conversation. The parent conversation receives only the final answer.
 
 ## Run locally
 
