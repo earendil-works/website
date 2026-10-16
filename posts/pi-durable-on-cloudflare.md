@@ -373,7 +373,7 @@ Create a session, open its URL in a second browser, and try this sequence:
 4. Open the search subagent from the sidebar and inspect its searches.  
 5. Ask the agent to check the weather in two minutes, then close the browser and return after the deadline.
 
-The demo intentionally has no authentication. Do not expose a deployed copy with a production model key until you add access control and rate limiting.
+Note that the demo intentionally has no authentication.
 
 ## Build with Pi Durable
 
