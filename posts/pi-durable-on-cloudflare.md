@@ -55,7 +55,7 @@ Pi Durable makes no assumption about where sessions are stored. You can bring yo
 await openDurableObjectSqliteStorage(ctx.storage)
 ```
 
-If your requires rolling your own SQLite adapter or a different storage backend, use Pi Durable’s conformance suite to check that it behaves correctly. It works with any Vitest- or Jest-compatible test runner. For a Durable Object, use it with the [Cloudflare Workers Vitest integration](https://developers.cloudflare.com/workers/testing/vitest-integration/):
+If your implementation requires rolling your own SQLite adapter or a different storage backend, use Pi Durable’s conformance suite to check that it behaves correctly. It works with any Vitest- or Jest-compatible test runner. For a Durable Object, use it with the [Cloudflare Workers Vitest integration](https://developers.cloudflare.com/workers/testing/vitest-integration/):
 
 ```ts
 registerStorageConformance(
