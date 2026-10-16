@@ -5,7 +5,7 @@ template: updates
 aria_label: Earendil posts
 from: Earendil Engineering <rfc@earendil.com>
 to: You
-date: Thu, 16 Oct 2026 13:45:00 +0100
+date: Fri, 16 Oct 2026 13:45:00 +0100
 subject: Pi Durable on Cloudflare
 ---
 
