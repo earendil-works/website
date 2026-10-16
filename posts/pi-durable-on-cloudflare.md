@@ -9,9 +9,11 @@ date: Thu, 16 Oct 2026 13:45:00 +0100
 subject: Pi Durable on Cloudflare
 ---
 
-Many AI agents respond to user requests or other external events, do their work and then sit idle for long periods. Keeping a machine running around the clock wastes compute and quickly gets expensive. With Cloudflare Durable Objects we have an alternative, providing a stateful object that shuts down when idle and starts up again when a request, WebSocket message, or alarm arrives.
+Many AI agents respond to user requests or other external events, do their work and then sit idle for long periods. Keeping a machine running around the clock wastes compute and quickly gets expensive.
 
-Pi Durable is a harness designed for long-running agents. Read the [announcement](/posts/pi-durable/) explaining its concepts and storage model in detail. In this post we will build a chat agent that stores every session in its own Durable Object, manages multiple conversations per session, survives hibernation, wakes up for scheduled work, and uses a subagent to search across conversations.
+Pi Durable is a harness designed for long-running agents. Read the [announcement](/posts/pi-durable/) explaining its concepts and storage model in detail. And Cloudflare Durable Objects offer a stateful objects that shut down when idle and start up again when a request, WebSocket message, or alarm arrives.
+
+In this post we will build a chat agent that stores every session in its own Durable Object, manages multiple conversations per session, survives hibernation, wakes up for scheduled work, and uses a subagent to search across conversations.
 
 We’ll run with 90s vibes for the interface but make it multiplayer because it’s 2026: multiple participants connected to the same chat session.
 
