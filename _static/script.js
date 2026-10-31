@@ -1393,26 +1393,23 @@ const QUALITY_SETTINGS = {
   low: {
     scale: 0.25,
     lowDpiScale: 0.425,  // 1.7x for low DPI screens
-    raymarchSteps: 20,
+    raymarchSteps: 16,
     waveIterRaymarch: 4,
-    waveIterNormal: 16,
-    fbmOctaves: 2
+    waveIterNormal: 16
   },
   medium: {
     scale: 0.35,
     lowDpiScale: 0.595,  // 1.7x for low DPI screens
-    raymarchSteps: 24,
+    raymarchSteps: 20,
     waveIterRaymarch: 6,
-    waveIterNormal: 16,
-    fbmOctaves: 3
+    waveIterNormal: 16
   },
   high: {
     scale: 0.4,
     lowDpiScale: 0.68,   // 1.7x for low DPI screens
-    raymarchSteps: 32,
+    raymarchSteps: 24,
     waveIterRaymarch: 8,
-    waveIterNormal: 16,
-    fbmOctaves: 4
+    waveIterNormal: 16
   }
 };
 
@@ -1742,6 +1739,92 @@ const LOGO_FADE_DURATION = 900;
 const LOGO_FADE_TARGET = 0.85;
 
 // based on afl_ext's ocean weaves shader (MIT licensed)
+
+// The wave octaves never change, so their directions, frequencies, speeds and
+// weights are baked into unrolled GLSL. The original loop recomputed sin, cos
+// and normalize for every octave of every raymarch step and normal sample.
+const WAVE_OCTAVES = 16;
+const WAVE_DRAG = 0.38;
+const WAVE_SWELL_BIAS = 0.35;
+// Mean of exp(sin(x) - 1) over one period (I0(1) / e). Octaves that are too
+// fine for a pixel fade towards this value so filtering keeps sea level put.
+const WAVE_OCTAVE_MEAN = 0.4657596075936404;
+// An octave fades out while the pixel footprint grows from WAVE_FADE_START to
+// WAVE_FADE_END of its wavelength. Sub-pixel waves otherwise alias into
+// shimmering speckle near the horizon, and skipping them saves most of the
+// work for distant samples.
+const WAVE_FADE_START = 0.2;
+const WAVE_FADE_END = 0.6;
+
+const WAVE_OCTAVE_PARAMS = (function() {
+  const swellLength = Math.hypot(-0.25, 1.0);
+  const swellX = -0.25 / swellLength;
+  const swellY = 1.0 / swellLength;
+  const octaves = [];
+  let iter = 0;
+  let frequency = 1.0;
+  let timeMultiplier = 2.0;
+  let weight = 1.0;
+  for (let i = 0; i < WAVE_OCTAVES; i++) {
+    const s = Math.sin(iter);
+    const c = Math.cos(iter);
+    let dx = s + (swellX - s) * WAVE_SWELL_BIAS;
+    let dy = c + (swellY - c) * WAVE_SWELL_BIAS;
+    const len = Math.hypot(dx, dy);
+    dx /= len;
+    dy /= len;
+    octaves.push({ dx, dy, frequency, timeMultiplier, weight });
+    weight *= 0.8;
+    frequency *= 1.18;
+    timeMultiplier *= 1.07;
+    // The shader used to accumulate this angle in 32-bit floats.
+    iter = Math.fround(iter + Math.fround(1232.399963));
+  }
+  return octaves;
+})();
+
+function glslFloat(value) {
+  const text = String(Number(value.toPrecision(9)));
+  return /[.eE]/.test(text) ? text : text + '.0';
+}
+
+// Emits `float name(vec2 p, float footprint)`, the height of the wave field
+// filtered for a sample covering `footprint` world units. Octaves are nested
+// so a sample stops as soon as the next (finer) octave is fully filtered.
+function buildWaveFunction(name, octaveCount) {
+  const octaves = WAVE_OCTAVE_PARAMS.slice(0, octaveCount);
+  const totalWeight = octaves.reduce((sum, o) => sum + o.weight, 0);
+  let body = '';
+  let indent = '    ';
+  octaves.forEach((o) => {
+    const wavelength = 2 * Math.PI / o.frequency;
+    const limit = WAVE_FADE_END * wavelength;
+    const fadeScale = 1 / ((WAVE_FADE_END - WAVE_FADE_START) * wavelength);
+    const g = glslFloat;
+    body += `${indent}if (footprint < ${g(limit)}) {\n`;
+    indent += '  ';
+    body += `${indent}f = min((${g(limit)} - footprint) * ${g(fadeScale)}, 1.0) * ${g(o.weight)};\n`;
+    body += `${indent}x = dot(p, vec2(${g(o.dx * o.frequency)}, ${g(o.dy * o.frequency)})) + t * ${g(o.timeMultiplier)} + shift;\n`;
+    body += `${indent}e = exp(sin(x) - 1.0);\n`;
+    body += `${indent}sum += (e - ${g(WAVE_OCTAVE_MEAN)}) * f;\n`;
+    body += `${indent}p -= vec2(${g(o.dx * WAVE_DRAG)}, ${g(o.dy * WAVE_DRAG)}) * (e * cos(x) * f);\n`;
+  });
+  for (let i = 0; i < octaves.length; i++) {
+    indent = indent.slice(2);
+    body += `${indent}}\n`;
+  }
+  return `
+  float ${name}(vec2 p, float footprint) {
+    float t = u_waveTime;
+    float shift = length(p) * 0.1;
+    float sum = 0.0;
+    float f, x, e;
+${body}
+    return ${glslFloat(WAVE_OCTAVE_MEAN)} + sum * ${glslFloat(1 / totalWeight)} + swell(p);
+  }
+`;
+}
+
 function buildFragmentShader(quality) {
   const settings = QUALITY_SETTINGS[quality];
   return `
@@ -1766,47 +1849,34 @@ function buildFragmentShader(quality) {
   // MIT License
   #define PI 3.14159265359
 
-  #define DRAG_MULT 0.38
   #define WATER_DEPTH 1.0
+  // Highest and lowest possible surface: waves span [-1, 0], the swell adds
+  // +-0.35 and ripples a little more on top.
+  #define WATER_TOP 0.6
+  #define WATER_BOTTOM -1.4
+  #define MAX_DISTANCE 400.0
   #define CAMERA_HEIGHT 1.5
-  #define ITERATIONS_RAYMARCH ${settings.waveIterRaymarch}
-  #define ITERATIONS_NORMAL ${settings.waveIterNormal}
   #define RAYMARCH_STEPS ${settings.raymarchSteps}
-  #define FBM_OCTAVES ${settings.fbmOctaves}
+  #define RAYMARCH_REFINE_STEPS 1
   #define LOGO_INTENSITY 3.5
   #define NIGHT_EPS 0.001
+  #define NIGHT_HORIZON_GLOW vec3(0.04, 0.044, 0.056)
+  // Stars seen in the water show up as single-pixel glitter, keep it subtle.
+  #define REFLECTED_STARS 0.6
 
   float hash21(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
   }
 
-  float noise21(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    float a = hash21(i);
-    float b = hash21(i + vec2(1.0, 0.0));
-    float c = hash21(i + vec2(0.0, 1.0));
-    float d = hash21(i + vec2(1.0, 1.0));
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+  vec2 cameraTilt() {
+    float angle = ${BASE_CAMERA_TILT} + u_cameraTiltOffset;
+    return vec2(cos(angle), sin(angle));
   }
-
-  float fbm(vec2 p) {
-    float value = 0.0;
-    float amplitude = 0.5;
-    float frequency = 1.0;
-    for (int i = 0; i < FBM_OCTAVES; i++) {
-      value += amplitude * noise21(p * frequency);
-      frequency *= 2.0;
-      amplitude *= 0.5;
-    }
-    return value;
-  }
-
-  mat3 createRotationMatrixAxisAngle(vec3 axis, float angle);
 
   vec2 dirToScreenUV(vec3 dir) {
-    vec3 unrotated = createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), -(${BASE_CAMERA_TILT} + u_cameraTiltOffset)) * dir;
+    // Inverse of the camera tilt applied in getRay().
+    vec2 cs = cameraTilt();
+    vec3 unrotated = vec3(dir.x, cs.x * dir.y - cs.y * dir.z, cs.y * dir.y + cs.x * dir.z);
     if (unrotated.z <= 0.0) return vec2(-1.0);
     vec2 uv = (unrotated.xy / unrotated.z) * ${CAMERA_PROJECTION_DEPTH};
     vec2 ndc = uv / vec2(iResolution.x / iResolution.y, 1.0);
@@ -1821,6 +1891,7 @@ function buildFragmentShader(quality) {
     vec2 deltaPx = (screenUv - starUv) * iResolution.xy;
     float sizePx = 0.25 + hash21(cellId + 0.3) * 0.45;
     float d = length(deltaPx);
+    if (d >= sizePx) return 0.0;
     float core = smoothstep(sizePx, sizePx * 0.2, d);
     float flickerPhase = hash21(cellId + 0.4) * 6.28318;
     float flickerSpeed = 0.2 + hash21(cellId + 0.5) * 0.3;
@@ -1831,12 +1902,18 @@ function buildFragmentShader(quality) {
     return core * flicker * brightness;
   }
 
-  vec2 wavedx(vec2 position, vec2 direction, float frequency, float timeshift) {
-    float x = dot(direction, position) * frequency + timeshift;
-    float wave = exp(sin(x) - 1.0);
-    float dx = wave * cos(x);
-    return vec2(wave, -dx);
+  float swell(vec2 p) {
+    // Long, slow swell centered around 0 so it lifts and lowers the surface
+    // near the camera.
+    vec2 swellDir = vec2(-0.242535625, 0.9701425);
+    float swellPhase = dot(p, swellDir) * 0.18 - u_waveTime * 0.08;
+    vec2 cameraPos = vec2(u_waveTime * 0.2, 1.0);
+    float swellFade = smoothstep(28.0, 4.0, length(p - cameraPos));
+    return sin(swellPhase) * swellFade * 0.35;
   }
+
+${buildWaveFunction('wavesMarch', settings.waveIterRaymarch)}
+${buildWaveFunction('wavesDetail', settings.waveIterNormal)}
 
   float getripples(vec2 position) {
     float rippleSum = 0.0;
@@ -1846,16 +1923,16 @@ function buildFragmentShader(quality) {
       vec2 ripplePos = ripple.xy;
       float birthTime = ripple.z;
       float amplitude = ripple.w;
-      
+
       float age = u_waveTime - birthTime;
       if (age < 0.0 || age > 12.0) continue;
-      
+
       float dist = length(position - ripplePos);
       float frequency = 4.0;
       float speed = 3.2;
       float decay = 0.45;
       float spatialDecay = 0.16;
-      
+
       // Circular wave propagating outward with decay
       float phase = dist * frequency - age * speed;
       float envelope = exp(-decay * age) * exp(-dist * spatialDecay);
@@ -1866,93 +1943,77 @@ function buildFragmentShader(quality) {
     return rippleSum;
   }
 
-  // Base wave calculation without ripples (used for raymarching)
-  float getwaves_base(vec2 position, int iterations) {
-    float wavePhaseShift = length(position) * 0.1;
-    vec2 swellDir = normalize(vec2(-0.25, 1.0));
-    float swellBias = 0.35;
-    float iter = 0.0;
-    float frequency = 1.0;
-    float timeMultiplier = 2.0;
-    float weight = 1.0;
-    float sumOfValues = 0.0;
-    float sumOfWeights = 0.0;
-    for(int i=0; i < 16; i++) {
-      if(i >= iterations) break;
-      vec2 p = normalize(mix(vec2(sin(iter), cos(iter)), swellDir, swellBias));
-      vec2 res = wavedx(position, p, frequency, u_waveTime * timeMultiplier + wavePhaseShift);
-      position += p * res.y * weight * DRAG_MULT;
-      sumOfValues += res.x * weight;
-      sumOfWeights += weight;
-      weight = mix(weight, 0.0, 0.2);
-      frequency *= 1.18;
-      timeMultiplier *= 1.07;
-      iter += 1232.399963;
-    }
-    float baseWaves = sumOfValues / sumOfWeights;
-
-    float swellPhase = dot(position, swellDir) * 0.18 - u_waveTime * 0.08;
-    // Center swell around 0 so it adds and subtracts from the surface.
-    float swell = sin(swellPhase);
-    vec2 cameraPos = vec2(u_waveTime * 0.2, 1.0);
-    float swellFade = smoothstep(28.0, 4.0, length(position - cameraPos));
-
-    return baseWaves + swell * swellFade * 0.35;
+  float marchHeight(vec2 p, float footprint) {
+    return (wavesMarch(p, footprint) + getripples(p)) * WATER_DEPTH - WATER_DEPTH;
   }
 
-  // Full wave calculation with ripples (used for normal calculation)
-  float getwaves(vec2 position, int iterations) {
-    return getwaves_base(position, iterations) + getripples(position);
+  float detailHeight(vec2 p, float footprint) {
+    return (wavesDetail(p, footprint) + getripples(p)) * WATER_DEPTH;
   }
 
-  float raymarchwater(vec3 camera, vec3 start, vec3 end, float depth) {
-    vec3 pos = start;
-    vec3 dir = normalize(end - start);
-    for(int i=0; i < RAYMARCH_STEPS; i++) {
-      float height = getwaves(pos.xz, ITERATIONS_RAYMARCH) * depth - depth;
-      if(height + 0.01 > pos.y) {
-        return distance(pos, camera);
+  // Marches between the planes bounding the surface. Steps follow the
+  // vertical gap like afl_ext's original, but lengthen as the ray flattens
+  // out: grazing rays otherwise exhaust their steps long before reaching the
+  // surface. Overshooting is fine because the crossing is then refined with
+  // a regula falsi step, which also removes stair-stepping.
+  float raymarchwater(vec3 origin, vec3 ray, float tNear, float tFar, float lodScale) {
+    float stepScale = 1.0 / (0.25 - ray.y);
+    float t = tNear;
+    float a = tNear;
+    float gapA = 0.0;
+    float gapB = 0.0;
+    for (int i = 0; i < RAYMARCH_STEPS; i++) {
+      vec3 p = origin + ray * t;
+      float gap = p.y - marchHeight(p.xz, t * lodScale);
+      if (gap < 0.0) {
+        gapB = gap;
+        break;
       }
-      pos += dir * (pos.y - height);
+      // Close enough once the remaining error, projected along the ray, is
+      // a fraction of the pixel's footprint on the water.
+      if (gap < 0.25 * t * lodScale * -ray.y) {
+        return t;
+      }
+      a = t;
+      gapA = gap;
+      t += gap * stepScale;
+      if (t >= tFar) {
+        return tFar;
+      }
     }
-    return distance(start, camera);
+    if (gapB >= 0.0) {
+      return t;
+    }
+    float b = t;
+    for (int i = 0; i < RAYMARCH_REFINE_STEPS; i++) {
+      float m = mix(a, b, gapA / (gapA - gapB));
+      vec3 p = origin + ray * m;
+      float gap = p.y - marchHeight(p.xz, m * lodScale);
+      if (gap < 0.0) {
+        b = m;
+        gapB = gap;
+      } else {
+        a = m;
+        gapA = gap;
+      }
+    }
+    return mix(a, b, gapA / (gapA - gapB));
   }
 
-  vec3 normal(vec2 pos, float e, float depth) {
-    vec2 ex = vec2(e, 0);
-    float H = getwaves(pos.xy, ITERATIONS_NORMAL) * depth;
-    vec3 a = vec3(pos.x, H, pos.y);
-    return normalize(
-      cross(
-        a - vec3(pos.x - e, getwaves(pos.xy - ex.xy, ITERATIONS_NORMAL) * depth, pos.y), 
-        a - vec3(pos.x, getwaves(pos.xy + ex.yx, ITERATIONS_NORMAL) * depth, pos.y + e)
-      )
-    );
-  }
-
-  mat3 createRotationMatrixAxisAngle(vec3 axis, float angle) {
-    float s = sin(angle);
-    float c = cos(angle);
-    float oc = 1.0 - c;
-    return mat3(
-      oc * axis.x * axis.x + c, oc * axis.x * axis.y - axis.z * s, oc * axis.z * axis.x + axis.y * s, 
-      oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c, oc * axis.y * axis.z - axis.x * s, 
-      oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z + c
-    );
+  vec3 normal(vec2 pos, float e, float footprint) {
+    float H = detailHeight(pos, footprint);
+    float hx = detailHeight(pos - vec2(e, 0.0), footprint);
+    float hz = detailHeight(pos + vec2(0.0, e), footprint);
+    return normalize(vec3(hx - H, e, H - hz));
   }
 
   vec3 getRay(vec2 fragCoord) {
     vec2 uv = ((fragCoord.xy / iResolution.xy) * 2.0 - 1.0) * vec2(iResolution.x / iResolution.y, 1.0);
     vec3 proj = normalize(vec3(uv.x, uv.y, ${CAMERA_PROJECTION_DEPTH}));
-    // Fixed camera angle (no mouse movement) - tilted up to show more sky
-    // u_cameraTiltOffset adds additional tilt (negative = look down more)
-    return createRotationMatrixAxisAngle(vec3(0.0, -1.0, 0.0), 0.0)
-      * createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), ${BASE_CAMERA_TILT} + u_cameraTiltOffset)
-      * proj;
-  }
-
-  float intersectPlane(vec3 origin, vec3 direction, vec3 point, vec3 normal) { 
-    return clamp(dot(point - origin, normal) / dot(direction, normal), -1.0, 9991999.0); 
+    // Fixed camera angle tilted up to show more sky. u_cameraTiltOffset adds
+    // additional tilt (negative = look down more).
+    vec2 cs = cameraTilt();
+    return vec3(proj.x, cs.x * proj.y + cs.y * proj.z, cs.x * proj.z - cs.y * proj.y);
   }
 
   vec3 extra_cheap_atmosphere(vec3 raydir, vec3 sundir) {
@@ -1966,7 +2027,7 @@ function buildFragmentShader(quality) {
     vec3 bluesky2 = max(vec3(0.0), bluesky - vec3(12.0, 12.0, 13.0) * 0.002 * (special_trick + -6.0 * sundir.y * sundir.y));
     bluesky2 *= special_trick * (0.24 + raysundt * 0.24);
     return bluesky2 * (1.0 + 1.0 * pow(1.0 - raydir.y, 3.0));
-  } 
+  }
 
   vec3 getSunDirection() {
     // Static sun position (no movement)
@@ -1975,11 +2036,6 @@ function buildFragmentShader(quality) {
 
   vec3 getAtmosphere(vec3 dir) {
      return extra_cheap_atmosphere(dir, getSunDirection()) * 0.5;
-  }
-
-  float getSun(vec3 dir) { 
-    // No visible sun disc
-    return 0.0;
   }
 
   vec2 skyUV(vec3 dir) {
@@ -1992,36 +2048,39 @@ function buildFragmentShader(quality) {
     return getAtmosphere(dir);
   }
 
-  vec3 getNightSky(vec3 dir) {
-    vec2 uv = skyUV(dir);
+  vec3 getNightSky(vec3 dir, float starAmount) {
     vec3 topColor = vec3(0.015, 0.02, 0.04);
     vec3 bottomColor = vec3(0.03, 0.035, 0.05);
-    vec3 color = mix(bottomColor, topColor, uv.y);
+    vec3 color = mix(bottomColor, topColor, clamp(dir.y * 0.5 + 0.5, 0.0, 1.0));
+    // Faint glow along the horizon. Wave faces pick it up in their
+    // reflections, which is what makes the swell readable at night.
+    color += NIGHT_HORIZON_GLOW * exp(-max(dir.y, 0.0) * 9.0);
 
     vec2 screenUv = dirToScreenUV(dir);
-    if (screenUv.x >= 0.0 && screenUv.x <= 1.0 && screenUv.y >= 0.0 && screenUv.y <= 1.0) {
-      if (screenUv.y > 0.35) {
-        float gridX = 40.0;
-        float gridY = 30.0;
-        vec2 grid = vec2(gridX, gridY);
-        vec2 baseCell = floor(vec2(screenUv.x * gridX, screenUv.y * gridY));
-        float s = 0.0;
-        for (int yi = -1; yi <= 1; yi++) {
-          for (int xi = -1; xi <= 1; xi++) {
-            vec2 cell = baseCell + vec2(float(xi), float(yi));
-            if (cell.y < 0.0 || cell.y >= gridY) continue;
-            cell.x = mod(cell.x + gridX, gridX);
-            s += star(screenUv, cell, grid);
-          }
-        }
-        float horizonFade = smoothstep(0.35, 0.55, screenUv.y);
-        vec3 starColor = vec3(1.0, 0.97, 0.9);
-        color += starColor * s * horizonFade;
-      }
-
+    if (screenUv.x >= 0.0 && screenUv.x <= 1.0 && screenUv.y > 0.35 && screenUv.y <= 1.0) {
+      // Stars are under a pixel wide and never reach a neighbouring cell, so
+      // only the cell containing this pixel needs to be evaluated.
+      vec2 grid = vec2(40.0, 30.0);
+      vec2 cell = floor(screenUv * grid);
+      float s = star(screenUv, cell, grid);
+      float horizonFade = smoothstep(0.35, 0.55, screenUv.y);
+      vec3 starColor = vec3(1.0, 0.97, 0.9);
+      color += starColor * (s * horizonFade * starAmount);
     }
 
     return color;
+  }
+
+  vec3 getSky(vec3 dir, float starAmount) {
+    if (u_night <= NIGHT_EPS) {
+      return getDaySky(dir);
+    }
+    if (u_night >= 1.0 - NIGHT_EPS) {
+      return getNightSky(dir, starAmount);
+    }
+    float horizonFactor = smoothstep(0.02, 0.25, dir.y);
+    float nightBlend = pow(u_night, mix(0.35, 1.0, horizonFactor));
+    return mix(getDaySky(dir), getNightSky(dir, starAmount), nightBlend);
   }
 
   float sampleLogo(vec2 uv) {
@@ -2031,7 +2090,7 @@ function buildFragmentShader(quality) {
     return alpha * u_logoFade;
   }
 
-  vec3 aces_tonemap(vec3 color) {  
+  vec3 aces_tonemap(vec3 color) {
     mat3 m1 = mat3(
       0.59719, 0.07600, 0.02840,
       0.35458, 0.90834, 0.13383,
@@ -2042,10 +2101,10 @@ function buildFragmentShader(quality) {
       -0.53108,  1.10813, -0.07276,
       -0.07367, -0.00605,  1.07602
     );
-    vec3 v = m1 * color;  
+    vec3 v = m1 * color;
     vec3 a = v * (v + 0.0245786) - 0.000090537;
     vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
-    return pow(clamp(m2 * (a / b), 0.0, 1.0), vec3(1.0 / 2.2));  
+    return pow(clamp(m2 * (a / b), 0.0, 1.0), vec3(1.0 / 2.2));
   }
 
   // Film grain based on Martin Upitis's shader. Keeping this in the ocean
@@ -2074,71 +2133,52 @@ function buildFragmentShader(quality) {
   void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec3 ray = getRay(fragCoord);
     if(ray.y >= 0.0) {
-      vec3 C;
-      float horizonFactor = smoothstep(0.02, 0.25, ray.y);
-      float nightBlend = pow(u_night, mix(0.35, 1.0, horizonFactor));
-      if (u_night <= NIGHT_EPS) {
-        C = getDaySky(ray);
-      } else if (u_night >= 1.0 - NIGHT_EPS) {
-        C = getNightSky(ray);
-      } else {
-        vec3 daySky = getDaySky(ray);
-        vec3 nightSky = getNightSky(ray);
-        C = mix(daySky, nightSky, nightBlend);
-      }
-      fragColor = vec4(aces_tonemap(C * 2.0), 1.0);   
+      fragColor = vec4(aces_tonemap(getSky(ray, 1.0) * 2.0), 1.0);
       return;
     }
 
-    vec3 waterPlaneHigh = vec3(0.0, 0.0, 0.0);
-    vec3 waterPlaneLow = vec3(0.0, -WATER_DEPTH, 0.0);
     vec3 origin = vec3(u_waveTime * 0.2, CAMERA_HEIGHT + u_cameraYOffset, 1.0 + u_cameraZOffset);
+    float tNear = (origin.y - WATER_TOP) / -ray.y;
+    float tFar = min((origin.y - WATER_BOTTOM) / -ray.y, MAX_DISTANCE);
 
-    float highPlaneHit = intersectPlane(origin, ray, waterPlaneHigh, vec3(0.0, 1.0, 0.0));
-    float lowPlaneHit = intersectPlane(origin, ray, waterPlaneLow, vec3(0.0, 1.0, 0.0));
-    vec3 highHitPos = origin + ray * highPlaneHit;
-    vec3 lowHitPos = origin + ray * lowPlaneHit;
+    // World-space size of this pixel on the water. Rays that graze the
+    // surface see a stretched footprint, which is what makes distant waves
+    // alias; widen it accordingly so their fine octaves are filtered out.
+    float pixelAngle = 2.0 / (${CAMERA_PROJECTION_DEPTH} * iResolution.y);
+    float lodScale = pixelAngle * inversesqrt(max(-ray.y, 0.01));
 
-    float dist = raymarchwater(origin, highHitPos, lowHitPos, WATER_DEPTH);
+    float dist = tNear < tFar ? raymarchwater(origin, ray, tNear, tFar, lodScale) : tFar;
     vec3 waterHitPos = origin + ray * dist;
+    float footprint = dist * lodScale;
 
-    float eps = max(0.01, dist * 0.004);
-    vec3 N = normal(waterHitPos.xz, eps, WATER_DEPTH);
-    N = mix(N, vec3(0.0, 1.0, 0.0), 0.8 * min(1.0, sqrt(dist*0.01) * 1.1));
+    // Fine octaves are already filtered by footprint, so distant normals only
+    // need gentle flattening to stay calm instead of washing out to a plane.
+    float distanceBlend = min(1.0, sqrt(dist * 0.01) * 1.1);
+    vec3 N = normal(waterHitPos.xz, max(0.01, dist * pixelAngle), footprint);
+    N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.45 * distanceBlend));
 
     float fresnelSharp = 0.04 + 0.96 * pow(1.0 - max(0.0, dot(-N, ray)), 5.0);
     // At distance, converge Fresnel to the smooth flat-normal value to kill speckle
-    float fresnelFlat = 0.04 + 0.96 * pow(1.0 - max(0.0, dot(vec3(0.0, 1.0, 0.0), -ray)), 5.0);
-    float fresnelBlend = min(1.0, sqrt(dist * 0.01) * 1.1);
-    float fresnel = mix(fresnelSharp, fresnelFlat, fresnelBlend);
+    float fresnelFlat = 0.04 + 0.96 * pow(1.0 - max(0.0, -ray.y), 5.0);
+    float fresnel = mix(fresnelSharp, fresnelFlat, 0.5 * distanceBlend);
 
-    vec3 R = normalize(reflect(ray, N));
+    vec3 R = reflect(ray, N);
     R.y = abs(R.y);
-    
-    float reflectedLogo = sampleLogo(skyUV(R));
-    vec3 reflection;
-    float reflectionHorizon = smoothstep(0.02, 0.25, R.y);
-    float nightReflectionBlend = pow(u_night, mix(0.35, 1.0, reflectionHorizon));
-    if (u_night <= NIGHT_EPS) {
-      reflection = getDaySky(R);
-    } else if (u_night >= 1.0 - NIGHT_EPS) {
-      reflection = getNightSky(R);
-    } else {
-      vec3 dayReflection = getDaySky(R);
-      vec3 nightReflection = getNightSky(R);
-      reflection = mix(dayReflection, nightReflection, nightReflectionBlend);
-    }
-    reflection += vec3(1.0) * (reflectedLogo * LOGO_INTENSITY);
+
+    vec3 reflection = getSky(R, REFLECTED_STARS);
+    reflection += vec3(sampleLogo(skyUV(R)) * LOGO_INTENSITY);
     vec3 scatteringBase = mix(vec3(0.08, 0.08, 0.09), vec3(0.02, 0.02, 0.03), u_night);
     vec3 scattering = scatteringBase * (0.2 + (waterHitPos.y + WATER_DEPTH) / WATER_DEPTH);
 
     vec3 C = fresnel * reflection + scattering;
-    
+
     // Add distance fog
-    vec3 fogColor = mix(vec3(0.55, 0.55, 0.58), vec3(0.03, 0.035, 0.05), u_night);
+    // At night the fog matches the sky right at the horizon so the two meet
+    // without a seam.
+    vec3 fogColor = mix(vec3(0.55, 0.55, 0.58), vec3(0.03, 0.035, 0.05) + NIGHT_HORIZON_GLOW, u_night);
     float fogAmount = 1.0 - exp(-dist * 0.02);
     C = mix(C, fogColor, fogAmount);
-    
+
     // Darken waves in light mode
     float waveBrightness = mix(1.4, 1.9, u_night);
     fragColor = vec4(aces_tonemap(C * waveBrightness), 1.0);
