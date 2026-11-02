@@ -14,7 +14,7 @@ i18n_key: post.pi-autoresearch-and-databricks
 
 AI has made code cheap, and as a result many companies are building bigger tools in pursuit of better performance. Larger prompts, more orchestration, more layers, more complexity. This also makes these tools intrinsically more expensive to use. Pi takes the opposite approach. 
 
-Pi is the coding harness that chooses minimalism on purpose. It comes out of the box with only 4 tools, and its [system prompt](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/system-prompt.ts#L121-L159) and tool definitions come in below 1,000 tokens. The idea being that most work can be done with the basics, and if you want more, build it.
+Pi is the coding harness that chooses minimalism on purpose. It comes out of the box with only 4 tools, and its [system prompt](https://github.com/earendil-works/pi/blob/bb3d7d399c06e5fe284f34eb66b15b037ab18649/packages/coding-agent/src/core/system-prompt.ts#L121-L159) and tool definitions come in below 1,000 tokens. The idea being that most work can be done with the basics, and if you want more, build it.
 
 Evidence increasingly suggests that Pi’s design is not just cleaner; it’s cheaper and more performant. Users are finding that vanilla Pi produces industry leading results, even before adding on extensions to match user specific workflows and needs. As we'll see in case studies of Databricks and Shopify, Pi produced ideal outcomes for both.
 
