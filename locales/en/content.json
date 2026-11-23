@@ -35,9 +35,29 @@
     "message": "Go to Market",
     "context": "Go-to-market role label on the join page"
   },
+  "join.headOfMarketing": {
+    "message": "Head of Marketing",
+    "context": "Head of Marketing role label on the join page"
+  },
   "join.apply": {
     "message": "APPLY",
     "context": "Call-to-action label for job application links on the join page"
+  },
+  "join.location.technicalStaff": {
+    "message": "Vienna, SF, London, Remote",
+    "context": "Work locations for the Member of the Technical Staff role on the join page (SF = San Francisco)"
+  },
+  "join.location.foundersOffice": {
+    "message": "Vienna",
+    "context": "Work location for the Founder's Office role on the join page"
+  },
+  "join.location.goToMarket": {
+    "message": "Vienna, SF, London",
+    "context": "Work locations for the Go to Market role on the join page (SF = San Francisco)"
+  },
+  "join.location.headOfMarketing": {
+    "message": "Vienna, SF, London",
+    "context": "Work locations for the Head of Marketing role on the join page (SF = San Francisco)"
   },
   "join.openRoles": {
     "message": "Open roles",

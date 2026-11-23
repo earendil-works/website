@@ -1406,6 +1406,28 @@ body:not(.theme-night) .posts-list .post-name::after {
   min-width: 10vw;
 }
 
+.join-role__location {
+  font: normal var(--font-size-xs)/var(--leading-ui) var(--mono-font);
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .join-role__title {
+    width: auto;
+  }
+
+  .join-role__spacer {
+    width: 4vw;
+    min-width: 4vw;
+  }
+
+  .join-role__location {
+    white-space: normal;
+  }
+}
+
 .page--prose .letter-body a.join-role__apply,
 .content-page .letter-body a.posts-action-link {
   display: inline-flex;
