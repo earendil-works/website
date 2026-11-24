@@ -27,7 +27,7 @@ aria_i18n_key: join
     <tr>
       <td class="join-role__title"><em data-i18n="content.join.goToMarket">Go to Market</em></td>
       <td class="join-role__spacer" aria-hidden="true"></td>
-      <td class="join-role__location" data-i18n="content.join.location.goToMarket">Vienna, SF, London</td>
+      <td class="join-role__location" data-i18n="content.join.location.goToMarket">SF, London</td>
       <td class="join-role__spacer" aria-hidden="true"></td>
       <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Go%20to%20Market"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.goToMarket">Go to Market</span></span></a></td>
     </tr>

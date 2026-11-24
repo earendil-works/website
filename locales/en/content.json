@@ -52,7 +52,7 @@
     "context": "Work location for the Founder's Office role on the join page"
   },
   "join.location.goToMarket": {
-    "message": "Vienna, SF, London",
+    "message": "SF, London",
     "context": "Work locations for the Go to Market role on the join page (SF = San Francisco)"
   },
   "join.location.headOfMarketing": {
