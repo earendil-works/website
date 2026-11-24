@@ -1379,52 +1379,107 @@ body:not(.theme-night) .posts-list .post-name::after {
   font-weight: 700;
 }
 
+/* Layout follows the width actually available to the table (the content
+   column narrows when the side navigation appears), not the viewport. */
+.join-roles-wrap {
+  container-type: inline-size;
+}
+
 .join-roles {
-  width: auto;
-  max-width: 100%;
+  --join-col-gap: clamp(1.25rem, 6cqi, 4rem);
+  --join-row-gap: 0.75rem;
+  width: 100%;
   border: 0;
   border-collapse: collapse;
 }
 
 .join-roles td {
-  padding: 0;
+  padding: calc(var(--join-row-gap) / 2) 0;
   border: 0;
   vertical-align: baseline;
 }
 
-.join-role__title {
-  width: min(24rem, 60vw);
+.join-roles tr:first-child td {
+  padding-top: 0;
 }
 
+.join-roles tr:last-child td {
+  padding-bottom: 0;
+}
+
+/* Title absorbs all leftover width so it only wraps when it must. */
 .join-role__title em {
   display: block;
   line-height: 1.4;
 }
 
-.join-role__spacer {
-  width: 10vw;
-  min-width: 10vw;
+.join-role__location,
+.join-role__action {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.join-roles td.join-role__location,
+.join-roles td.join-role__action {
+  padding-inline-start: var(--join-col-gap);
 }
 
 .join-role__location {
   font: normal var(--font-size-xs)/var(--leading-ui) var(--mono-font);
   letter-spacing: 0;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
-@media (max-width: 640px) {
+/* Narrow containers: stack the location under the title so the title keeps
+   the full row width, with APPLY aligned to the title's first line. Three
+   columns need ~32rem (longest title + locations + APPLY + gaps). */
+@container (max-width: 32rem) {
+  .join-roles,
+  .join-roles tbody {
+    display: block;
+  }
+
+  .join-roles tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--join-col-gap);
+    row-gap: 0.125rem;
+    align-items: baseline;
+    padding: calc(var(--join-row-gap) / 2) 0;
+  }
+
+  .join-roles tr:first-child {
+    padding-top: 0;
+  }
+
+  .join-roles tr:last-child {
+    padding-bottom: 0;
+  }
+
+  .join-roles td,
+  .join-roles tr:first-child td,
+  .join-roles tr:last-child td {
+    padding: 0;
+  }
+
   .join-role__title {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .join-roles td.join-role__location {
+    grid-column: 1;
+    grid-row: 2;
     width: auto;
-  }
-
-  .join-role__spacer {
-    width: 4vw;
-    min-width: 4vw;
-  }
-
-  .join-role__location {
     white-space: normal;
+    padding-inline-start: 0;
+  }
+
+  .join-roles td.join-role__action {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+    padding-inline-start: 0;
   }
 }
 
