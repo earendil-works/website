@@ -67,6 +67,14 @@
     "message": "SF",
     "context": "Work location for the Sales Engineer role on the join page. SF is San Francisco; keep the abbreviation SF exactly as written, do not expand or transliterate it"
   },
+  "join.location.headOfProduct": {
+    "message": "Vienna, SF",
+    "context": "Work locations for the Head of Product role on the join page. SF is San Francisco; keep the abbreviation SF exactly as written, do not expand or transliterate it"
+  },
+  "join.location.headOfSales": {
+    "message": "SF",
+    "context": "Work location for the Head of Sales role on the join page. SF is San Francisco; keep the abbreviation SF exactly as written, do not expand or transliterate it"
+  },
   "join.openRoles": {
     "message": "Open roles",
     "context": "Accessible label for the open roles table on the join page"

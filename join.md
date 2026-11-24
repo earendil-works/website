@@ -42,6 +42,16 @@ aria_i18n_key: join
       <td class="join-role__action"><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Head%20of%20People"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span translate="no">Head of People</span></span></a></td>
     </tr>
     <tr>
+      <td class="join-role__title"><em translate="no">Head of Product</em></td>
+      <td class="join-role__location" data-i18n="content.join.location.headOfProduct">Vienna, SF</td>
+      <td class="join-role__action"><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Head%20of%20Product"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span translate="no">Head of Product</span></span></a></td>
+    </tr>
+    <tr>
+      <td class="join-role__title"><em translate="no">Head of Sales</em></td>
+      <td class="join-role__location" data-i18n="content.join.location.headOfSales">SF</td>
+      <td class="join-role__action"><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Head%20of%20Sales"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span translate="no">Head of Sales</span></span></a></td>
+    </tr>
+    <tr>
       <td class="join-role__title"><em translate="no">Member of the Design Staff</em></td>
       <td class="join-role__location" data-i18n="content.join.location.designStaff">Vienna, SF, London</td>
       <td class="join-role__action"><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Member%20of%20the%20Design%20Staff"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span translate="no">Member of the Design Staff</span></span></a></td>
