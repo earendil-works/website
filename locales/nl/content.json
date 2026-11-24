@@ -1,8 +1,10 @@
 {
   "join.apply": "SOLLICITEER",
+  "join.designStaff": "Lid van het Design Staff",
   "join.foundersOffice": "Founder's Office",
   "join.goToMarket": "Go to Market",
   "join.headOfMarketing": "Head of Marketing",
+  "join.location.designStaff": "Wenen, SF, Londen",
   "join.location.foundersOffice": "Wenen",
   "join.location.goToMarket": "Wenen, SF, Londen",
   "join.location.headOfMarketing": "SF",

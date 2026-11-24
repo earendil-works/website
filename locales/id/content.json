@@ -1,8 +1,10 @@
 {
   "join.apply": "LAMAR",
+  "join.designStaff": "Anggota Staf Desain",
   "join.foundersOffice": "Kantor Founder",
   "join.goToMarket": "Go to Market",
   "join.headOfMarketing": "Head of Marketing",
+  "join.location.designStaff": "Vienna, SF, London",
   "join.location.foundersOffice": "Wina",
   "join.location.goToMarket": "Wina, SF, London",
   "join.location.headOfMarketing": "SF",

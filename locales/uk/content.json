@@ -1,8 +1,10 @@
 {
   "join.apply": "ПОДАТИ ЗАЯВКУ",
+  "join.designStaff": "Учасник дизайн-команди",
   "join.foundersOffice": "Офіс засновника",
   "join.goToMarket": "Вихід на ринок",
   "join.headOfMarketing": "Керівник відділу маркетингу",
+  "join.location.designStaff": "Відень, Сан-Франциско, Лондон",
   "join.location.foundersOffice": "Відень",
   "join.location.goToMarket": "Відень, Сан-Франциско, Лондон",
   "join.location.headOfMarketing": "Сан-Франциско",

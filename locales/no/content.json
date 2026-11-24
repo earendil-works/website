@@ -1,8 +1,10 @@
 {
   "join.apply": "SØK",
+  "join.designStaff": "Medlem av designstaben",
   "join.foundersOffice": "Founder's Office",
   "join.goToMarket": "Go to Market",
   "join.headOfMarketing": "Markedssjef",
+  "join.location.designStaff": "Wien, SF, London",
   "join.location.foundersOffice": "Wien",
   "join.location.goToMarket": "Wien, SF, London",
   "join.location.headOfMarketing": "SF",

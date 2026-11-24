@@ -1,8 +1,10 @@
 {
   "join.apply": "POSTULER",
+  "join.designStaff": "Membre de l'équipe de design",
   "join.foundersOffice": "Cabinet des fondateurs",
   "join.goToMarket": "Mise sur le marché",
   "join.headOfMarketing": "Responsable Marketing",
+  "join.location.designStaff": "Vienne, SF, Londres",
   "join.location.foundersOffice": "Vienne",
   "join.location.goToMarket": "Vienne, SF, Londres",
   "join.location.headOfMarketing": "SF",

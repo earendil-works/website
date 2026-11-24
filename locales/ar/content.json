@@ -1,8 +1,10 @@
 {
   "join.apply": "تقديم",
+  "join.designStaff": "عضو في فريق التصميم",
   "join.foundersOffice": "مكتب المؤسسين",
   "join.goToMarket": "التسويق والانطلاق للسوق",
   "join.headOfMarketing": "رئيس التسويق",
+  "join.location.designStaff": "فيينا، سان فرانسيسكو، لندن",
   "join.location.foundersOffice": "فيينا",
   "join.location.goToMarket": "فيينا، سان فرانسيسكو، لندن",
   "join.location.headOfMarketing": "سان فرانسيسكو",

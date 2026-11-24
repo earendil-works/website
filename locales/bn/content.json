@@ -1,8 +1,10 @@
 {
   "join.apply": "আবেদন করুন",
+  "join.designStaff": "ডিজাইন স্টাফের সদস্য",
   "join.foundersOffice": "ফাউন্ডার'স অফিস",
   "join.goToMarket": "গো টু মার্কেট",
   "join.headOfMarketing": "হেড অফ মার্কেটিং",
+  "join.location.designStaff": "ভিয়েনা, এসএফ, লন্ডন",
   "join.location.foundersOffice": "ভিয়েনা",
   "join.location.goToMarket": "ভিয়েনা, এসএফ, লন্ডন",
   "join.location.headOfMarketing": "এসএফ",

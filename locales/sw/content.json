@@ -1,8 +1,10 @@
 {
   "join.apply": "OMBA",
+  "join.designStaff": "Mwanachama wa Wafanyakazi wa Usanifu",
   "join.foundersOffice": "Ofisi ya Waanzilishi",
   "join.goToMarket": "Kuingia Sokoni",
   "join.headOfMarketing": "Mkuu wa Masoko",
+  "join.location.designStaff": "Vienna, SF, London",
   "join.location.foundersOffice": "Vienna",
   "join.location.goToMarket": "Vienna, SF, London",
   "join.location.headOfMarketing": "SF",

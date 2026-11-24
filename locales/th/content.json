@@ -1,8 +1,10 @@
 {
   "join.apply": "สมัครงาน",
+  "join.designStaff": "สมาชิกทีมออกแบบ",
   "join.foundersOffice": "สำนักงานผู้ก่อตั้ง",
   "join.goToMarket": "การนำผลิตภัณฑ์สู่ตลาด",
   "join.headOfMarketing": "หัวหน้าฝ่ายการตลาด",
+  "join.location.designStaff": "เวียนนา, ซานฟรานซิสโก, ลอนดอน",
   "join.location.foundersOffice": "เวียนนา",
   "join.location.goToMarket": "เวียนนา, ซานฟรานซิสโก, ลอนดอน",
   "join.location.headOfMarketing": "ซานฟรานซิสโก",

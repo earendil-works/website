@@ -1,8 +1,10 @@
 {
   "join.apply": "BAŞVUR",
+  "join.designStaff": "Tasarım Ekibi Üyesi",
   "join.foundersOffice": "Kurucu Ofisi",
   "join.goToMarket": "Pazara Giriş",
   "join.headOfMarketing": "Pazarlama Direktörü",
+  "join.location.designStaff": "Viyana, SF, Londra",
   "join.location.foundersOffice": "Viyana",
   "join.location.goToMarket": "Viyana, SF, Londra",
   "join.location.headOfMarketing": "SF",

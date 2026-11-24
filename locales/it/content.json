@@ -1,8 +1,10 @@
 {
   "join.apply": "CANDIDATI",
+  "join.designStaff": "Membro del Design Staff",
   "join.foundersOffice": "Founder's Office",
   "join.goToMarket": "Go to Market",
   "join.headOfMarketing": "Head of Marketing",
+  "join.location.designStaff": "Vienna, SF, Londra",
   "join.location.foundersOffice": "Vienna",
   "join.location.goToMarket": "Vienna, SF, Londra",
   "join.location.headOfMarketing": "SF",

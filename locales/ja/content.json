@@ -1,8 +1,10 @@
 {
   "join.apply": "応募する",
+  "join.designStaff": "デザインスタッフ",
   "join.foundersOffice": "ファウンダーズオフィス",
   "join.goToMarket": "事業開発",
   "join.headOfMarketing": "マーケティング責任者",
+  "join.location.designStaff": "ウィーン、SF、ロンドン",
   "join.location.foundersOffice": "ウィーン",
   "join.location.goToMarket": "ウィーン、SF、ロンドン",
   "join.location.headOfMarketing": "SF",

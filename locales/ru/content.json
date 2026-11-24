@@ -1,8 +1,10 @@
 {
   "join.apply": "ОТКЛИКНУТЬСЯ",
+  "join.designStaff": "Сотрудник дизайн-отдела",
   "join.foundersOffice": "Офис основателей",
   "join.goToMarket": "Вывод на рынок",
   "join.headOfMarketing": "Руководитель отдела маркетинга",
+  "join.location.designStaff": "Вена, Сан-Франциско, Лондон",
   "join.location.foundersOffice": "Вена",
   "join.location.goToMarket": "Вена, Сан-Франциско, Лондон",
   "join.location.headOfMarketing": "Сан-Франциско",

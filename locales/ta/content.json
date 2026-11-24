@@ -1,8 +1,10 @@
 {
   "join.apply": "விண்ணப்பிக்க",
+  "join.designStaff": "வடிவமைப்பு குழு உறுப்பினர்",
   "join.foundersOffice": "நிறுவனரின் அலுவலகம்",
   "join.goToMarket": "சந்தைப்படுத்தல்",
   "join.headOfMarketing": "சந்தைப்படுத்தல் தலைவர்",
+  "join.location.designStaff": "வியன்னா, எஸ்எஃப், லண்டன்",
   "join.location.foundersOffice": "வியன்னா",
   "join.location.goToMarket": "வியன்னா, SF, லண்டன்",
   "join.location.headOfMarketing": "எஸ்எஃப்",
