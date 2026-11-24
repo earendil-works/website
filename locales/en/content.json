@@ -39,6 +39,10 @@
     "message": "Head of Marketing",
     "context": "Head of Marketing role label on the join page"
   },
+  "join.designStaff": {
+    "message": "Member of the Design Staff",
+    "context": "Design staff role label on the join page"
+  },
   "join.apply": {
     "message": "APPLY",
     "context": "Call-to-action label for job application links on the join page"
@@ -58,6 +62,10 @@
   "join.location.headOfMarketing": {
     "message": "SF",
     "context": "Work location for the Head of Marketing role on the join page (SF = San Francisco)"
+  },
+  "join.location.designStaff": {
+    "message": "Vienna, SF, London",
+    "context": "Work locations for the Member of the Design Staff role on the join page (SF = San Francisco)"
   },
   "join.openRoles": {
     "message": "Open roles",

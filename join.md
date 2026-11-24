@@ -11,13 +11,6 @@ aria_i18n_key: join
 <table class="join-roles" aria-label="Open roles" data-i18n-aria="content.join.openRoles">
   <tbody>
     <tr>
-      <td class="join-role__title"><em data-i18n="content.join.technicalStaff">Member of the Technical Staff</em></td>
-      <td class="join-role__spacer" aria-hidden="true"></td>
-      <td class="join-role__location" data-i18n="content.join.location.technicalStaff">Vienna, SF, London</td>
-      <td class="join-role__spacer" aria-hidden="true"></td>
-      <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Member%20of%20the%20Technical%20Staff"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.technicalStaff">Member of the Technical Staff</span></span></a></td>
-    </tr>
-    <tr>
       <td class="join-role__title"><em data-i18n="content.join.foundersOffice">Founder's Office</em></td>
       <td class="join-role__spacer" aria-hidden="true"></td>
       <td class="join-role__location" data-i18n="content.join.location.foundersOffice">Vienna</td>
@@ -37,6 +30,20 @@ aria_i18n_key: join
       <td class="join-role__location" data-i18n="content.join.location.headOfMarketing">SF</td>
       <td class="join-role__spacer" aria-hidden="true"></td>
       <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Head%20of%20Marketing"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.headOfMarketing">Head of Marketing</span></span></a></td>
+    </tr>
+    <tr>
+      <td class="join-role__title"><em data-i18n="content.join.designStaff">Member of the Design Staff</em></td>
+      <td class="join-role__spacer" aria-hidden="true"></td>
+      <td class="join-role__location" data-i18n="content.join.location.designStaff">Vienna, SF, London</td>
+      <td class="join-role__spacer" aria-hidden="true"></td>
+      <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Member%20of%20the%20Design%20Staff"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.designStaff">Member of the Design Staff</span></span></a></td>
+    </tr>
+    <tr>
+      <td class="join-role__title"><em data-i18n="content.join.technicalStaff">Member of the Technical Staff</em></td>
+      <td class="join-role__spacer" aria-hidden="true"></td>
+      <td class="join-role__location" data-i18n="content.join.location.technicalStaff">Vienna, SF, London</td>
+      <td class="join-role__spacer" aria-hidden="true"></td>
+      <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Member%20of%20the%20Technical%20Staff"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.technicalStaff">Member of the Technical Staff</span></span></a></td>
     </tr>
   </tbody>
 </table>
