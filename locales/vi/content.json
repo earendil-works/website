@@ -7,6 +7,8 @@
   "join.location.goToMarket": "Vienna, SF, London",
   "join.location.headOfMarketing": "SF",
   "join.location.headOfPeople": "Vienna",
+  "join.location.headOfProduct": "Vienna, SF",
+  "join.location.headOfSales": "SF",
   "join.location.salesEngineer": "SF",
   "join.location.technicalStaff": "Vienna, SF, London",
   "join.location.technicalStaffInfrastructure": "Vienna, SF",
