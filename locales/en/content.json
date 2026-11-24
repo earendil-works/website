@@ -43,6 +43,26 @@
     "message": "Member of the Design Staff",
     "context": "Design staff role label on the join page"
   },
+  "join.developerRelations": {
+    "message": "Developer Relations",
+    "context": "Developer Relations role label on the join page"
+  },
+  "join.financeOperations": {
+    "message": "Finance & Operations",
+    "context": "Finance & Operations role label on the join page"
+  },
+  "join.headOfPeople": {
+    "message": "Head of People",
+    "context": "Head of People role label on the join page"
+  },
+  "join.technicalStaffInfrastructure": {
+    "message": "Member of the Technical Staff – Infrastructure",
+    "context": "Member of the Technical Staff – Infrastructure role label on the join page"
+  },
+  "join.salesEngineer": {
+    "message": "Sales Engineer",
+    "context": "Sales Engineer role label on the join page"
+  },
   "join.apply": {
     "message": "APPLY",
     "context": "Call-to-action label for job application links on the join page"
@@ -66,6 +86,26 @@
   "join.location.designStaff": {
     "message": "Vienna, SF, London",
     "context": "Work locations for the Member of the Design Staff role on the join page (SF = San Francisco)"
+  },
+  "join.location.developerRelations": {
+    "message": "SF",
+    "context": "Work location for the Developer Relations role on the join page (SF = San Francisco)"
+  },
+  "join.location.financeOperations": {
+    "message": "Vienna",
+    "context": "Work location for the Finance & Operations role on the join page"
+  },
+  "join.location.headOfPeople": {
+    "message": "Vienna",
+    "context": "Work location for the Head of People role on the join page"
+  },
+  "join.location.technicalStaffInfrastructure": {
+    "message": "Vienna, SF",
+    "context": "Work locations for the Member of the Technical Staff – Infrastructure role on the join page (SF = San Francisco)"
+  },
+  "join.location.salesEngineer": {
+    "message": "SF",
+    "context": "Work location for the Sales Engineer role on the join page (SF = San Francisco)"
   },
   "join.openRoles": {
     "message": "Open roles",
