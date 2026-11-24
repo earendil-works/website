@@ -34,7 +34,7 @@ aria_i18n_key: join
     <tr>
       <td class="join-role__title"><em data-i18n="content.join.headOfMarketing">Head of Marketing</em></td>
       <td class="join-role__spacer" aria-hidden="true"></td>
-      <td class="join-role__location" data-i18n="content.join.location.headOfMarketing">Vienna, SF, London</td>
+      <td class="join-role__location" data-i18n="content.join.location.headOfMarketing">SF</td>
       <td class="join-role__spacer" aria-hidden="true"></td>
       <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Head%20of%20Marketing"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.headOfMarketing">Head of Marketing</span></span></a></td>
     </tr>

@@ -56,8 +56,8 @@
     "context": "Work locations for the Go to Market role on the join page (SF = San Francisco)"
   },
   "join.location.headOfMarketing": {
-    "message": "Vienna, SF, London",
-    "context": "Work locations for the Head of Marketing role on the join page (SF = San Francisco)"
+    "message": "SF",
+    "context": "Work location for the Head of Marketing role on the join page (SF = San Francisco)"
   },
   "join.openRoles": {
     "message": "Open roles",
