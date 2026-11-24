@@ -13,7 +13,7 @@ aria_i18n_key: join
     <tr>
       <td class="join-role__title"><em data-i18n="content.join.technicalStaff">Member of the Technical Staff</em></td>
       <td class="join-role__spacer" aria-hidden="true"></td>
-      <td class="join-role__location" data-i18n="content.join.location.technicalStaff">Vienna, SF, London, Remote</td>
+      <td class="join-role__location" data-i18n="content.join.location.technicalStaff">Vienna, SF, London</td>
       <td class="join-role__spacer" aria-hidden="true"></td>
       <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Member%20of%20the%20Technical%20Staff"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.technicalStaff">Member of the Technical Staff</span></span></a></td>
     </tr>

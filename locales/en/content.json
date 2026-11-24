@@ -44,7 +44,7 @@
     "context": "Call-to-action label for job application links on the join page"
   },
   "join.location.technicalStaff": {
-    "message": "Vienna, SF, London, Remote",
+    "message": "Vienna, SF, London",
     "context": "Work locations for the Member of the Technical Staff role on the join page (SF = San Francisco)"
   },
   "join.location.foundersOffice": {
