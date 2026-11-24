@@ -35,9 +35,77 @@
     "message": "Go to Market",
     "context": "Go-to-market role label on the join page"
   },
+  "join.headOfMarketing": {
+    "message": "Head of Marketing",
+    "context": "Head of Marketing role label on the join page"
+  },
+  "join.designStaff": {
+    "message": "Member of the Design Staff",
+    "context": "Design staff role label on the join page"
+  },
+  "join.developerRelations": {
+    "message": "Developer Relations",
+    "context": "Developer Relations role label on the join page"
+  },
+  "join.financeOperations": {
+    "message": "Finance & Operations",
+    "context": "Finance & Operations role label on the join page"
+  },
+  "join.headOfPeople": {
+    "message": "Head of People",
+    "context": "Head of People role label on the join page"
+  },
+  "join.technicalStaffInfrastructure": {
+    "message": "MTS, Infrastructure",
+    "context": "Infrastructure-focused Member of the Technical Staff role label on the join page (MTS = Member of the Technical Staff)"
+  },
+  "join.salesEngineer": {
+    "message": "Sales Engineer",
+    "context": "Sales Engineer role label on the join page"
+  },
   "join.apply": {
     "message": "APPLY",
     "context": "Call-to-action label for job application links on the join page"
+  },
+  "join.location.technicalStaff": {
+    "message": "Vienna, SF, London",
+    "context": "Work locations for the Member of the Technical Staff role on the join page (SF = San Francisco)"
+  },
+  "join.location.foundersOffice": {
+    "message": "Vienna",
+    "context": "Work location for the Founder's Office role on the join page"
+  },
+  "join.location.goToMarket": {
+    "message": "Vienna, SF, London",
+    "context": "Work locations for the Go to Market role on the join page (SF = San Francisco)"
+  },
+  "join.location.headOfMarketing": {
+    "message": "SF",
+    "context": "Work location for the Head of Marketing role on the join page (SF = San Francisco)"
+  },
+  "join.location.designStaff": {
+    "message": "Vienna, SF, London",
+    "context": "Work locations for the Member of the Design Staff role on the join page (SF = San Francisco)"
+  },
+  "join.location.developerRelations": {
+    "message": "SF",
+    "context": "Work location for the Developer Relations role on the join page (SF = San Francisco)"
+  },
+  "join.location.financeOperations": {
+    "message": "Vienna",
+    "context": "Work location for the Finance & Operations role on the join page"
+  },
+  "join.location.headOfPeople": {
+    "message": "Vienna",
+    "context": "Work location for the Head of People role on the join page"
+  },
+  "join.location.technicalStaffInfrastructure": {
+    "message": "Vienna, SF",
+    "context": "Work locations for the MTS, Infrastructure role on the join page (SF = San Francisco)"
+  },
+  "join.location.salesEngineer": {
+    "message": "SF",
+    "context": "Work location for the Sales Engineer role on the join page (SF = San Francisco)"
   },
   "join.openRoles": {
     "message": "Open roles",
