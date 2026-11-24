@@ -56,7 +56,7 @@
     "context": "Head of People role label on the join page"
   },
   "join.technicalStaffInfrastructure": {
-    "message": "MTS – Infrastructure",
+    "message": "MTS, Infrastructure",
     "context": "Infrastructure-focused Member of the Technical Staff role label on the join page (MTS = Member of the Technical Staff)"
   },
   "join.salesEngineer": {
@@ -101,7 +101,7 @@
   },
   "join.location.technicalStaffInfrastructure": {
     "message": "Vienna, SF",
-    "context": "Work locations for the MTS – Infrastructure role on the join page (SF = San Francisco)"
+    "context": "Work locations for the MTS, Infrastructure role on the join page (SF = San Francisco)"
   },
   "join.location.salesEngineer": {
     "message": "SF",

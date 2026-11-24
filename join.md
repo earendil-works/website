@@ -67,11 +67,11 @@ aria_i18n_key: join
       <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20Member%20of%20the%20Technical%20Staff"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.technicalStaff">Member of the Technical Staff</span></span></a></td>
     </tr>
     <tr>
-      <td class="join-role__title"><em data-i18n="content.join.technicalStaffInfrastructure">MTS – Infrastructure</em></td>
+      <td class="join-role__title"><em data-i18n="content.join.technicalStaffInfrastructure">MTS, Infrastructure</em></td>
       <td class="join-role__spacer" aria-hidden="true"></td>
       <td class="join-role__location" data-i18n="content.join.location.technicalStaffInfrastructure">Vienna, SF</td>
       <td class="join-role__spacer" aria-hidden="true"></td>
-      <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20MTS%20%E2%80%93%20Infrastructure"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.technicalStaffInfrastructure">MTS – Infrastructure</span></span></a></td>
+      <td><a class="join-role__apply" href="mailto:join@earendil.com?subject=Application%20to%20MTS%2C%20Infrastructure"><span data-i18n="content.join.apply">APPLY</span><span class="visually-hidden">: <span data-i18n="content.join.technicalStaffInfrastructure">MTS, Infrastructure</span></span></a></td>
     </tr>
     <tr>
       <td class="join-role__title"><em data-i18n="content.join.salesEngineer">Sales Engineer</em></td>
