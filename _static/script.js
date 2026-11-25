@@ -1503,6 +1503,7 @@ function applyThemePreference() {
 function updateThemeToggle() {
   const valueSpan = themeToggle.querySelector('.value');
   valueSpan.textContent = getThemeLabel(themeMode);
+  themeToggle.dataset.mode = themeMode;
   themeToggle.setAttribute('aria-label', window.i18n.t('common.aria.appearanceLabel', { state: getThemeLabel(themeMode) }));
   applyThemePreference();
 }

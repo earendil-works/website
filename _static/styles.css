@@ -57,6 +57,8 @@
   --frame-content-top: calc(var(--frame-block) + 76px);
   --frame-content-bottom: calc(var(--frame-block) + 100px);
   --frame-chrome-fade: 40px;
+  /* Inline padding of the language and theme toggles in the footer. */
+  --footer-toggle-padding: 10px;
   --chrome-surface: 250, 249, 246;
   --color-text-day: #353431;
 }
@@ -202,7 +204,7 @@ a:hover {
   right: 0;
   width: 100%;
   flex: 0 0 auto;
-  align-items: center;
+  align-items: flex-start;
   padding: 0 var(--frame-inline) var(--frame-block);
 }
 
@@ -212,7 +214,7 @@ a:hover {
 }
 
 .site-header > .top-nav,
-.site-footer-bar > .bottom-controls {
+.site-footer-bar > .product-marks {
   margin-left: auto;
 }
 
@@ -250,15 +252,24 @@ body:has(.page[data-page-type="corner-logo"]) .center-logo {
   position: static;
   transform: none;
   flex: 0 0 auto;
-  /* Optical exception: center the tall emblem on the first navigation row. */
-  margin-block-start: -35px;
+  /* Optical exception: center the tall emblem on the first navigation row.
+     The emblem was 32px wide with a -35px offset; at 24px, move it down by
+     half the height it lost (its viewBox is 84x153) to keep the same centre. */
+  margin-block-start: calc(-35px + (32px - 24px) / 2 * 153 / 84);
 }
 
 body:has(.page[data-page-type="home"]) .main-logo,
 body:has(.page[data-page-type="corner-logo"]) .main-logo {
   /* The emblem SVG has a tight viewBox, so its visible edge is the frame edge. */
-  width: 32px;
+  width: 24px;
   max-width: none;
+}
+
+/* The corner emblem turns fully white on hover, like the product marks. */
+body:has(.page[data-page-type="home"]) .center-logo:is(:hover, :focus-visible) .main-logo,
+body:has(.page[data-page-type="corner-logo"]) .center-logo:is(:hover, :focus-visible) .main-logo {
+  opacity: 1;
+  filter: none;
 }
 
 /* ==========================================================================
@@ -784,13 +795,62 @@ body:not(.theme-night) .nav-link::after {
   line-height: var(--leading-ui);
 }
 
+/* Footer start: EARENDIL INC. above the language and theme controls. */
+.site-footer-start {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
 /* Bottom Controls */
 .bottom-controls {
   position: relative;
   z-index: 200;
   display: flex;
   align-items: center;
-  gap: 16px;
+  /* Pull the toggles' inline padding out so EN lines up with EARENDIL INC. */
+  margin-inline-start: calc(-1 * var(--footer-toggle-padding));
+}
+
+/* Product marks: Pi, Radius, Lefos. Their top edge lines up with the top of
+   the EARENDIL INC. capitals: the line's half-leading plus the gap between
+   the em box and the cap height of Departure Mono (0.075em). */
+.product-marks {
+  position: relative;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  margin-block-start: calc((var(--leading-ui) - 1) * var(--text-ui) / 2 + 0.075 * var(--text-ui));
+}
+
+.product-mark {
+  display: inline-flex;
+  color: rgba(255, 255, 255, 0.95);
+  opacity: 0.85;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+body:not(.theme-night) .product-mark {
+  color: var(--color-text-day);
+}
+
+/* `body` outweighs the day-theme colour rule above. */
+body .product-mark:is(:hover, :focus-visible) {
+  opacity: 1;
+  color: #fff;
+}
+
+.product-mark:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
+}
+
+.product-mark svg {
+  display: block;
+  width: 22px;
+  height: 22px;
 }
 
 #theme-toggle {
@@ -800,9 +860,10 @@ body:not(.theme-night) .nav-link::after {
   font-family: var(--mono-font);
   font-size: var(--text-ui);
   line-height: var(--leading-ui);
-  padding: 6px 10px;
+  padding: 0 var(--footer-toggle-padding);
   cursor: pointer;
   transition: color 0.2s ease;
+  position: relative;
 }
 
 #theme-toggle:hover {
@@ -818,8 +879,35 @@ body:not(.theme-night) .nav-link::after {
   cursor: pointer;
 }
 
+/* The theme is shown as a pixel symbol. The text label stays in the DOM,
+   visually hidden; the button's aria-label carries it for assistive tech. */
 #theme-toggle .value {
-  margin-inline-start: 0.15em;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.theme-icon {
+  display: none;
+}
+
+#theme-toggle[data-mode="auto"] .theme-icon--auto,
+#theme-toggle[data-mode="night"] .theme-icon--night,
+#theme-toggle[data-mode="day"] .theme-icon--day {
+  display: inline;
+}
+
+/* 11x11 pixel symbols. Departure Mono capitals are 11/15em tall, so one symbol
+   pixel matches one font pixel and the symbols sit on the EN baseline at
+   exactly cap height. */
+.theme-icon svg {
+  display: inline-block;
+  vertical-align: baseline;
+  width: calc(11em / 15);
+  height: calc(11em / 15);
 }
 
 /* Language Picker */
@@ -836,7 +924,7 @@ body:not(.theme-night) .nav-link::after {
   font-family: var(--mono-font);
   font-size: var(--text-ui);
   line-height: var(--leading-ui);
-  padding: 6px 10px;
+  padding: 0 var(--footer-toggle-padding);
   cursor: pointer;
   transition: color 0.2s ease;
   position: relative;
@@ -864,7 +952,7 @@ body:not(.theme-night) .nav-link::after {
 .lang-menu {
   position: absolute;
   bottom: 100%;
-  right: 0;
+  left: 0;
   margin-bottom: 8px;
   z-index: 230;
   background: rgba(30, 30, 30, 0.95);
@@ -2103,12 +2191,13 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 
   body:has(.page[data-page-type="home"]) .center-logo,
   body:has(.page[data-page-type="corner-logo"]) .center-logo {
-    margin-block-start: -10px;
+    /* Same centre as the former 22px emblem with a -10px offset. */
+    margin-block-start: calc(-10px + (22px - 16.5px) / 2 * 153 / 84);
   }
 
   body:has(.page[data-page-type="home"]) .main-logo,
   body:has(.page[data-page-type="corner-logo"]) .main-logo {
-    width: 22px;
+    width: 16.5px;
     max-width: none;
   }
 
@@ -2152,6 +2241,7 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     --frame-inline: 28px;
     --frame-block: 28px;
     --hero-horizon-gap: 1.5rem;
+    --footer-toggle-padding: 6px;
   }
 
   .content-page::before {
@@ -2164,15 +2254,6 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
       rgba(var(--page-veil), 0.34) 76%,
       rgba(var(--page-veil), 0) 92%
     );
-  }
-
-  .bottom-controls {
-    gap: 8px;
-  }
-
-  #lang-toggle,
-  #theme-toggle {
-    padding: 6px 6px;
   }
 
   .lang-menu {
