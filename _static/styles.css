@@ -57,8 +57,10 @@
   --frame-content-top: calc(var(--frame-block) + 76px);
   --frame-content-bottom: calc(var(--frame-block) + 100px);
   --frame-chrome-fade: 40px;
-  /* Inline padding of the language and theme toggles in the footer. */
-  --footer-toggle-padding: 10px;
+  /* Vertical centre of the MENU capitals within the first header row: half
+     the line box, less half an em, plus Departure Mono's 0.075em cap offset
+     and half its 11/15em cap height. */
+  --menu-cap-centre: calc(var(--text-ui) * (var(--leading-ui) / 2 - 0.5 + 0.075 + 11 / 30));
   --chrome-surface: 250, 249, 246;
   --color-text-day: #353431;
 }
@@ -204,7 +206,7 @@ a:hover {
   right: 0;
   width: 100%;
   flex: 0 0 auto;
-  align-items: flex-start;
+  align-items: flex-end;
   padding: 0 var(--frame-inline) var(--frame-block);
 }
 
@@ -252,16 +254,15 @@ body:has(.page[data-page-type="corner-logo"]) .center-logo {
   position: static;
   transform: none;
   flex: 0 0 auto;
-  /* Optical exception: center the tall emblem on the first navigation row.
-     The emblem was 32px wide with a -35px offset; at 24px, move it down by
-     half the height it lost (its viewBox is 84x153) to keep the same centre. */
-  margin-block-start: calc(-35px + (32px - 24px) / 2 * 153 / 84);
+  /* Centre the tall emblem (viewBox 84x153) on the MENU capitals. */
+  --emblem-width: 24px;
+  margin-block-start: calc(var(--menu-cap-centre) - var(--emblem-width) * 153 / 84 / 2);
 }
 
 body:has(.page[data-page-type="home"]) .main-logo,
 body:has(.page[data-page-type="corner-logo"]) .main-logo {
   /* The emblem SVG has a tight viewBox, so its visible edge is the frame edge. */
-  width: 24px;
+  width: var(--emblem-width);
   max-width: none;
 }
 
@@ -435,17 +436,17 @@ body:has(.content-page) .center-logo {
   z-index: 200;
 }
 
-body:not(.theme-night):has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
+body:not(.theme-night):has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle) {
   color: var(--color-text-day);
   text-shadow: none;
 }
 
-body.theme-night:has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
+body.theme-night:has(.content-page) :is(.nav-link, .menu-label, #site-footer, #theme-toggle) {
   color: #fff;
   text-shadow: none;
 }
 
-html :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
+html :is(.nav-link, .menu-label, #site-footer, #theme-toggle) {
   transition-duration: 0.52s;
   transition-timing-function: ease;
 }
@@ -470,13 +471,13 @@ body:not(.theme-night) .main-logo {
   filter: url('#logo-day-color');
 }
 
-body:not(.theme-night) :is(.nav-link, .menu-label, #site-footer, #theme-toggle, #lang-toggle) {
+body:not(.theme-night) :is(.nav-link, .menu-label, #site-footer, #theme-toggle) {
   color: var(--color-text-day);
   text-shadow: none;
 }
 
 body:not(.theme-night) .menu-trigger-toggle,
-body:not(.theme-night) :is(.nav-link, .menu-trigger-toggle, #theme-toggle, #lang-toggle):hover {
+body:not(.theme-night) :is(.nav-link, .menu-trigger-toggle, #theme-toggle):hover {
   color: var(--color-text-day);
 }
 
@@ -706,7 +707,8 @@ body:not(.theme-night) .top-nav.is-open .menu-trigger-toggle {
   gap: 8px;
 }
 
-.menu-link-group--external {
+.menu-link-group--external,
+.menu-link-group--language {
   margin-top: 12px;
 }
 
@@ -724,6 +726,14 @@ body:not(.theme-night) .top-nav.is-open .menu-trigger-toggle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+button.nav-link {
+  appearance: none;
+  border: 0;
+  background: none;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-link::after {
@@ -795,34 +805,16 @@ body:not(.theme-night) .nav-link::after {
   line-height: var(--leading-ui);
 }
 
-/* Footer start: EARENDIL INC. above the language and theme controls. */
-.site-footer-start {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-/* Bottom Controls */
-.bottom-controls {
-  position: relative;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  /* Pull the toggles' inline padding out so EN lines up with EARENDIL INC. */
-  margin-inline-start: calc(-1 * var(--footer-toggle-padding));
-}
-
-/* Product marks: Pi, Radius, Lefos. Their top edge lines up with the top of
-   the EARENDIL INC. capitals: the line's half-leading plus the gap between
-   the em box and the cap height of Departure Mono (0.075em). */
+/* Product marks: Pi, Radius, Lefos. Their bottom edge lines up with the
+   EARENDIL INC. baseline: the line's half-leading plus the space Departure Mono
+   leaves below its capitals (1em - 0.075em above - 11/15em cap height). */
 .product-marks {
   position: relative;
   z-index: 200;
   display: flex;
   align-items: center;
   gap: 1.75rem;
-  margin-block-start: calc((var(--leading-ui) - 1) * var(--text-ui) / 2 + 0.075 * var(--text-ui));
+  margin-block-end: calc((var(--leading-ui) - 1) * var(--text-ui) / 2 + (1 - 0.075 - 11 / 15) * var(--text-ui));
 }
 
 .product-mark {
@@ -853,14 +845,19 @@ body .product-mark:is(:hover, :focus-visible) {
   height: 22px;
 }
 
+/* Theme toggle: sits left of MENU. --theme-toggle-gap plus the MENU label's
+   1px side bearing gives a 27.57px visible gap between symbol and label. */
 #theme-toggle {
+  --theme-toggle-gap: 26.57px;
+  appearance: none;
   border: 0;
   background: none;
+  margin: 0 var(--theme-toggle-gap) 0 0;
   color: rgba(255, 255, 255, 0.95);
   font-family: var(--mono-font);
   font-size: var(--text-ui);
   line-height: var(--leading-ui);
-  padding: 0 var(--footer-toggle-padding);
+  padding: 0;
   cursor: pointer;
   transition: color 0.2s ease;
   position: relative;
@@ -917,32 +914,11 @@ body .product-mark:is(:hover, :focus-visible) {
   pointer-events: auto;
 }
 
+/* The language toggle sits in the site menu and is styled as a .nav-link. */
 #lang-toggle {
-  border: 0;
-  background: none;
-  color: rgba(255, 255, 255, 0.95);
-  font-family: var(--mono-font);
-  font-size: var(--text-ui);
-  line-height: var(--leading-ui);
-  padding: 0 var(--footer-toggle-padding);
-  cursor: pointer;
-  transition: color 0.2s ease;
   position: relative;
   z-index: 221;
   pointer-events: auto;
-}
-
-#lang-toggle:hover {
-  color: #fff;
-  cursor: pointer;
-}
-
-.theme-night #lang-toggle {
-  cursor: pointer;
-}
-
-.theme-night #lang-toggle:hover {
-  cursor: pointer;
 }
 
 /* ==========================================================================
@@ -951,9 +927,9 @@ body .product-mark:is(:hover, :focus-visible) {
 
 .lang-menu {
   position: absolute;
-  bottom: 100%;
-  left: 0;
-  margin-bottom: 8px;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
   z-index: 230;
   background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(10px);
@@ -966,7 +942,7 @@ body .product-mark:is(:hover, :focus-visible) {
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(-8px);
   transition: opacity 0.2s ease, transform 0.2s ease;
   pointer-events: none;
 }
@@ -2055,6 +2031,13 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     padding: 15px 10px;
   }
 
+  /* Same touch target as MENU. The margin offsets the 10px padding so the
+     visible gap matches desktop. */
+  #theme-toggle {
+    margin: -15px calc(var(--theme-toggle-gap) - 10px) -15px -10px;
+    padding: 15px 10px;
+  }
+
   .top-nav .menu-links {
     position: fixed;
     inset: 0;
@@ -2115,7 +2098,8 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     gap: 8px;
   }
 
-  .top-nav .menu-link-group--external {
+  .top-nav .menu-link-group--external,
+  .top-nav .menu-link-group--language {
     margin-top: 8px;
     padding-top: 0;
     border: 0;
@@ -2146,6 +2130,15 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
   .top-nav .nav-link:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 2px;
+  }
+
+  /* EN sits low in the full-screen menu, so the language list opens upward. */
+  .top-nav .lang-menu {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: 8px;
+    transform: translateY(8px);
   }
 
   /* On scrolling pages, the fixed header gets an opaque-to-transparent veil.
@@ -2191,14 +2184,7 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
 
   body:has(.page[data-page-type="home"]) .center-logo,
   body:has(.page[data-page-type="corner-logo"]) .center-logo {
-    /* Same centre as the former 22px emblem with a -10px offset. */
-    margin-block-start: calc(-10px + (22px - 16.5px) / 2 * 153 / 84);
-  }
-
-  body:has(.page[data-page-type="home"]) .main-logo,
-  body:has(.page[data-page-type="corner-logo"]) .main-logo {
-    width: 16.5px;
-    max-width: none;
+    --emblem-width: 16.5px;
   }
 
 
@@ -2241,7 +2227,6 @@ body:not(.theme-night) .page--values .disclosure-summary::after {
     --frame-inline: 28px;
     --frame-block: 28px;
     --hero-horizon-gap: 1.5rem;
-    --footer-toggle-padding: 6px;
   }
 
   .content-page::before {
