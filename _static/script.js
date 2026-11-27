@@ -141,6 +141,8 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
           var navTrigger = navMenu.querySelector('.menu-trigger-toggle');
           if (event.key === 'Escape') {
+            // An open language list inside the menu takes Escape first.
+            if (event.defaultPrevented || navMenu.querySelector('.lang-menu:not([hidden])')) return;
             event.preventDefault();
             setMenuExpanded(navMenu, false);
             if (navTrigger) navTrigger.focus();
