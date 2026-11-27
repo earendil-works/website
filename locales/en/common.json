@@ -64,8 +64,8 @@
     "context": "Announcement banner linking to press release"
   },
   "home.hero": {
-    "message": "Earendil crafts tools to harness AI with <a class=\"home-hero-link\" href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a> and <a class=\"home-hero-link\" href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a>.<br><span class=\"home-hero-open-clause\">Built in the <a class=\"home-hero-open\" href=\"https://github.com/earendil-works\" target=\"_blank\" rel=\"noopener noreferrer\">open</a>,</span> <span class=\"home-hero-tail-clause\">shaped by the humans who use them.</span>",
-    "context": "Home page hero paragraph introducing Earendil with links to Pi, Lefos, and open source"
+    "message": "Earendil crafts tools to harness AI with <a class=\"home-hero-link\" href=\"https://pi.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Pi</a>, <a class=\"home-hero-link\" href=\"https://radius.earendil.com/\" target=\"_blank\" rel=\"noopener noreferrer\">Radius</a>, and <a class=\"home-hero-link\" href=\"https://lefos.com\" target=\"_blank\" rel=\"noopener noreferrer\">Lefos</a>.<br><span class=\"home-hero-open-clause\">Built in the <a class=\"home-hero-open\" href=\"https://github.com/earendil-works\" target=\"_blank\" rel=\"noopener noreferrer\">open</a>,</span> <span class=\"home-hero-tail-clause\">shaped by the people who use them.</span>",
+    "context": "Home page hero paragraph introducing Earendil with links to Pi, Radius, Lefos, and open source"
   },
   "meta.titleFormat": {
     "message": "{title} | Earendil",
@@ -106,6 +106,10 @@
   "aria.hero": {
     "message": "Earendil hero",
     "context": "Aria-label for the home page hero section"
+  },
+  "aria.products": {
+    "message": "Earendil products",
+    "context": "Aria-label for the row of product logo links (Pi, Radius, Lefos) in the site footer"
   },
   "aria.purpose": {
     "message": "Earendil purpose",

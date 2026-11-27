@@ -454,6 +454,7 @@
     // Close on Escape
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && !menu.hidden) {
+        e.preventDefault();
         closeMenu();
         toggle.focus();
       }

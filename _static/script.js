@@ -141,6 +141,8 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
           var navTrigger = navMenu.querySelector('.menu-trigger-toggle');
           if (event.key === 'Escape') {
+            // An open language list inside the menu takes Escape first.
+            if (event.defaultPrevented || navMenu.querySelector('.lang-menu:not([hidden])')) return;
             event.preventDefault();
             setMenuExpanded(navMenu, false);
             if (navTrigger) navTrigger.focus();
@@ -149,7 +151,7 @@ window.__earendilUiRuntime = window.__earendilUiRuntime || {};
 
           if (event.key !== 'Tab') return;
           var focusable = Array.prototype.slice.call(
-            navMenu.querySelectorAll('.menu-trigger-toggle, .menu-links a')
+            navMenu.querySelectorAll('.menu-trigger button, .menu-links a, .menu-links button')
           ).filter(function(element) {
             return !element.hidden && element.getClientRects().length > 0;
           });
@@ -1503,6 +1505,7 @@ function applyThemePreference() {
 function updateThemeToggle() {
   const valueSpan = themeToggle.querySelector('.value');
   valueSpan.textContent = getThemeLabel(themeMode);
+  themeToggle.dataset.mode = themeMode;
   themeToggle.setAttribute('aria-label', window.i18n.t('common.aria.appearanceLabel', { state: getThemeLabel(themeMode) }));
   applyThemePreference();
 }
